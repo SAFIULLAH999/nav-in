@@ -1,97 +1,131 @@
 import jwt from 'jsonwebtoken'
-import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
-
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'your-access-secret'
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret'
-const JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || '15m'
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+import { NextRequest } from 'next/server'
 
 export interface JWTPayload {
   userId: string
   email: string
-  type: 'access' | 'refresh'
+  role: string
 }
 
-export class JWTManager {
-  static generateAccessToken(payload: Omit<JWTPayload, 'type'>): string {
-    return jwt.sign(
-      { ...payload, type: 'access' } as object,
-      JWT_ACCESS_SECRET,
-      { expiresIn: JWT_ACCESS_EXPIRES_IN }
-    )
-  }
+export interface AuthenticatedRequest extends NextRequest {
+  user?: JWTPayload
+}
 
-  static generateRefreshToken(payload: Omit<JWTPayload, 'type'>): string {
-    return jwt.sign(
-      { ...payload, type: 'refresh' } as object,
-      JWT_REFRESH_SECRET,
-      { expiresIn: JWT_REFRESH_EXPIRES_IN }
-    )
-  }
+/**
+ * Generate access token
+ */
+export function generateAccessToken(payload: JWTPayload): string {
+  return jwt.sign(payload, process.env.JWT_SECRET || 'fallback-secret', {
+    expiresIn: '7d'
+  })
+}
 
-  static verifyAccessToken(token: string): JWTPayload | null {
-    try {
-      const decoded = jwt.verify(token, JWT_ACCESS_SECRET) as JWTPayload
-      return decoded.type === 'access' ? decoded : null
-    } catch {
-      return null
+/**
+ * Generate refresh token
+ */
+export function generateRefreshToken(userId: string): string {
+  return jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret',
+    {
+      expiresIn: '30d'
     }
+  )
+}
+
+/**
+ * Verify access token
+ */
+export function verifyAccessToken(token: string): JWTPayload | null {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as JWTPayload
+  } catch (error) {
+    return null
+  }
+}
+
+/**
+ * Verify refresh token
+ */
+export function verifyRefreshToken(token: string): { userId: string } | null {
+  try {
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret') as { userId: string }
+  } catch (error) {
+    return null
+  }
+}
+
+/**
+ * Extract token from request headers
+ */
+export function extractTokenFromHeader(request: NextRequest): string | null {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null
+  }
+  return authHeader.substring(7)
+}
+
+/**
+ * Extract token from cookies
+ */
+export function extractTokenFromCookie(request: NextRequest): string | null {
+  return request.cookies.get('accessToken')?.value || null
+}
+
+/**
+ * Middleware to verify JWT and add user to request
+ */
+export async function authenticateRequest(request: NextRequest): Promise<{ user: JWTPayload } | { error: string }> {
+  const token = extractTokenFromHeader(request) || extractTokenFromCookie(request)
+
+  if (!token) {
+    return { error: 'No token provided' }
   }
 
-  static verifyRefreshToken(token: string): JWTPayload | null {
-    try {
-      const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as JWTPayload
-      return decoded.type === 'refresh' ? decoded : null
-    } catch {
-      return null
+  const payload = verifyAccessToken(token)
+
+  if (!payload) {
+    return { error: 'Invalid token' }
+  }
+
+  return { user: payload }
+}
+
+/**
+ * Check if user has required role
+ */
+export function hasRole(userRole: string, requiredRoles: string[]): boolean {
+  return requiredRoles.includes(userRole)
+}
+
+/**
+ * Role-based authorization middleware
+ */
+export function requireRoles(roles: string[]) {
+  return async (request: NextRequest): Promise<{ user?: JWTPayload; error?: string }> => {
+    const authResult = await authenticateRequest(request)
+
+    if ('error' in authResult) {
+      return { error: authResult.error }
     }
-  }
 
-  static async storeRefreshToken(userId: string, token: string): Promise<void> {
-    // Hash the token before storing
-    const hashedToken = await bcrypt.hash(token, 12)
+    if (!hasRole(authResult.user.role, roles)) {
+      return { error: 'Insufficient permissions' }
+    }
 
-    await prisma.refreshToken.create({
-      data: {
-        token: hashedToken,
-        userId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-      }
-    })
-  }
-
-  static async revokeRefreshToken(token: string): Promise<void> {
-    const hashedToken = await bcrypt.hash(token, 12)
-
-    await prisma.refreshToken.updateMany({
-      where: { token: hashedToken },
-      data: { isRevoked: true }
-    })
-  }
-
-  static async isRefreshTokenValid(token: string): Promise<boolean> {
-    const hashedToken = await bcrypt.hash(token, 12)
-
-    const storedToken = await prisma.refreshToken.findUnique({
-      where: { token: hashedToken }
-    })
-
-    return storedToken ? !storedToken.isRevoked && storedToken.expiresAt > new Date() : false
-  }
-
-  static async revokeAllUserTokens(userId: string): Promise<void> {
-    await prisma.refreshToken.updateMany({
-      where: { userId },
-      data: { isRevoked: true }
-    })
+    return { user: authResult.user }
   }
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12)
-}
+/**
+ * Common role constants
+ */
+export const ROLES = {
+  USER: 'USER',
+  RECRUITER: 'RECRUITER',
+  ADMIN: 'ADMIN',
+  COMPANY_ADMIN: 'COMPANY_ADMIN'
+} as const
 
-export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword)
-}
+export type UserRole = typeof ROLES[keyof typeof ROLES]

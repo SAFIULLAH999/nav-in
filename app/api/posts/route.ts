@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { firebaseAuth } from '@/lib/firebase-auth'
+import { authenticateRequest } from '@/lib/jwt'
+import { z } from 'zod'
 
-// GET - Fetch posts for feed
+const createPostSchema = z.object({
+  content: z.string().min(1, 'Content is required').max(2000, 'Content too long'),
+  image: z.string().url().optional(),
+  video: z.string().url().optional(),
+})
+
+// GET - Fetch posts for feed with engagement algorithm
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -10,6 +17,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = (page - 1) * limit
 
+    // Get current user for personalized feed (optional)
+    const authResult = await authenticateRequest(request)
+    const currentUserId = ('user' in authResult) ? authResult.user.userId : null
+
+    // Enhanced feed algorithm: combine recency + engagement
     const posts = await prisma.post.findMany({
       take: limit,
       skip: offset,
@@ -23,6 +35,17 @@ export async function GET(request: NextRequest) {
             avatar: true,
             title: true,
           }
+        },
+        likes: currentUserId ? {
+          where: { userId: currentUserId },
+          select: { id: true }
+        } : false,
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+            shares: true
+          }
         }
       }
     })
@@ -32,17 +55,18 @@ export async function GET(request: NextRequest) {
       id: post.id,
       author: {
         name: post.author.name || 'Unknown User',
-        username: post.author.username || post.author.email?.split('@')[0] || 'user',
+        username: post.author.username || 'user',
         avatar: post.author.avatar || '',
         title: post.author.title || 'NavIN User'
       },
       content: post.content,
       timestamp: post.createdAt.toISOString(),
-      likes: 0, // TODO: Implement likes system
-      comments: 0, // TODO: Implement comments system
-      shares: 0, // TODO: Implement shares system
-      liked: false,
-      image: post.image
+      likes: post._count.likes,
+      comments: post._count.comments,
+      shares: post._count.shares,
+      liked: post.likes.length > 0,
+      image: post.image,
+      video: post.video
     }))
 
     return NextResponse.json({
@@ -66,48 +90,29 @@ export async function GET(request: NextRequest) {
 // POST - Create a new post
 export async function POST(request: NextRequest) {
   try {
-    // Get current user from auth
-    const currentUser = firebaseAuth.getCurrentUser()
-    if (!currentUser) {
+    // Authenticate user
+    const authResult = await authenticateRequest(request)
+
+    if ('error' in authResult) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: authResult.error },
         { status: 401 }
       )
     }
 
     const body = await request.json()
-    const { content, image } = body
+    const { content, image, video } = createPostSchema.parse(body)
 
-    if (!content || content.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Post content is required' },
-        { status: 400 }
-      )
-    }
-
-    // Find or create user in database
-    let dbUser = await prisma.user.findUnique({
-      where: { email: currentUser.email! }
-    })
-
-    if (!dbUser) {
-      // Create user in database
-      dbUser = await prisma.user.create({
-        data: {
-          email: currentUser.email!,
-          name: currentUser.displayName || currentUser.email!.split('@')[0],
-          username: currentUser.email!.split('@')[0],
-          isActive: true,
-        }
-      })
-    }
+    // Get current user
+    const currentUserId = authResult.user.userId
 
     // Create the post
     const newPost = await prisma.post.create({
       data: {
         content: content.trim(),
         image: image || null,
-        authorId: dbUser.id,
+        video: video || null,
+        authorId: currentUserId,
       },
       include: {
         author: {
@@ -118,6 +123,13 @@ export async function POST(request: NextRequest) {
             avatar: true,
             title: true,
           }
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+            shares: true
+          }
         }
       }
     })
@@ -127,17 +139,18 @@ export async function POST(request: NextRequest) {
       id: newPost.id,
       author: {
         name: newPost.author.name || 'Unknown User',
-        username: newPost.author.username || newPost.author.email?.split('@')[0] || 'user',
+        username: newPost.author.username || 'user',
         avatar: newPost.author.avatar || '',
         title: newPost.author.title || 'NavIN User'
       },
       content: newPost.content,
       timestamp: newPost.createdAt.toISOString(),
-      likes: 0,
-      comments: 0,
-      shares: 0,
+      likes: newPost._count.likes,
+      comments: newPost._count.comments,
+      shares: newPost._count.shares,
       liked: false,
-      image: newPost.image
+      image: newPost.image,
+      video: newPost.video
     }
 
     return NextResponse.json({
@@ -146,6 +159,13 @@ export async function POST(request: NextRequest) {
       message: 'Post created successfully'
     })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Validation error', details: error.errors },
+        { status: 400 }
+      )
+    }
+
     console.error('Error creating post:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to create post' },

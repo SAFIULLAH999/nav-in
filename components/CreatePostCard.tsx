@@ -10,14 +10,38 @@ export const CreatePostCard = () => {
   const [isExpanded, setIsExpanded] = useState(false)
   const { user } = useFirebase()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
 
-    // TODO: Implement post creation
-    console.log('Creating post:', content)
-    setContent('')
-    setIsExpanded(false)
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: content.trim(),
+          image: null // TODO: Add image upload support
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        console.log('Post created successfully:', data.data)
+        setContent('')
+        setIsExpanded(false)
+        // Optionally trigger a callback to refresh the feed
+        window.location.reload() // Simple refresh for now
+      } else {
+        console.error('Failed to create post:', data.error)
+        alert('Failed to create post: ' + data.error)
+      }
+    } catch (error) {
+      console.error('Error creating post:', error)
+      alert('Failed to create post. Please try again.')
+    }
   }
 
   if (!user) {

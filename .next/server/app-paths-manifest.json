@@ -1,10 +1,9 @@
 {
-  "/messages/page": "app/messages/page.js",
   "/page": "app/page.js",
-  "/jobs/page": "app/jobs/page.js",
   "/login/page": "app/login/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/messages/page": "app/messages/page.js",
+  "/jobs/page": "app/jobs/page.js",
   "/feed/page": "app/feed/page.js",
-  "/api/posts/route": "app/api/posts/route.js",
-  "/network/page": "app/network/page.js"
+  "/network/page": "app/network/page.js",
+  "/api/posts/route": "app/api/posts/route.js"
 }
