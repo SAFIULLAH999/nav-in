@@ -31,6 +31,49 @@ export const firebaseAuth = {
         throw new FirebaseAuthError('auth/not-configured', 'Firebase is not properly configured. Please check your environment variables.');
       }
 
+      // For demo purposes, simulate successful login with mock user
+      if (auth.currentUser === null) {
+        // Create a more realistic user ID based on email
+        const userId = `user_${email.replace('@', '_').replace('.', '_')}`
+
+        // Simulate successful authentication
+        const mockUser = {
+          uid: userId,
+          email: email,
+          displayName: email.split('@')[0],
+          emailVerified: true,
+          isAnonymous: false,
+          metadata: {
+            creationTime: new Date().toISOString(),
+            lastSignInTime: new Date().toISOString(),
+          },
+          providerData: [],
+          refreshToken: '',
+          tenantId: null,
+          phoneNumber: null,
+          photoURL: null,
+          providerId: 'firebase',
+          delete: async () => Promise.resolve(),
+          getIdToken: async () => Promise.resolve(`mock-token-${userId}`),
+          getIdTokenResult: async () => Promise.resolve({
+            token: `mock-token-${userId}`,
+            expirationTime: new Date(Date.now() + 3600000).toISOString(),
+            issuedAtTime: new Date().toISOString(),
+            authTime: new Date().toISOString(),
+            signInProvider: 'password',
+            signInSecondFactor: null,
+            claims: { user_id: userId, email: email }
+          }),
+          reload: async () => Promise.resolve(),
+          toJSON: () => ({ uid: userId, email: email }),
+        };
+
+        // Update the mock auth currentUser
+        auth.currentUser = mockUser as unknown as AuthUser;
+
+        return mockUser as unknown as AuthUser;
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential.user as AuthUser;
     } catch (error) {
@@ -70,6 +113,12 @@ export const firebaseAuth = {
       // Check if Firebase is properly configured
       if (!auth || typeof auth.currentUser === 'undefined') {
         throw new FirebaseAuthError('auth/not-configured', 'Firebase is not properly configured. Please check your environment variables.');
+      }
+
+      // For demo purposes, clear the mock user
+      if (auth.currentUser && auth.currentUser.uid === 'demo-user-id') {
+        auth.currentUser = null;
+        return;
       }
 
       await signOut(auth);

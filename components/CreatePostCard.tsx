@@ -1,45 +1,119 @@
 'use client'
 
-import { Image, Video, Briefcase, FileText, Smile } from 'lucide-react'
+import React, { useState } from 'react'
+import { Image, Video, Calendar, MapPin, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useFirebase } from './FirebaseProvider'
 
-export function CreatePostCard() {
+export const CreatePostCard = () => {
+  const [content, setContent] = useState('')
+  const [isExpanded, setIsExpanded] = useState(false)
+  const { user } = useFirebase()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!content.trim()) return
+
+    // TODO: Implement post creation
+    console.log('Creating post:', content)
+    setContent('')
+    setIsExpanded(false)
+  }
+
+  if (!user) {
+    return null // Don't show post creation for non-authenticated users
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-surface rounded-3xl border border-border p-6 shadow-soft hover:shadow-medium transition-all duration-300"
+      className="bg-card rounded-xl shadow-soft border border-border p-6"
     >
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-soft">
-          JD
+      {!isExpanded ? (
+        <div
+          onClick={() => setIsExpanded(true)}
+          className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
+        >
+          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
+            {user.displayName
+              ? user.displayName.charAt(0).toUpperCase()
+              : user.email?.split('@')[0].charAt(0).toUpperCase()
+            }
+          </div>
+          <div className="flex-1 text-text-muted">
+            What's on your mind?
+          </div>
         </div>
-        <button className="flex-1 bg-secondary hover:bg-primary/5 rounded-2xl px-6 py-4 text-left transition-all duration-300 border border-border hover:border-primary/20">
-          <span className="text-text-muted">Share something with your network...</span>
-        </button>
-      </div>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <div className="flex items-start space-x-3 mb-4">
+            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+              {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Share your thoughts..."
+                className="w-full p-3 bg-surface border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                rows={3}
+              />
+            </div>
+          </div>
 
-      <div className="flex items-center justify-between border-t border-border pt-4">
-        <div className="flex items-center space-x-8">
-          <PostOption icon={Image} label="Photo" color="hover:text-primary" />
-          <PostOption icon={Video} label="Video" color="hover:text-accent" />
-          <PostOption icon={Briefcase} label="Job" color="hover:text-primary" />
-          <PostOption icon={FileText} label="Article" color="hover:text-accent" />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Smile className="w-5 h-5 text-text-muted cursor-pointer hover:text-primary transition-colors" />
-          <span className="text-xs text-text-muted">Anyone</span>
-        </div>
-      </div>
+          {/* Post Options */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+              >
+                <Image className="w-5 h-5" />
+                <span className="text-sm">Photo</span>
+              </button>
+              <button
+                type="button"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+              >
+                <Video className="w-5 h-5" />
+                <span className="text-sm">Video</span>
+              </button>
+              <button
+                type="button"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+              >
+                <Calendar className="w-5 h-5" />
+                <span className="text-sm">Event</span>
+              </button>
+              <button
+                type="button"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+              >
+                <MapPin className="w-5 h-5" />
+                <span className="text-sm">Location</span>
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setIsExpanded(false)}
+                className="px-4 py-2 text-text-muted hover:text-text transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!content.trim()}
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
     </motion.div>
-  )
-}
-
-function PostOption({ icon: Icon, label, color }: { icon: any, label: string, color: string }) {
-  return (
-    <button className={`flex items-center space-x-3 text-text-muted ${color} transition-all duration-300 p-3 rounded-xl hover:bg-secondary`}>
-      <Icon className="w-6 h-6" />
-      <span className="text-sm font-medium">{label}</span>
-    </button>
   )
 }

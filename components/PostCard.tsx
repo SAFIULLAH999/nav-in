@@ -1,102 +1,189 @@
 'use client'
 
-import { Heart, MessageCircle, Repeat2, Send, MoreHorizontal, ThumbsUp } from 'lucide-react'
+import React, { useState } from 'react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Flag } from 'lucide-react'
 import { motion } from 'framer-motion'
-
-interface Post {
-  id: string
-  author: {
-    name: string
-    title: string
-    avatar: string
-  }
-  content: string
-  image?: string
-  timestamp: string
-  likes: number
-  comments: number
-  shares: number
-}
+import { Post } from '@/types'
 
 interface PostCardProps {
   post: Post
 }
 
-export function PostCard({ post }: PostCardProps) {
+export const PostCard = ({ post }: PostCardProps) => {
+  const [isLiked, setIsLiked] = useState(post.liked)
+  const [likesCount, setLikesCount] = useState(post.likes)
+  const [showComments, setShowComments] = useState(false)
+
+  const handleLike = () => {
+    setIsLiked(!isLiked)
+    setLikesCount(prev => isLiked ? prev - 1 : prev + 1)
+  }
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'NavIN Post',
+        text: post.content,
+        url: window.location.href,
+      })
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href)
+    }
+  }
+
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="bg-surface rounded-3xl border border-border p-6 shadow-soft hover:shadow-medium transition-all duration-300 group"
+      className="bg-card rounded-xl shadow-soft border border-border overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-soft">
-            {post.author.avatar}
+      {/* Post Header */}
+      <div className="p-6 pb-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
+              {post.author.name.charAt(0)}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <h3 className="font-semibold text-text">{post.author.name}</h3>
+                <span className="text-text-muted">•</span>
+                <span className="text-text-muted text-sm">{post.timestamp}</span>
+              </div>
+              <p className="text-sm text-text-muted">{post.author.title}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-base text-text">{post.author.name}</h3>
-            <p className="text-sm text-text-muted">{post.author.title}</p>
-            <p className="text-xs text-text-muted">{post.timestamp}</p>
+
+          <div className="flex items-center space-x-2">
+            <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+              <MoreHorizontal className="w-5 h-5 text-text-muted" />
+            </button>
           </div>
         </div>
-        <button className="p-2 hover:bg-secondary rounded-full transition-colors opacity-0 group-hover:opacity-100">
-          <MoreHorizontal className="w-5 h-5 text-text-muted" />
-        </button>
       </div>
 
-      {/* Content */}
-      <div className="mb-6">
-        <p className="text-sm text-text leading-relaxed">{post.content}</p>
+      {/* Post Content */}
+      <div className="px-6 pb-4">
+        <p className="text-text leading-relaxed mb-4">{post.content}</p>
+
+        {post.image && (
+          <div className="rounded-lg overflow-hidden mb-4">
+            <img
+              src={post.image}
+              alt="Post content"
+              className="w-full h-auto max-h-96 object-cover"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Image */}
-      {post.image && (
-        <div className="mb-6">
-          <motion.img
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            src={post.image}
-            alt="Post content"
-            className="w-full rounded-2xl object-cover max-h-96 shadow-soft"
-          />
+      {/* Engagement Stats */}
+      {(likesCount > 0 || post.comments > 0 || post.shares > 0) && (
+        <div className="px-6 pb-4">
+          <div className="flex items-center justify-between text-sm text-text-muted">
+            <div className="flex items-center space-x-4">
+              {likesCount > 0 && (
+                <span>{likesCount} {likesCount === 1 ? 'like' : 'likes'}</span>
+              )}
+              {post.comments > 0 && (
+                <span>{post.comments} {post.comments === 1 ? 'comment' : 'comments'}</span>
+              )}
+            </div>
+            {post.shares > 0 && (
+              <span>{post.shares} {post.shares === 1 ? 'share' : 'shares'}</span>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Engagement Stats */}
-      <div className="flex items-center justify-between text-sm text-text-muted mb-4 pb-4 border-b border-border">
-        <div className="flex items-center space-x-6">
-          <span className="hover:text-primary cursor-pointer transition-colors">
-            {post.likes} likes
-          </span>
-          <span className="hover:text-primary cursor-pointer transition-colors">
-            {post.comments} comments
-          </span>
-          <span className="hover:text-primary cursor-pointer transition-colors">
-            {post.shares} shares
-          </span>
+      {/* Action Buttons */}
+      <div className="px-6 pb-4">
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <button
+            onClick={handleLike}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              isLiked
+                ? 'text-red-500 bg-red-50'
+                : 'text-text-muted hover:text-red-500 hover:bg-red-50'
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <span className="text-sm font-medium">Like</span>
+          </button>
+
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg text-text-muted hover:text-primary hover:bg-secondary/50 transition-colors"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-sm font-medium">Comment</span>
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg text-text-muted hover:text-primary hover:bg-secondary/50 transition-colors"
+          >
+            <Share className="w-5 h-5" />
+            <span className="text-sm font-medium">Share</span>
+          </button>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between">
-        <ActionButton icon={ThumbsUp} label="Like" color="hover:text-primary" />
-        <ActionButton icon={MessageCircle} label="Comment" color="hover:text-accent" />
-        <ActionButton icon={Repeat2} label="Repost" color="hover:text-primary" />
-        <ActionButton icon={Send} label="Send" color="hover:text-accent" />
-      </div>
-    </motion.div>
-  )
-}
+      {/* Comments Section */}
+      {showComments && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="border-t border-border"
+        >
+          <div className="p-6">
+            <div className="space-y-4">
+              {/* Comment Input */}
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  U
+                </div>
+                <div className="flex-1">
+                  <textarea
+                    placeholder="Write a comment..."
+                    className="w-full p-3 bg-secondary/30 border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    rows={2}
+                  />
+                  <div className="flex items-center justify-end mt-2 space-x-2">
+                    <button className="px-4 py-1 text-sm text-text-muted hover:text-text transition-colors">
+                      Cancel
+                    </button>
+                    <button className="px-4 py-1 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                      Comment
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-function ActionButton({ icon: Icon, label, color }: { icon: any, label: string, color: string }) {
-  return (
-    <button className={`flex items-center space-x-3 text-text-muted ${color} transition-all duration-300 p-3 rounded-xl hover:bg-secondary flex-1 justify-center group`}>
-      <Icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-      <span className="text-sm font-medium">{label}</span>
-    </button>
+              {/* Sample Comments */}
+              <div className="space-y-3 pt-4 border-t border-border">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    JD
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-secondary/30 rounded-lg p-3">
+                      <p className="text-sm text-text">Great work! TypeScript makes everything so much safer.</p>
+                    </div>
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-text-muted">
+                      <span>2h ago</span>
+                      <button className="hover:text-primary transition-colors">Like</button>
+                      <button className="hover:text-primary transition-colors">Reply</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </motion.article>
   )
 }
