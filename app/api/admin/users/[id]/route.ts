@@ -42,7 +42,27 @@ export async function PATCH(
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, isActive: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        image: true,
+        username: true,
+        bio: true,
+        title: true,
+        company: true,
+        location: true,
+        website: true,
+        skills: true,
+        avatar: true,
+        summary: true,
+        socialLinks: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+        updatedAt: true
+      }
     })
 
     if (!user) {
