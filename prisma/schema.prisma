@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -49,10 +49,10 @@ model User {
   company       String?
   location      String?
   website       String?
-  skills        String[]  // Array of skill strings
+  skills        String?   // JSON string of skill strings
   avatar        String?   // profile picture URL
   summary       String?   // professional summary
-  socialLinks   Json?     // JSON object for social media links
+  socialLinks   String?   // JSON string for social media links
   isActive      Boolean   @default(true)
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
@@ -146,7 +146,7 @@ model Connection {
   id         String   @id @default(cuid())
   senderId   String
   receiverId String
-  status     ConnectionStatus @default(PENDING)
+  status     String @default("PENDING")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -162,10 +162,10 @@ model Job {
   description String
   company     String
   location    String
-  type        JobType
+  type        String @default("FULL_TIME")
   salaryMin   Int?
   salaryMax   Int?
-  requirements String[] // Array of requirement strings
+  requirements String?  // JSON string of requirement strings
   benefits    String?
   authorId    String
   isActive    Boolean  @default(true)
@@ -182,7 +182,7 @@ model Application {
   jobId     String
   resume    String?  // URL to uploaded resume
   coverLetter String?
-  status    ApplicationStatus @default(PENDING)
+  status    String @default("PENDING")
   appliedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -206,11 +206,11 @@ model Message {
 model Notification {
   id      String   @id @default(cuid())
   userId  String
-  type    NotificationType
+  type    String @default("LIKE")
   title   String
   message String
   isRead  Boolean  @default(false)
-  data    Json?    // Additional data for the notification
+  data    String?   // JSON string for additional data for the notification
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -273,7 +273,7 @@ model EmailQueue {
   to          String
   subject     String
   html        String
-  status      EmailStatus @default(PENDING)
+  status      String @default("PENDING")
   scheduledFor DateTime @default(now())
   sentAt      DateTime?
   error       String?
@@ -286,7 +286,7 @@ model BackupLog {
   fileName  String
   filePath  String?
   fileSize  Int?
-  status    BackupStatus
+  status    String @default("SUCCESS")
   error     String?
   createdAt DateTime @default(now())
 }
@@ -294,7 +294,7 @@ model BackupLog {
 model UserConsent {
   id        String   @id @default(cuid())
   userId    String
-  type      ConsentType
+  type      String @default("TERMS")
   version   String
   granted   Boolean  @default(false)
   grantedAt DateTime @default(now())
@@ -311,8 +311,8 @@ model UserConsent {
 model GDPRRequest {
   id          String   @id @default(cuid())
   userId      String
-  type        GDPRRequestType
-  status      RequestStatus @default(PENDING)
+  type        String @default("DATA_EXPORT")
+  status      String @default("PENDING")
   downloadUrl String?
   error       String?
   requestedAt DateTime @default(now())
@@ -330,7 +330,7 @@ model JobQueue {
   priority    Int      @default(0)
   attempts    Int      @default(0)
   maxAttempts Int      @default(3)
-  status      QueueStatus @default(PENDING)
+  status      String @default("PENDING")
   scheduledFor DateTime @default(now())
   error       String?
   createdAt   DateTime @default(now())
@@ -351,79 +351,4 @@ model AnalyticsEvent {
   timestamp DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum ConnectionStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-  BLOCKED
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
-}
-
-enum ApplicationStatus {
-  PENDING
-  REVIEWED
-  INTERVIEWED
-  ACCEPTED
-  REJECTED
-}
-
-enum NotificationType {
-  LIKE
-  COMMENT
-  SHARE
-  CONNECTION_REQUEST
-  CONNECTION_ACCEPTED
-  JOB_APPLICATION
-  MESSAGE
-  MENTION
-}
-
-enum EmailStatus {
-  PENDING
-  SENT
-  FAILED
-}
-
-enum BackupStatus {
-  SUCCESS
-  FAILED
-  RESTORED
-}
-
-enum ConsentType {
-  TERMS
-  PRIVACY
-  MARKETING
-  ANALYTICS
-  COOKIES
-}
-
-enum GDPRRequestType {
-  DATA_EXPORT
-  DATA_DELETION
-  DATA_RECTIFICATION
-  DATA_PORTABILITY
-}
-
-enum RequestStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-enum QueueStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
 }
