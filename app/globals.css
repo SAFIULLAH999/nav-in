@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-text font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 rounded-2xl font-semibold hover:bg-primary/90 transition-all duration-300 shadow-soft hover:shadow-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-text px-6 py-3 rounded-2xl font-semibold hover:bg-primary/10 transition-all duration-300 border border-border;
+  }
+
+  .card {
+    @apply bg-surface rounded-3xl border border-border p-6 shadow-soft hover:shadow-medium transition-all duration-300;
+  }
+
+  .input-primary {
+    @apply bg-secondary border border-border rounded-2xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all duration-300;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceSoft {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
