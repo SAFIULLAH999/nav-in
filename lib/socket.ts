@@ -1,8 +1,7 @@
 import { Server as NetServer } from 'http'
 import { NextApiRequest, NextApiResponse } from 'next'
-import { Server as ServerIO, Socket } from 'socket.io'
-import { prisma } from '@/lib/prisma'
-import { JWTManager } from '@/lib/jwt'
+import { Server as ServerIO } from 'socket.io'
+import jwt from 'jsonwebtoken'
 
 export type NextApiResponseServerIo = NextApiResponse & {
   socket: any & {
@@ -12,221 +11,146 @@ export type NextApiResponseServerIo = NextApiResponse & {
   }
 }
 
-interface AuthenticatedSocket extends Socket {
-  userId?: string
-  user?: any
-}
+// Store active users and their socket IDs
+const activeUsers = new Map<string, string>()
 
 export const initSocketIO = (httpServer: NetServer) => {
   const io = new ServerIO(httpServer, {
     path: '/api/socket',
     cors: {
-      origin: process.env.NODE_ENV === 'production'
-        ? process.env.NEXTAUTH_URL
-        : "http://localhost:3000",
+      origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
       methods: ["GET", "POST"]
     }
   })
 
-  // Middleware for authentication
-  io.use(async (socket: AuthenticatedSocket, next) => {
-    try {
-      const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1]
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id)
 
-      if (!token) {
-        return next(new Error('Authentication token missing'))
+    // Authenticate user on connection
+    socket.on('authenticate', (token: string) => {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
+        const userId = decoded.userId
+
+        // Store user-socket mapping
+        activeUsers.set(userId, socket.id)
+        socket.userId = userId
+
+        console.log(`User ${userId} authenticated with socket ${socket.id}`)
+
+        // Join user to their personal room for direct messages
+        socket.join(`user_${userId}`)
+
+        // Broadcast user online status
+        socket.broadcast.emit('user_online', { userId })
+
+      } catch (error) {
+        console.error('Socket authentication failed:', error)
+        socket.emit('auth_error', 'Invalid token')
+        socket.disconnect()
       }
-
-      const payload = JWTManager.verifyAccessToken(token)
-      if (!payload) {
-        return next(new Error('Invalid token'))
-      }
-
-      // Get user data
-      const user = await prisma.user.findUnique({
-        where: { id: payload.userId },
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatar: true,
-          email: true
-        }
-      })
-
-      if (!user) {
-        return next(new Error('User not found'))
-      }
-
-      socket.userId = user.id
-      socket.user = user
-      next()
-    } catch (error) {
-      next(new Error('Authentication failed'))
-    }
-  })
-
-  io.on('connection', (socket: AuthenticatedSocket) => {
-    console.log(`User ${socket.user?.name} connected with socket ID: ${socket.id}`)
-
-    // Join user's personal room
-    socket.join(`user:${socket.userId}`)
+    })
 
     // Handle joining conversation rooms
-    socket.on('join_conversation', (conversationId: string) => {
-      socket.join(`conversation:${conversationId}`)
-      console.log(`User ${socket.user?.name} joined conversation ${conversationId}`)
+    socket.on('join_conversation', (otherUserId: string) => {
+      if (socket.userId) {
+        const roomId = [socket.userId, otherUserId].sort().join('_')
+        socket.join(roomId)
+        console.log(`User ${socket.userId} joined conversation ${roomId}`)
+      }
     })
 
     // Handle leaving conversation rooms
-    socket.on('leave_conversation', (conversationId: string) => {
-      socket.leave(`conversation:${conversationId}`)
-      console.log(`User ${socket.user?.name} left conversation ${conversationId}`)
-    })
-
-    // Handle sending messages
-    socket.on('send_message', async (data: {
-      content: string
-      receiverId: string
-      conversationId?: string
-    }) => {
-      try {
-        if (!socket.userId) return
-
-        const { content, receiverId, conversationId } = data
-
-        // Validate message content
-        if (!content.trim()) {
-          socket.emit('message_error', 'Message content cannot be empty')
-          return
-        }
-
-        if (content.length > 2000) {
-          socket.emit('message_error', 'Message too long')
-          return
-        }
-
-        // Create message in database
-        const message = await prisma.message.create({
-          data: {
-            content: content.trim(),
-            senderId: socket.userId,
-            receiverId
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                avatar: true
-              }
-            },
-            receiver: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                avatar: true
-              }
-            }
-          }
-        })
-
-        // Emit to conversation room
-        io.to(`conversation:${conversationId || message.id}`)
-          .emit('new_message', {
-            id: message.id,
-            content: message.content,
-            senderId: message.senderId,
-            receiverId: message.receiverId,
-            isRead: message.isRead,
-            createdAt: message.createdAt,
-            sender: message.sender,
-            receiver: message.receiver
-          })
-
-        // Emit notification to receiver
-        socket.to(`user:${receiverId}`).emit('message_notification', {
-          id: message.id,
-          content: message.content,
-          sender: message.sender,
-          createdAt: message.createdAt
-        })
-
-        console.log(`Message sent from ${socket.user?.name} to ${receiverId}`)
-      } catch (error) {
-        console.error('Error sending message:', error)
-        socket.emit('message_error', 'Failed to send message')
+    socket.on('leave_conversation', (otherUserId: string) => {
+      if (socket.userId) {
+        const roomId = [socket.userId, otherUserId].sort().join('_')
+        socket.leave(roomId)
+        console.log(`User ${socket.userId} left conversation ${roomId}`)
       }
     })
 
-    // Handle marking messages as read
-    socket.on('mark_as_read', async (messageIds: string[]) => {
+    // Handle real-time messaging
+    socket.on('send_message', async (data: {
+      receiverId: string
+      content: string
+      conversationId?: string
+    }) => {
       try {
-        if (!socket.userId) return
+        if (!socket.userId) {
+          socket.emit('error', 'Not authenticated')
+          return
+        }
 
-        await prisma.message.updateMany({
-          where: {
-            id: { in: messageIds },
-            receiverId: socket.userId
-          },
-          data: { isRead: true }
-        })
+        const { receiverId, content } = data
 
-        // Notify sender that messages were read
-        const messages = await prisma.message.findMany({
-          where: { id: { in: messageIds } },
-          select: { senderId: true }
-        })
+        // Check if users are connected (you might want to implement this check)
+        // For now, we'll allow messaging between any authenticated users
 
-        const uniqueSenderIds = [...new Set(messages.map(m => m.senderId))]
+        // Create message in database (you might want to do this via API call)
+        // For real-time demo, we'll just broadcast the message
 
-        uniqueSenderIds.forEach(senderId => {
-          socket.to(`user:${senderId}`).emit('messages_read', {
-            messageIds,
-            readBy: socket.userId
-          })
-        })
+        const messageData = {
+          id: `temp_${Date.now()}`,
+          content,
+          senderId: socket.userId,
+          receiverId,
+          timestamp: new Date().toISOString(),
+          isRead: false
+        }
 
-        console.log(`Messages ${messageIds.join(', ')} marked as read by ${socket.user?.name}`)
+        // Send to receiver's personal room
+        socket.to(`user_${receiverId}`).emit('new_message', messageData)
+
+        // Send confirmation to sender
+        socket.emit('message_sent', messageData)
+
+        console.log(`Message from ${socket.userId} to ${receiverId}`)
+
       } catch (error) {
-        console.error('Error marking messages as read:', error)
+        console.error('Error sending message:', error)
+        socket.emit('error', 'Failed to send message')
       }
     })
 
     // Handle typing indicators
     socket.on('typing_start', (receiverId: string) => {
-      socket.to(`user:${receiverId}`).emit('user_typing', {
-        userId: socket.userId,
-        user: socket.user
-      })
+      if (socket.userId) {
+        socket.to(`user_${receiverId}`).emit('user_typing', {
+          userId: socket.userId,
+          isTyping: true
+        })
+      }
     })
 
     socket.on('typing_stop', (receiverId: string) => {
-      socket.to(`user:${receiverId}`).emit('user_stopped_typing', {
-        userId: socket.userId
-      })
+      if (socket.userId) {
+        socket.to(`user_${receiverId}`).emit('user_typing', {
+          userId: socket.userId,
+          isTyping: false
+        })
+      }
     })
 
-    // Handle user status updates
-    socket.on('update_status', (status: 'online' | 'away' | 'busy' | 'offline') => {
-      socket.user!.status = status
-      socket.broadcast.emit('user_status_update', {
-        userId: socket.userId,
-        status
-      })
-    })
-
-    // Handle disconnection
+    // Handle user disconnect
     socket.on('disconnect', () => {
-      console.log(`User ${socket.user?.name} disconnected`)
-      socket.broadcast.emit('user_status_update', {
-        userId: socket.userId,
-        status: 'offline'
-      })
+      if (socket.userId) {
+        activeUsers.delete(socket.userId)
+        console.log(`User ${socket.userId} disconnected`)
+
+        // Broadcast user offline status
+        socket.broadcast.emit('user_offline', { userId: socket.userId })
+      }
     })
   })
 
   return io
 }
+
+// Helper function to get active users
+export const getActiveUsers = () => Array.from(activeUsers.keys())
+
+// Helper function to check if user is online
+export const isUserOnline = (userId: string) => activeUsers.has(userId)
+
+// Helper function to get user's socket ID
+export const getUserSocketId = (userId: string) => activeUsers.get(userId)

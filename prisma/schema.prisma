@@ -10,6 +10,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+  TEMPORARY
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -41,6 +56,7 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
+  password      String    // Hashed password for authentication
   emailVerified DateTime?
   image         String?
   username      String?   @unique
@@ -53,6 +69,7 @@ model User {
   avatar        String?   // profile picture URL
   summary       String?   // professional summary
   socialLinks   String?   // JSON string for social media links
+  role          String    @default("USER") // User role for authorization
   isActive      Boolean   @default(true)
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
@@ -66,6 +83,8 @@ model User {
   comments              Comment[]
   sentConnections       Connection[] @relation("ConnectionSender")
   receivedConnections   Connection[] @relation("ConnectionReceiver")
+  following             Follow[] @relation("FollowFollowing")
+  followers             Follow[] @relation("FollowFollower")
   jobs                  Job[]
   applications          Application[]
   sentMessages          Message[] @relation("MessageSender")
@@ -78,6 +97,8 @@ model User {
   consents              UserConsent[]
   gdprRequests          GDPRRequest[]
   analyticsEvents       AnalyticsEvent[]
+  companyPosts          CompanyPost[]
+  companyMemberships    CompanyEmployee[]
 }
 
 model VerificationToken {
@@ -146,7 +167,7 @@ model Connection {
   id         String   @id @default(cuid())
   senderId   String
   receiverId String
-  status     String @default("PENDING")
+  status     ConnectionStatus @default(PENDING)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -156,24 +177,98 @@ model Connection {
   @@unique([senderId, receiverId])
 }
 
-model Job {
+model Follow {
   id          String   @id @default(cuid())
-  title       String
-  description String
-  company     String
-  location    String
-  type        String @default("FULL_TIME")
-  salaryMin   Int?
-  salaryMax   Int?
-  requirements String?  // JSON string of requirement strings
-  benefits    String?
-  authorId    String
-  isActive    Boolean  @default(true)
+  followerId  String   // User who is following
+  followingId String   // User being followed
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  website     String?
+  logo        String?   // Company logo URL
+  industry    String?
+  size        String?   // Company size (startup, SMB, enterprise)
+  location    String?
+  foundedYear Int?
+  isVerified  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Relations
+  employees   CompanyEmployee[]
+  jobs        Job[]
+  posts       CompanyPost[]
+}
+
+model CompanyEmployee {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  role      String   // Job title/role at company
+  isAdmin   Boolean  @default(false) // Can manage company page
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  company      String   // Company name (denormalized for search)
+  location     String
+  type         JobType  @default(FULL_TIME)
+  salaryMin    Int?
+  salaryMax    Int?
+  requirements String?  // JSON string of requirement strings
+  benefits     String?
+  skills       String?  // JSON string of required skills
+  experience   String?  // Experience level required
+  authorId     String   // Recruiter who posted
+  companyId    String?  // Associated company page (optional)
+  isActive     Boolean  @default(true)
+  isRemote     Boolean  @default(false)
+  applicationDeadline DateTime?
+  views        Int      @default(0)
+  applicationsCount Int @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  company      Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   applications Application[]
+}
+
+model CompanyPost {
+  id        String   @id @default(cuid())
+  content   String
+  image     String?
+  video     String?
+  companyId String
+  authorId  String   // Employee who posted
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  shares    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model Application {

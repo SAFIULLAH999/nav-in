@@ -4,8 +4,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Navbar } from '@/components/Navbar'
-import { LeftSidebar } from '@/components/LeftSidebar'
-import { RightSidebar } from '@/components/RightSidebar'
 import { FirebaseProvider } from '@/components/FirebaseProvider'
 import { DarkModeProvider } from '@/components/DarkModeProvider'
 import { usePathname } from 'next/navigation'
@@ -29,11 +27,15 @@ export default function RootLayout({
             <div className="min-h-screen flex flex-col">
               {!isAuthPage && <Navbar />}
               <div className={`flex flex-1 max-w-7xl mx-auto w-full ${!isAuthPage ? 'pt-14' : ''}`}>
-                {isFeedPage && <LeftSidebar />}
-                <main className={`flex-1 px-2 sm:px-4 py-4 sm:py-6 min-w-0 ${isFeedPage ? '' : 'max-w-4xl mx-auto'}`}>
-                  {children}
-                </main>
-                {isFeedPage && <RightSidebar />}
+                {isFeedPage ? (
+                  <>
+                    {children}
+                  </>
+                ) : (
+                  <main className="flex-1 px-2 sm:px-4 py-4 sm:py-6 min-w-0 max-w-4xl mx-auto">
+                    {children}
+                  </main>
+                )}
               </div>
             </div>
           </FirebaseProvider>
