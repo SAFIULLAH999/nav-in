@@ -47,11 +47,26 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
     }
   }, []);
 
+  // Force re-render when auth state might have changed
+  useEffect(() => {
+    const handleFocus = () => {
+      // Check for current user when window regains focus
+      const currentUser = firebaseAuth.getCurrentUser();
+      setUser(currentUser);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     try {
       setError(null);
       setLoading(true);
       await firebaseAuth.signIn(email, password);
+      // Force state update after successful sign in
+      setUser(firebaseAuth.getCurrentUser());
+      setLoading(false);
     } catch (error) {
       const authError = error as FirebaseAuthError;
       setError(authError.message);
@@ -77,6 +92,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
     try {
       setError(null);
       await firebaseAuth.signOutUser();
+      // Force state update after sign out
+      setUser(null);
     } catch (error) {
       const authError = error as FirebaseAuthError;
       setError(authError.message);

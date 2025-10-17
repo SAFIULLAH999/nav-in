@@ -41,9 +41,9 @@ try {
   // Check if this looks like placeholder data
   if (firebaseConfig.apiKey?.includes('your-firebase-api-key') ||
       firebaseConfig.projectId?.includes('your-project-id')) {
-    throw new Error(
-      'Firebase configuration appears to contain placeholder values. ' +
-      'Please replace them with your actual Firebase project credentials. ' +
+    console.warn(
+      'Firebase configuration contains placeholder values. ' +
+      'Authentication features will not work until you configure real Firebase credentials. ' +
       'See FIREBASE_SETUP.md for setup instructions.'
     );
   }

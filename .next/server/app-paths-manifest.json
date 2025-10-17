@@ -1,11 +1,10 @@
 {
-  "/page": "app/page.js",
-  "/register/page": "app/register/page.js",
-  "/login/page": "app/login/page.js",
-  "/api/auth/register/route": "app/api/auth/register/route.js",
-  "/profile/page": "app/profile/page.js",
-  "/feed/page": "app/feed/page.js",
-  "/network/page": "app/network/page.js",
   "/messages/page": "app/messages/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js"
+  "/page": "app/page.js",
+  "/jobs/page": "app/jobs/page.js",
+  "/login/page": "app/login/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/feed/page": "app/feed/page.js",
+  "/api/posts/route": "app/api/posts/route.js",
+  "/network/page": "app/network/page.js"
 }

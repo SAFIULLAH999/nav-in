@@ -9,6 +9,39 @@
   body {
     @apply bg-background text-text font-sans;
   }
+
+  /* Dark mode styles */
+  .dark body {
+    @apply bg-dark-background text-dark-text;
+  }
+
+  .dark .bg-background {
+    @apply bg-dark-background;
+  }
+
+  .dark .bg-surface {
+    @apply bg-dark-surface;
+  }
+
+  .dark .bg-card {
+    @apply bg-dark-card;
+  }
+
+  .dark .text-text {
+    @apply text-dark-text;
+  }
+
+  .dark .text-text-muted {
+    @apply text-dark-text-muted;
+  }
+
+  .dark .border-border {
+    @apply border-dark-border;
+  }
+
+  .dark .bg-secondary {
+    @apply bg-dark-secondary;
+  }
 }
 
 @layer components {

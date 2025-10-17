@@ -18,6 +18,7 @@ export const FirebaseAuth: React.FC<FirebaseAuthProps> = ({ mode, onSuccess }) =
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,8 +31,12 @@ export const FirebaseAuth: React.FC<FirebaseAuthProps> = ({ mode, onSuccess }) =
 
       if (mode === 'signin') {
         await signIn(email, password);
+        // Redirect to feed page after successful login
+        window.location.href = '/feed';
       } else {
         await signUp(email, password, displayName || undefined);
+        // Redirect to profile setup after successful signup
+        window.location.href = '/profile';
       }
 
       onSuccess?.();
@@ -59,15 +64,28 @@ export const FirebaseAuth: React.FC<FirebaseAuthProps> = ({ mode, onSuccess }) =
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'signup' && (
-            <div>
-              <Input
-                type="text"
-                placeholder="Display Name (optional)"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
+            <>
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Display Name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+            </>
           )}
 
           <div>
