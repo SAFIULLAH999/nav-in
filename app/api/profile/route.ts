@@ -1,45 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { JWTManager } from '@/lib/jwt'
+import { validateData, profileUpdateSchema, ProfileUpdateInput } from '@/lib/validations'
+import { sanitizeInput } from '@/lib/security'
 
 // GET - Fetch user profile
 export async function GET(request: NextRequest) {
   try {
-    // In a real app, you would fetch from database
-    const userProfile = {
-      id: '1',
-      name: 'John Doe',
-      title: 'Senior Software Engineer',
-      company: 'NavIN Corp',
-      location: 'San Francisco, CA',
-      email: 'john.doe@navin.com',
-      bio: 'Passionate software engineer with 5+ years of experience in full-stack development.',
-      website: 'https://johndoe.dev',
-      avatar: 'JD',
-      connections: 1234,
-      skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS'],
-      experience: [
-        {
-          id: '1',
-          title: 'Senior Software Engineer',
-          company: 'NavIN Corp',
-          startDate: '2022-01',
-          endDate: 'Present',
-          description: 'Lead development of key platform features, mentor junior developers, and architect scalable solutions.'
-        }
-      ],
-      education: [
-        {
-          id: '1',
-          degree: 'Bachelor of Science in Computer Science',
-          school: 'University of California, Berkeley',
-          startDate: '2016-09',
-          endDate: '2020-05',
-          description: 'GPA: 3.8/4.0 • Relevant Coursework: Data Structures, Algorithms, Software Engineering'
-        }
-      ]
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
 
-    return NextResponse.json({ success: true, data: userProfile })
+    const token = authHeader.substring(7)
+    const payload = JWTManager.verifyAccessToken(token)
+
+    if (!payload) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      include: {
+        experiences: true,
+        education: true,
+        _count: {
+          select: {
+            sentConnections: {
+              where: { status: 'ACCEPTED' }
+            },
+            receivedConnections: {
+              where: { status: 'ACCEPTED' }
+            }
+          }
+        }
+      }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    const profile = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      bio: user.bio,
+      title: user.title,
+      company: user.company,
+      location: user.location,
+      website: user.website,
+      skills: user.skills,
+      avatar: user.avatar,
+      summary: user.summary,
+      socialLinks: user.socialLinks,
+      connections: user._count.sentConnections + user._count.receivedConnections,
+      experiences: user.experiences,
+      education: user.education,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }
+
+    return NextResponse.json({ success: true, data: profile })
   } catch (error) {
+    console.error('Profile fetch error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch profile' },
       { status: 500 }
@@ -50,32 +84,103 @@ export async function GET(request: NextRequest) {
 // PUT - Update user profile
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, title, company, location, email, bio, website, skills, experience, education } = body
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
 
-    // In a real app, you would update the database
-    const updatedProfile = {
-      id: '1',
-      name: name || 'John Doe',
-      title: title || 'Senior Software Engineer',
-      company: company || 'NavIN Corp',
-      location: location || 'San Francisco, CA',
-      email: email || 'john.doe@navin.com',
-      bio: bio || 'Passionate software engineer with 5+ years of experience in full-stack development.',
-      website: website || 'https://johndoe.dev',
-      avatar: 'JD',
-      connections: 1234,
-      skills: skills || ['React', 'TypeScript', 'Node.js', 'Python', 'AWS'],
-      experience: experience || [],
-      education: education || []
+    const token = authHeader.substring(7)
+    const payload = JWTManager.verifyAccessToken(token)
+
+    if (!payload) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const validation = validateData(profileUpdateSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Validation failed',
+          details: validation.errors.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        },
+        { status: 400 }
+      )
+    }
+
+    const updateData: ProfileUpdateInput = validation.data
+
+    // Check if username is already taken (if being updated)
+    if (updateData.username) {
+      const existingUser = await prisma.user.findUnique({
+        where: { username: updateData.username }
+      })
+
+      if (existingUser && existingUser.id !== payload.userId) {
+        return NextResponse.json(
+          { success: false, error: 'Username already taken' },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Update user profile
+    const updatedUser = await prisma.user.update({
+      where: { id: payload.userId },
+      data: {
+        name: updateData.name,
+        username: updateData.username,
+        bio: updateData.bio,
+        title: updateData.title,
+        company: updateData.company,
+        location: updateData.location,
+        website: updateData.website,
+        skills: updateData.skills,
+        avatar: updateData.avatar,
+        summary: updateData.summary,
+        socialLinks: updateData.socialLinks,
+        updatedAt: new Date()
+      },
+      include: {
+        experiences: true,
+        education: true
+      }
+    })
+
+    const profile = {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      bio: updatedUser.bio,
+      title: updatedUser.title,
+      company: updatedUser.company,
+      location: updatedUser.location,
+      website: updatedUser.website,
+      skills: updatedUser.skills,
+      avatar: updatedUser.avatar,
+      summary: updatedUser.summary,
+      socialLinks: updatedUser.socialLinks,
+      experiences: updatedUser.experiences,
+      education: updatedUser.education,
+      updatedAt: updatedUser.updatedAt
     }
 
     return NextResponse.json({
       success: true,
-      data: updatedProfile,
+      data: profile,
       message: 'Profile updated successfully'
     })
   } catch (error) {
+    console.error('Profile update error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to update profile' },
       { status: 500 }
