@@ -75,6 +75,9 @@ model User {
   education             Education[]
   shares                Share[]
   refreshTokens         RefreshToken[]
+  consents              UserConsent[]
+  gdprRequests          GDPRRequest[]
+  analyticsEvents       AnalyticsEvent[]
 }
 
 model VerificationToken {
@@ -288,6 +291,68 @@ model BackupLog {
   createdAt DateTime @default(now())
 }
 
+model UserConsent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      ConsentType
+  version   String
+  granted   Boolean  @default(false)
+  grantedAt DateTime @default(now())
+  ipAddress String
+  userAgent String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model GDPRRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  type        GDPRRequestType
+  status      RequestStatus @default(PENDING)
+  downloadUrl String?
+  error       String?
+  requestedAt DateTime @default(now())
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JobQueue {
+  id          String   @id @default(cuid())
+  type        String
+  data        String   // JSON string
+  priority    Int      @default(0)
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  status      QueueStatus @default(PENDING)
+  scheduledFor DateTime @default(now())
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  eventType String
+  eventName String
+  properties String? // JSON string
+  sessionId String?
+  ipAddress String?
+  userAgent String?
+  url       String?
+  referrer  String?
+  timestamp DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum ConnectionStatus {
   PENDING
   ACCEPTED
@@ -332,4 +397,33 @@ enum BackupStatus {
   SUCCESS
   FAILED
   RESTORED
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+  MARKETING
+  ANALYTICS
+  COOKIES
+}
+
+enum GDPRRequestType {
+  DATA_EXPORT
+  DATA_DELETION
+  DATA_RECTIFICATION
+  DATA_PORTABILITY
+}
+
+enum RequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum QueueStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
