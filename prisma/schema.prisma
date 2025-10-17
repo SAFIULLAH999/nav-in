@@ -45,11 +45,16 @@ model User {
   image         String?
   username      String?   @unique
   bio           String?
-  title         String?
+  title         String?   // headline
   company       String?
   location      String?
   website       String?
   skills        String[]  // Array of skill strings
+  avatar        String?   // profile picture URL
+  summary       String?   // professional summary
+  socialLinks   Json?     // JSON object for social media links
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -69,6 +74,7 @@ model User {
   experiences           Experience[]
   education             Education[]
   shares                Share[]
+  refreshTokens         RefreshToken[]
 }
 
 model VerificationToken {
@@ -239,6 +245,49 @@ model Education {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique // IP address or user ID
+  count     Int      @default(1)
+  windowStart DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailQueue {
+  id          String   @id @default(cuid())
+  to          String
+  subject     String
+  html        String
+  status      EmailStatus @default(PENDING)
+  scheduledFor DateTime @default(now())
+  sentAt      DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BackupLog {
+  id        String   @id @default(cuid())
+  fileName  String
+  filePath  String?
+  fileSize  Int?
+  status    BackupStatus
+  error     String?
+  createdAt DateTime @default(now())
+}
+
 enum ConnectionStatus {
   PENDING
   ACCEPTED
@@ -271,4 +320,16 @@ enum NotificationType {
   JOB_APPLICATION
   MESSAGE
   MENTION
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum BackupStatus {
+  SUCCESS
+  FAILED
+  RESTORED
 }
