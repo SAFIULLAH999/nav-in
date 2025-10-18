@@ -14,6 +14,15 @@ const validateFirebaseConfig = () => {
     appId: process.env.FIREBASE_APP_ID,
   };
 
+  console.log('Firebase config check:', {
+    apiKey: process.env.FIREBASE_API_KEY ? 'Set' : 'Missing',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN ? 'Set' : 'Missing',
+    projectId: process.env.FIREBASE_PROJECT_ID ? 'Set' : 'Missing',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET ? 'Set' : 'Missing',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID ? 'Set' : 'Missing',
+    appId: process.env.FIREBASE_APP_ID ? 'Set' : 'Missing',
+  });
+
   const requiredFields = ['apiKey', 'authDomain', 'projectId'];
   const missingFields = requiredFields.filter(field => !config[field as keyof typeof config]);
 
@@ -74,12 +83,27 @@ try {
   // Create mock services for development when Firebase is not configured
   console.warn('⚠️  Running without Firebase - some features will not work');
 
-  // Mock auth object
+  // Mock auth object with all required properties
   auth = {
     currentUser: null,
     onAuthStateChanged: (callback: Function) => {
       callback(null);
       return () => {};
+    },
+    signInWithEmailAndPassword: async () => {
+      throw new Error('Firebase not configured');
+    },
+    createUserWithEmailAndPassword: async () => {
+      throw new Error('Firebase not configured');
+    },
+    signOut: async () => {
+      throw new Error('Firebase not configured');
+    },
+    sendPasswordResetEmail: async () => {
+      throw new Error('Firebase not configured');
+    },
+    updateProfile: async () => {
+      throw new Error('Firebase not configured');
     }
   };
 

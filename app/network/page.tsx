@@ -37,7 +37,7 @@ export default function NetworkPage() {
   const [pendingRequests, setPendingRequests] = useState<ConnectionRequest[]>([])
   const [sentRequests, setSentRequests] = useState<ConnectionRequest[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'connections' | 'requests' | 'sent'>('connections')
+  const [activeTab, setActiveTab] = useState<'connections' | 'requests' | 'sent' | 'browse'>('connections')
 
   useEffect(() => {
     loadNetworkData()
@@ -131,6 +131,7 @@ export default function NetworkPage() {
               { id: 'connections', label: 'Connections', count: connections.length, icon: Users },
               { id: 'requests', label: 'Pending Requests', count: pendingRequests.length, icon: Clock },
               { id: 'sent', label: 'Sent Requests', count: sentRequests.length, icon: UserCheck },
+              { id: 'browse', label: 'Browse Users', count: 0, icon: UserX },
             ].map((tab) => {
               const Icon = tab.icon
               return (
@@ -181,8 +182,10 @@ export default function NetworkPage() {
             <ConnectionsTab connections={connections} />
           ) : activeTab === 'requests' ? (
             <RequestsTab requests={pendingRequests} onAction={handleConnectionAction} />
-          ) : (
+          ) : activeTab === 'sent' ? (
             <SentRequestsTab requests={sentRequests} />
+          ) : (
+            <BrowseUsersTab />
           )}
         </motion.div>
       </div>
@@ -350,6 +353,167 @@ function SentRequestsTab({ requests }: { requests: ConnectionRequest[] }) {
             <div className="text-right text-xs text-text-muted">
               <p>Sent</p>
               <p>{new Date(request.requestedAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+function BrowseUsersTab() {
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [connectingUsers, setConnectingUsers] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/network/browse', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setUsers(data.data)
+      }
+    } catch (error) {
+      console.error('Error loading users:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleConnect = async (targetUserId: string) => {
+    try {
+      setConnectingUsers(prev => new Set(prev).add(targetUserId))
+
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token) {
+        alert('Authentication required')
+        return
+      }
+
+      const response = await fetch('/api/connections/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ targetUserId })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Update the user status in the list
+        setUsers(prev => prev.map(user =>
+          user.id === targetUserId
+            ? { ...user, connectionStatus: 'pending' }
+            : user
+        ))
+      } else {
+        alert(data.error || 'Failed to send connection request')
+      }
+    } catch (error) {
+      console.error('Error sending connection request:', error)
+      alert('Failed to send connection request')
+    } finally {
+      setConnectingUsers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(targetUserId)
+        return newSet
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-card rounded-xl shadow-soft border border-border p-8 text-center">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-text-muted">Loading users...</p>
+      </div>
+    )
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className="bg-card rounded-xl shadow-soft border border-border p-12 text-center">
+        <UserX className="w-16 h-16 text-text-muted mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-text mb-2">No users found</h3>
+        <p className="text-text-muted">Be the first to join the network!</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {users.map((user) => (
+        <motion.div
+          key={user.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-xl shadow-soft border border-border p-6"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div>
+                <h3 className="font-semibold text-text">{user.name}</h3>
+                <p className="text-sm text-text-muted">{user.title}</p>
+                {user.location && (
+                  <p className="text-xs text-text-muted">{user.location}</p>
+                )}
+                {user.bio && (
+                  <p className="text-xs text-text-muted mt-1 max-w-md truncate">{user.bio}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {user.connectionStatus === 'pending' ? (
+                <div className="flex items-center space-x-2 px-4 py-2 text-text-muted">
+                  <Clock className="w-4 h-4" />
+                  <span>Request Sent</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleConnect(user.id)}
+                  disabled={connectingUsers.has(user.id)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {connectingUsers.has(user.id) ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <UserPlus className="w-4 h-4" />
+                  )}
+                  <span>{connectingUsers.has(user.id) ? 'Connecting...' : 'Connect'}</span>
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

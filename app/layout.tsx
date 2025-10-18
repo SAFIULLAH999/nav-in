@@ -8,6 +8,7 @@ import { FirebaseProvider } from '@/components/FirebaseProvider'
 import { DarkModeProvider } from '@/components/DarkModeProvider'
 import { SocketProvider } from '@/components/SocketProvider'
 import { RealTimeProvider } from '@/components/providers/RealTimeProvider'
+import { LiveblocksProvider } from '@/components/providers/LiveblocksProvider'
 import { SessionProvider } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 
@@ -29,20 +30,22 @@ export default function RootLayout({
           <DarkModeProvider>
             <FirebaseProvider>
               <SocketProvider>
-                <div className="min-h-screen flex flex-col">
-                  {!isAuthPage && <Navbar />}
-                  <div className={`flex flex-1 max-w-7xl mx-auto w-full ${!isAuthPage ? 'pt-14' : ''}`}>
-                    {isFeedPage ? (
-                      <>
-                        {children}
-                      </>
-                    ) : (
-                      <main className="flex-1 px-2 sm:px-4 py-4 sm:py-6 min-w-0 max-w-4xl mx-auto">
-                        {children}
-                      </main>
-                    )}
+                <LiveblocksProvider>
+                  <div className="min-h-screen flex flex-col">
+                    {!isAuthPage && <Navbar />}
+                    <div className={`flex flex-1 max-w-7xl mx-auto w-full ${!isAuthPage ? 'pt-14' : ''}`}>
+                      {isFeedPage ? (
+                        <>
+                          {children}
+                        </>
+                      ) : (
+                        <main className="flex-1 px-2 sm:px-4 py-4 sm:py-6 min-w-0 max-w-4xl mx-auto">
+                          {children}
+                        </main>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </LiveblocksProvider>
               </SocketProvider>
             </FirebaseProvider>
           </DarkModeProvider>
