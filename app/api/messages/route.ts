@@ -3,12 +3,12 @@ import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 import { z } from 'zod'
 
-const sendMessageSchema = z.object({
-  receiverId: z.string().min(1, 'Receiver ID is required'),
-  content: z.string().min(1, 'Message content is required').max(1000, 'Message too long')
+const getConversationsSchema = z.object({
+  page: z.string().optional(),
+  limit: z.string().optional()
 })
 
-// GET - Get messages between current user and another user
+// GET - Get user's conversations
 export async function GET(request: NextRequest) {
   try {
     // Authenticate user
@@ -23,41 +23,16 @@ export async function GET(request: NextRequest) {
 
     const currentUserId = authResult.user.userId
     const { searchParams } = new URL(request.url)
-    const otherUserId = searchParams.get('userId')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = (page - 1) * limit
 
-    if (!otherUserId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Check if users are connected
-    const connection = await prisma.connection.findFirst({
+    // Get unique conversations (users the current user has messaged with)
+    const conversations = await prisma.message.findMany({
       where: {
         OR: [
-          { senderId: currentUserId, receiverId: otherUserId, status: 'ACCEPTED' },
-          { senderId: otherUserId, receiverId: currentUserId, status: 'ACCEPTED' }
-        ]
-      }
-    })
-
-    if (!connection) {
-      return NextResponse.json(
-        { success: false, error: 'Users are not connected' },
-        { status: 403 }
-      )
-    }
-
-    // Get messages between users
-    const messages = await prisma.message.findMany({
-      where: {
-        OR: [
-          { senderId: currentUserId, receiverId: otherUserId },
-          { senderId: otherUserId, receiverId: currentUserId }
+          { senderId: currentUserId },
+          { receiverId: currentUserId }
         ]
       },
       include: {
@@ -67,6 +42,16 @@ export async function GET(request: NextRequest) {
             name: true,
             username: true,
             avatar: true,
+            title: true
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+            title: true
           }
         }
       },
@@ -75,52 +60,58 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
-    // Transform messages for frontend (reverse for chronological order)
-    const transformedMessages = messages.reverse().map(message => ({
-      id: message.id,
-      content: message.content,
-      senderId: message.senderId,
-      receiverId: message.receiverId,
-      isRead: message.isRead,
-      timestamp: message.createdAt.toISOString(),
-      sender: {
-        name: message.sender.name || 'Unknown User',
-        username: message.sender.username || 'user',
-        avatar: message.sender.avatar || ''
-      }
-    }))
+    // Group by conversation partner and get latest message
+    const conversationMap = new Map()
 
-    // Mark messages as read
-    await prisma.message.updateMany({
-      where: {
-        senderId: otherUserId,
-        receiverId: currentUserId,
-        isRead: false
-      },
-      data: { isRead: true }
+    conversations.forEach(message => {
+      const otherUser = message.senderId === currentUserId
+        ? message.receiver
+        : message.sender
+
+      const otherUserId = otherUser.id
+
+      if (!conversationMap.has(otherUserId)) {
+        conversationMap.set(otherUserId, {
+          user: otherUser,
+          lastMessage: {
+            id: message.id,
+            content: message.content,
+            timestamp: message.createdAt.toISOString(),
+            isRead: message.isRead,
+            isFromMe: message.senderId === currentUserId
+          },
+          unreadCount: 0
+        })
+      }
+
+      // Update unread count if message is from other user and unread
+      if (message.receiverId === currentUserId && !message.isRead) {
+        conversationMap.get(otherUserId).unreadCount++
+      }
     })
+
+    const conversationList = Array.from(conversationMap.values())
+      .sort((a, b) => new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime())
 
     return NextResponse.json({
       success: true,
-      data: {
-        messages: transformedMessages,
-        pagination: {
-          page,
-          limit,
-          hasMore: messages.length === limit
-        }
+      data: conversationList,
+      pagination: {
+        page,
+        limit,
+        hasMore: conversations.length === limit
       }
     })
   } catch (error) {
-    console.error('Error fetching messages:', error)
+    console.error('Error fetching conversations:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch messages' },
+      { success: false, error: 'Failed to fetch conversations' },
       { status: 500 }
     )
   }
 }
 
-// POST - Send a message
+// POST - Send a message (alternative to Socket.IO)
 export async function POST(request: NextRequest) {
   try {
     // Authenticate user
@@ -134,53 +125,37 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { receiverId, content } = sendMessageSchema.parse(body)
+    const { receiverId, content } = z.object({
+      receiverId: z.string().min(1, 'Receiver ID is required'),
+      content: z.string().min(1, 'Message content is required').max(1000, 'Message too long')
+    }).parse(body)
 
-    const senderId = authResult.user.userId
-
-    // Prevent self-messaging
-    if (senderId === receiverId) {
-      return NextResponse.json(
-        { success: false, error: 'Cannot message yourself' },
-        { status: 400 }
-      )
-    }
-
-    // Check if receiver exists and is active
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId }
-    })
-
-    if (!receiver || !receiver.isActive) {
-      return NextResponse.json(
-        { success: false, error: 'Receiver not found or inactive' },
-        { status: 404 }
-      )
-    }
+    const currentUserId = authResult.user.userId
 
     // Check if users are connected
     const connection = await prisma.connection.findFirst({
       where: {
         OR: [
-          { senderId, receiverId, status: 'ACCEPTED' },
-          { senderId: receiverId, receiverId: senderId, status: 'ACCEPTED' }
+          { senderId: currentUserId, receiverId, status: 'ACCEPTED' },
+          { senderId: receiverId, receiverId: currentUserId, status: 'ACCEPTED' }
         ]
       }
     })
 
     if (!connection) {
       return NextResponse.json(
-        { success: false, error: 'Users must be connected to message' },
-        { status: 403 }
+        { success: false, error: 'You can only message users you are connected with' },
+        { status: 400 }
       )
     }
 
-    // Create message
+    // Create message in database
     const message = await prisma.message.create({
       data: {
         content: content.trim(),
-        senderId,
-        receiverId
+        senderId: currentUserId,
+        receiverId,
+        isRead: false
       },
       include: {
         sender: {
@@ -189,6 +164,7 @@ export async function POST(request: NextRequest) {
             name: true,
             username: true,
             avatar: true,
+            title: true
           }
         }
       }
@@ -198,34 +174,27 @@ export async function POST(request: NextRequest) {
     await prisma.notification.create({
       data: {
         userId: receiverId,
-        type: 'NEW_MESSAGE',
+        type: 'MESSAGE',
         title: 'New Message',
         message: `${message.sender.name || 'Someone'} sent you a message`,
         data: JSON.stringify({
           messageId: message.id,
-          senderId: senderId
+          senderId: currentUserId
         })
       }
     })
 
-    // Transform for frontend response
-    const transformedMessage = {
-      id: message.id,
-      content: message.content,
-      senderId: message.senderId,
-      receiverId: message.receiverId,
-      isRead: message.isRead,
-      timestamp: message.createdAt.toISOString(),
-      sender: {
-        name: message.sender.name || 'Unknown User',
-        username: message.sender.username || 'user',
-        avatar: message.sender.avatar || ''
-      }
-    }
-
     return NextResponse.json({
       success: true,
-      data: transformedMessage,
+      data: {
+        id: message.id,
+        content: message.content,
+        senderId: message.senderId,
+        receiverId: message.receiverId,
+        timestamp: message.createdAt.toISOString(),
+        isRead: message.isRead,
+        sender: message.sender
+      },
       message: 'Message sent successfully'
     })
   } catch (error) {

@@ -13,7 +13,6 @@ const createJobSchema = z.object({
   salaryMax: z.number().min(0).optional(),
   requirements: z.string().optional(),
   benefits: z.string().optional(),
-  skills: z.string().optional(),
   experience: z.string().optional(),
   isRemote: z.boolean().default(false),
   applicationDeadline: z.string().datetime().optional(),
@@ -40,7 +39,9 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } }
+        { companyName: { contains: search, mode: 'insensitive' } },
+        { requirements: { contains: search, mode: 'insensitive' } },
+        { benefits: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (company) {
-      where.company = { contains: company, mode: 'insensitive' }
+      where.companyName = { contains: company, mode: 'insensitive' }
     }
 
     if (type) {
@@ -71,14 +72,6 @@ export async function GET(request: NextRequest) {
             title: true,
           }
         },
-        company: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-            isVerified: true
-          }
-        },
         _count: {
           select: {
             applications: true
@@ -92,14 +85,13 @@ export async function GET(request: NextRequest) {
       id: job.id,
       title: job.title,
       description: job.description,
-      company: job.company,
+      company: job.companyName,
       location: job.location,
       type: job.type,
       salaryMin: job.salaryMin,
       salaryMax: job.salaryMax,
-      requirements: job.requirements,
+      requirements: job.requirements ? JSON.parse(job.requirements) : [],
       benefits: job.benefits,
-      skills: job.skills,
       experience: job.experience,
       isRemote: job.isRemote,
       applicationDeadline: job.applicationDeadline?.toISOString(),
@@ -112,11 +104,7 @@ export async function GET(request: NextRequest) {
         avatar: job.author.avatar || '',
         title: job.author.title || 'Recruiter'
       },
-      companyInfo: job.company ? {
-        name: job.company.name,
-        logo: job.company.logo,
-        isVerified: job.company.isVerified
-      } : null
+      companyInfo: null
     }))
 
     return NextResponse.json({
@@ -168,14 +156,13 @@ export async function POST(request: NextRequest) {
       data: {
         title: jobData.title,
         description: jobData.description,
-        company: jobData.company,
+        companyName: jobData.companyName,
         location: jobData.location,
         type: jobData.type,
         salaryMin: jobData.salaryMin,
         salaryMax: jobData.salaryMax,
         requirements: jobData.requirements,
         benefits: jobData.benefits,
-        skills: jobData.skills,
         experience: jobData.experience,
         isRemote: jobData.isRemote,
         applicationDeadline: jobData.applicationDeadline ? new Date(jobData.applicationDeadline) : null,
@@ -206,7 +193,6 @@ export async function POST(request: NextRequest) {
       salaryMax: newJob.salaryMax,
       requirements: newJob.requirements,
       benefits: newJob.benefits,
-      skills: newJob.skills,
       experience: newJob.experience,
       isRemote: newJob.isRemote,
       applicationDeadline: newJob.applicationDeadline?.toISOString(),

@@ -122,6 +122,31 @@ export const emailTemplates = {
     `
   }),
 
+  emailVerification: (name: string, verificationToken: string) => ({
+    subject: 'Verify Your Email Address',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #2563eb;">Verify Your Email</h1>
+        <p>Hello ${name},</p>
+        <p>Welcome to NavIN! Please verify your email address to activate your account and start connecting with professionals.</p>
+        <p>Click the button below to verify your email address:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Verify Email</a>
+        </div>
+        <p style="color: #6b7280; font-size: 14px;">This verification link will expire in 24 hours. If you didn't create an account with NavIN, please ignore this email.</p>
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Why verify your email?</strong></p>
+          <ul>
+            <li>Secure your account</li>
+            <li>Receive important notifications</li>
+            <li>Reset your password if needed</li>
+            <li>Connect with other professionals</li>
+          </ul>
+        </div>
+      </div>
+    `
+  }),
+
   notification: (title: string, message: string, actionUrl?: string, actionText?: string) => ({
     subject: title,
     html: `
@@ -199,6 +224,11 @@ export class EmailService {
 
   static async sendPasswordResetEmail(userEmail: string, name: string, resetToken: string): Promise<void> {
     const template = emailTemplates.passwordReset(name, resetToken)
+    await this.sendEmail(userEmail, template)
+  }
+
+  static async sendEmailVerification(userEmail: string, name: string, verificationToken: string): Promise<void> {
+    const template = emailTemplates.emailVerification(name, verificationToken)
     await this.sendEmail(userEmail, template)
   }
 
