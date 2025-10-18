@@ -1,3 +1,12 @@
 {
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/jobs/page": "app/jobs/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/feed/page": "app/feed/page.js",
+  "/api/socket/route": "app/api/socket/route.js",
+  "/login/page": "app/login/page.js",
+  "/api/profile/route": "app/api/profile/route.js",
+  "/api/posts/route": "app/api/posts/route.js",
+  "/profile/page": "app/profile/page.js"
 }

@@ -1,10 +1,74 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Users, Briefcase, MessageCircle, Settings, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { UserPresenceIndicator } from '@/components/UserPresenceIndicator'
 
 export function LeftSidebar() {
+  const { data: session } = useSession()
+  const [userProfile, setUserProfile] = useState<any>(null)
+  const [connectionsCount, setConnectionsCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (session?.user) {
+      loadUserProfile()
+    }
+  }, [session])
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token || !session?.user) return
+
+      // Load user profile
+      const profileResponse = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json()
+        setUserProfile(profileData.data)
+      }
+
+      // Load connections count
+      const connectionsResponse = await fetch('/api/connections', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (connectionsResponse.ok) {
+        const connectionsData = await connectionsResponse.json()
+        setConnectionsCount(connectionsData.data?.length || 0)
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getUserInitials = (name?: string) => {
+    if (!name) return 'U'
+    return name.split(' ').map(n => n[0]).join('').toUpperCase()
+  }
+
+  const getUserDisplayName = () => {
+    return userProfile?.name || session?.user?.name || 'User'
+  }
+
+  const getUserTitle = () => {
+    return userProfile?.title || 'User'
+  }
+
   return (
     <motion.aside
       initial={{ x: -300 }}
@@ -13,21 +77,44 @@ export function LeftSidebar() {
     >
       {/* User Profile Card */}
       <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl border border-primary/10 p-6 shadow-soft">
-        <div className="flex items-center space-x-4 mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold text-xl shadow-soft">
-            JD
+        {loading ? (
+          <div className="animate-pulse">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="w-16 h-16 bg-secondary rounded-full"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-secondary rounded w-24"></div>
+                <div className="h-3 bg-secondary rounded w-32"></div>
+              </div>
+            </div>
+            <div className="h-3 bg-secondary rounded w-20 mb-4"></div>
+            <div className="h-10 bg-secondary rounded-2xl w-full"></div>
           </div>
-          <div>
-            <h3 className="font-semibold text-base text-text">John Doe</h3>
-            <p className="text-sm text-text-muted">Senior Software Engineer</p>
-          </div>
-        </div>
-        <div className="text-sm text-text-muted mb-4">
-          1,234 connections
-        </div>
-        <button className="w-full text-sm text-primary hover:bg-primary/10 py-3 px-4 rounded-2xl transition-all duration-300 font-medium border border-primary/20 hover:border-primary/40">
-          View Profile
-        </button>
+        ) : (
+          <>
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold text-xl shadow-soft">
+                  {getUserInitials(getUserDisplayName())}
+                </div>
+                <div className="absolute -bottom-1 -right-1">
+                  <UserPresenceIndicator userId={session?.user?.id || ''} size="md" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-base text-text truncate">{getUserDisplayName()}</h3>
+                <p className="text-sm text-text-muted truncate">{getUserTitle()}</p>
+              </div>
+            </div>
+            <div className="text-sm text-text-muted mb-4">
+              {connectionsCount.toLocaleString()} connections
+            </div>
+            <Link href="/profile">
+              <button className="w-full text-sm text-primary hover:bg-primary/10 py-3 px-4 rounded-2xl transition-all duration-300 font-medium border border-primary/20 hover:border-primary/40">
+                View Profile
+              </button>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Navigation Links */}

@@ -1,25 +1,78 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Heart, MessageCircle, Share, MoreHorizontal, Flag } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Post } from '@/types'
+import { useSocket } from '@/components/SocketProvider'
 
 interface PostCardProps {
   post: Post
 }
 
 export const PostCard = ({ post }: PostCardProps) => {
+  const { socket, isConnected, onPostUpdate } = useSocket()
   const [isLiked, setIsLiked] = useState(post.liked)
   const [likesCount, setLikesCount] = useState(post.likes)
   const [showComments, setShowComments] = useState(false)
+  const [comments, setComments] = useState<any[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentContent, setCommentContent] = useState('')
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikesCount(prev => isLiked ? prev - 1 : prev + 1)
+  // Socket event listeners for real-time updates
+  useEffect(() => {
+    const handlePostUpdate = (data: any) => {
+      if (data.postId === post.id) {
+        switch (data.type) {
+          case 'like':
+            setLikesCount(data.likesCount)
+            setIsLiked(data.liked)
+            break
+          case 'comment':
+            setComments(prev => [data.comment, ...prev])
+            break
+          case 'share':
+            // Handle share updates if needed
+            break
+        }
+      }
+    }
+
+    onPostUpdate(handlePostUpdate)
+  }, [onPostUpdate, post.id])
+
+  const handleLike = async () => {
+    if (!isConnected) {
+      alert('Real-time connection not available')
+      return
+    }
+
+    try {
+      // Send like/unlike via socket
+      socket?.emit('post_interaction', {
+        postId: post.id,
+        type: 'like',
+        action: isLiked ? 'unlike' : 'like'
+      })
+
+      // Optimistically update UI
+      setIsLiked(!isLiked)
+      setLikesCount(prev => isLiked ? prev - 1 : prev + 1)
+    } catch (error) {
+      console.error('Error updating like:', error)
+      alert('Failed to update like')
+    }
   }
 
   const handleShare = () => {
+    if (isConnected) {
+      // Send share via socket for analytics
+      socket?.emit('post_interaction', {
+        postId: post.id,
+        type: 'share'
+      })
+    }
+
     if (navigator.share) {
       navigator.share({
         title: 'NavIN Post',
@@ -29,6 +82,55 @@ export const PostCard = ({ post }: PostCardProps) => {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href)
+    }
+  }
+
+  const loadComments = async () => {
+    try {
+      setCommentsLoading(true)
+      const response = await fetch(`/api/posts/${post.id}/comments`)
+      const data = await response.json()
+
+      if (data.success) {
+        setComments(data.data)
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error)
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  const handleCommentSubmit = async () => {
+    if (!commentContent.trim() || !isConnected) return
+
+    try {
+      // Send comment via socket
+      socket?.emit('post_interaction', {
+        postId: post.id,
+        type: 'comment',
+        content: commentContent.trim()
+      })
+
+      // Optimistically add comment to UI
+      const optimisticComment = {
+        id: `temp_${Date.now()}`,
+        content: commentContent.trim(),
+        author: { name: 'You', avatar: null },
+        timestamp: new Date().toISOString()
+      }
+      setComments(prev => [optimisticComment, ...prev])
+      setCommentContent('')
+    } catch (error) {
+      console.error('Error adding comment:', error)
+      alert('Failed to add comment')
+    }
+  }
+
+  const toggleComments = () => {
+    setShowComments(!showComments)
+    if (!showComments && comments.length === 0) {
+      loadComments()
     }
   }
 
@@ -113,7 +215,7 @@ export const PostCard = ({ post }: PostCardProps) => {
           </button>
 
           <button
-            onClick={() => setShowComments(!showComments)}
+            onClick={toggleComments}
             className="flex items-center space-x-2 px-4 py-2 rounded-lg text-text-muted hover:text-primary hover:bg-secondary/50 transition-colors"
           >
             <MessageCircle className="w-5 h-5" />
@@ -147,38 +249,67 @@ export const PostCard = ({ post }: PostCardProps) => {
                 </div>
                 <div className="flex-1">
                   <textarea
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
                     placeholder="Write a comment..."
                     className="w-full p-3 bg-secondary/30 border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                     rows={2}
                   />
                   <div className="flex items-center justify-end mt-2 space-x-2">
-                    <button className="px-4 py-1 text-sm text-text-muted hover:text-text transition-colors">
+                    <button
+                      onClick={() => setShowComments(false)}
+                      className="px-4 py-1 text-sm text-text-muted hover:text-text transition-colors"
+                    >
                       Cancel
                     </button>
-                    <button className="px-4 py-1 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    <button
+                      onClick={handleCommentSubmit}
+                      disabled={!commentContent.trim()}
+                      className="px-4 py-1 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    >
                       Comment
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Sample Comments */}
+              {/* Comments List */}
               <div className="space-y-3 pt-4 border-t border-border">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                    JD
+                {commentsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
                   </div>
-                  <div className="flex-1">
-                    <div className="bg-secondary/30 rounded-lg p-3">
-                      <p className="text-sm text-text">Great work! TypeScript makes everything so much safer.</p>
+                ) : comments.length > 0 ? (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                        {comment.author.avatar ? (
+                          <img
+                            src={comment.author.avatar}
+                            alt={comment.author.name}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          comment.author.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-secondary/30 rounded-lg p-3">
+                          <p className="text-sm text-text">{comment.content}</p>
+                        </div>
+                        <div className="flex items-center space-x-4 mt-2 text-xs text-text-muted">
+                          <span>{new Date(comment.timestamp).toLocaleDateString()}</span>
+                          <button className="hover:text-primary transition-colors">Like</button>
+                          <button className="hover:text-primary transition-colors">Reply</button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-4 mt-2 text-xs text-text-muted">
-                      <span>2h ago</span>
-                      <button className="hover:text-primary transition-colors">Like</button>
-                      <button className="hover:text-primary transition-colors">Reply</button>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-text-muted">
+                    <p>No comments yet. Be the first to comment!</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

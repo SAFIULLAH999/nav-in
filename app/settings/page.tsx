@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, Save, User, Briefcase, GraduationCap, Award, Settings as SettingsIcon } from 'lucide-react'
+import { ArrowLeft, Save, User, Settings as SettingsIcon, Bell, Shield, Lock, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -61,11 +61,10 @@ export default function SettingsPage() {
   }
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'experience', label: 'Experience', icon: Briefcase },
-    { id: 'education', label: 'Education', icon: GraduationCap },
-    { id: 'skills', label: 'Skills', icon: Award },
     { id: 'account', label: 'Account', icon: SettingsIcon },
+    { id: 'privacy', label: 'Privacy', icon: User },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'security', label: 'Security', icon: Shield },
   ]
 
   return (
@@ -112,11 +111,10 @@ export default function SettingsPage() {
             animate={{ opacity: 1, x: 0 }}
             className="bg-surface rounded-lg border border-border p-6"
           >
-            {activeTab === 'profile' && <ProfileSettings formData={formData} setFormData={setFormData} />}
-            {activeTab === 'experience' && <ExperienceSettings formData={formData} setFormData={setFormData} />}
-            {activeTab === 'education' && <EducationSettings formData={formData} setFormData={setFormData} />}
-            {activeTab === 'skills' && <SkillsSettings formData={formData} setFormData={setFormData} />}
             {activeTab === 'account' && <AccountSettings formData={formData} setFormData={setFormData} />}
+            {activeTab === 'privacy' && <PrivacySettings formData={formData} setFormData={setFormData} />}
+            {activeTab === 'notifications' && <NotificationSettings formData={formData} setFormData={setFormData} />}
+            {activeTab === 'security' && <SecuritySettings formData={formData} setFormData={setFormData} />}
 
             <div className="flex justify-end mt-6 pt-6 border-t border-border">
               <button
@@ -134,385 +132,176 @@ export default function SettingsPage() {
   )
 }
 
-function ProfileSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
+function AccountSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Profile Information</h2>
+      <h2 className="text-xl font-semibold">Account Information</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Full Name</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Email</label>
+          <label className="block text-sm font-medium mb-2">Email Address</label>
           <input
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
+          <p className="text-xs text-text-muted mt-1">This email is used for login and notifications</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Professional Title</label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Company</label>
-          <input
-            type="text"
-            value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Location</label>
-          <input
-            type="text"
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Website</label>
-          <input
-            type="url"
-            value={formData.website}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Bio</label>
-        <textarea
-          rows={4}
-          value={formData.bio}
-          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-          className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="Tell us about yourself..."
-        />
-      </div>
-    </div>
-  )
-}
-
-function ExperienceSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
-  const addExperience = () => {
-    const newExperience = {
-      id: Date.now().toString(),
-      title: '',
-      company: '',
-      startDate: '',
-      endDate: '',
-      description: ''
-    }
-    setFormData({
-      ...formData,
-      experience: [...formData.experience, newExperience]
-    })
-  }
-
-  const updateExperience = (id: string, field: string, value: string) => {
-    setFormData({
-      ...formData,
-      experience: formData.experience.map((exp: any) =>
-        exp.id === id ? { ...exp, [field]: value } : exp
-      )
-    })
-  }
-
-  const removeExperience = (id: string) => {
-    setFormData({
-      ...formData,
-      experience: formData.experience.filter((exp: any) => exp.id !== id)
-    })
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Work Experience</h2>
-        <button
-          onClick={addExperience}
-          className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-        >
-          Add Experience
-        </button>
-      </div>
-
-      <div className="space-y-6">
-        {formData.experience.map((exp: any) => (
-          <div key={exp.id} className="border border-border rounded-lg p-4">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-medium">Experience Entry</h3>
-              <button
-                onClick={() => removeExperience(exp.id)}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
-                Remove
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Job Title</label>
-                <input
-                  type="text"
-                  value={exp.title}
-                  onChange={(e) => updateExperience(exp.id, 'title', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Company</label>
-                <input
-                  type="text"
-                  value={exp.company}
-                  onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date</label>
-                <input
-                  type="month"
-                  value={exp.startDate}
-                  onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">End Date</label>
-                <input
-                  type="month"
-                  value={exp.endDate}
-                  onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea
-                rows={3}
-                value={exp.description}
-                onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Describe your role and achievements..."
-              />
-            </div>
+          <label className="block text-sm font-medium mb-2">Account Type</label>
+          <div className="p-3 bg-secondary/20 rounded-lg">
+            <span className="font-medium">Personal Account</span>
+            <p className="text-xs text-text-muted mt-1">For individual professionals and job seekers</p>
           </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+        </div>
 
-function EducationSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
-  const addEducation = () => {
-    const newEducation = {
-      id: Date.now().toString(),
-      degree: '',
-      school: '',
-      startDate: '',
-      endDate: '',
-      description: ''
-    }
-    setFormData({
-      ...formData,
-      education: [...formData.education, newEducation]
-    })
-  }
-
-  const updateEducation = (id: string, field: string, value: string) => {
-    setFormData({
-      ...formData,
-      education: formData.education.map((edu: any) =>
-        edu.id === id ? { ...edu, [field]: value } : edu
-      )
-    })
-  }
-
-  const removeEducation = (id: string) => {
-    setFormData({
-      ...formData,
-      education: formData.education.filter((edu: any) => edu.id !== id)
-    })
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Education</h2>
-        <button
-          onClick={addEducation}
-          className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-        >
-          Add Education
-        </button>
-      </div>
-
-      <div className="space-y-6">
-        {formData.education.map((edu: any) => (
-          <div key={edu.id} className="border border-border rounded-lg p-4">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-medium">Education Entry</h3>
-              <button
-                onClick={() => removeEducation(edu.id)}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
-                Remove
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">Degree</label>
-                <input
-                  type="text"
-                  value={edu.degree}
-                  onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="e.g. Bachelor of Science in Computer Science"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">School</label>
-                <input
-                  type="text"
-                  value={edu.school}
-                  onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date</label>
-                <input
-                  type="month"
-                  value={edu.startDate}
-                  onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">End Date</label>
-                <input
-                  type="month"
-                  value={edu.endDate}
-                  onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium mb-2">Additional Information</label>
-              <textarea
-                rows={2}
-                value={edu.description}
-                onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="GPA, relevant coursework, achievements..."
-              />
-            </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">Member Since</label>
+          <div className="p-3 bg-secondary/20 rounded-lg">
+            <span className="font-medium">January 2024</span>
           </div>
-        ))}
+        </div>
       </div>
-    </div>
-  )
-}
 
-function SkillsSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
-  const [newSkill, setNewSkill] = useState('')
-
-  const addSkill = () => {
-    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
-      setFormData({
-        ...formData,
-        skills: [...formData.skills, newSkill.trim()]
-      })
-      setNewSkill('')
-    }
-  }
-
-  const removeSkill = (skillToRemove: string) => {
-    setFormData({
-      ...formData,
-      skills: formData.skills.filter((skill: string) => skill !== skillToRemove)
-    })
-  }
-
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Skills</h2>
-
-      <div className="flex space-x-2">
-        <input
-          type="text"
-          value={newSkill}
-          onChange={(e) => setNewSkill(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && addSkill()}
-          className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="Add a skill..."
-        />
-        <button
-          onClick={addSkill}
-          className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-        >
-          Add
+      <div className="pt-4 border-t border-border">
+        <button className="text-red-500 hover:text-red-700 font-medium">
+          Deactivate Account
         </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {formData.skills.map((skill: string) => (
-          <span
-            key={skill}
-            className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center space-x-2"
-          >
-            <span>{skill}</span>
-            <button
-              onClick={() => removeSkill(skill)}
-              className="text-primary hover:text-primary/70"
-            >
-              ×
-            </button>
-          </span>
-        ))}
+        <p className="text-xs text-text-muted mt-1">
+          Temporarily disable your account. You can reactivate it anytime.
+        </p>
       </div>
     </div>
   )
 }
 
-function AccountSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
+function PrivacySettings({ formData, setFormData }: { formData: any, setFormData: any }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Account Settings</h2>
+      <h2 className="text-xl font-semibold">Privacy Settings</h2>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Profile Visibility</h3>
+            <p className="text-sm text-text-muted">Control who can see your profile and posts</p>
+          </div>
+          <select className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+            <option>Public</option>
+            <option>Connections Only</option>
+            <option>Private</option>
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Connection Requests</h3>
+            <p className="text-sm text-text-muted">Who can send you connection requests</p>
+          </div>
+          <select className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+            <option>Everyone</option>
+            <option>2nd Degree Connections</option>
+            <option>Nobody</option>
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Email Notifications</h3>
+            <p className="text-sm text-text-muted">Receive email updates about your account</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" defaultChecked />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Activity Status</h3>
+            <p className="text-sm text-text-muted">Show when you're active on NavIN</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" defaultChecked />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NotificationSettings({ formData, setFormData }: { formData: any, setFormData: any }) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Notification Preferences</h2>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Push Notifications</h3>
+            <p className="text-sm text-text-muted">Receive notifications in your browser</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" defaultChecked />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Connection Requests</h3>
+            <p className="text-sm text-text-muted">Get notified when someone wants to connect</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" defaultChecked />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Messages</h3>
+            <p className="text-sm text-text-muted">Get notified about new messages</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" defaultChecked />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Job Alerts</h3>
+            <p className="text-sm text-text-muted">Get notified about relevant job opportunities</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Weekly Digest</h3>
+            <p className="text-sm text-text-muted">Weekly summary of activity and updates</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" defaultChecked />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SecuritySettings({ formData, setFormData }: { formData: any, setFormData: any }) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Security Settings</h2>
 
       <div className="space-y-4">
         <div>
@@ -520,6 +309,7 @@ function AccountSettings({ formData, setFormData }: { formData: any, setFormData
           <input
             type="password"
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Enter current password"
           />
         </div>
 
@@ -528,6 +318,7 @@ function AccountSettings({ formData, setFormData }: { formData: any, setFormData
           <input
             type="password"
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Enter new password"
           />
         </div>
 
@@ -536,15 +327,38 @@ function AccountSettings({ formData, setFormData }: { formData: any, setFormData
           <input
             type="password"
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Confirm new password"
           />
+        </div>
+
+        <button className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+          Update Password
+        </button>
+      </div>
+
+      <div className="pt-6 border-t border-border">
+        <h3 className="font-medium mb-4">Two-Factor Authentication</h3>
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <p className="font-medium">Enable 2FA</p>
+            <p className="text-sm text-text-muted">Add an extra layer of security to your account</p>
+          </div>
+          <button className="bg-secondary text-text px-4 py-2 rounded-lg font-medium hover:bg-secondary/80 transition-colors">
+            Enable 2FA
+          </button>
         </div>
       </div>
 
-      <div className="pt-4 border-t border-border">
-        <button className="text-red-500 hover:text-red-700 font-medium">
+      <div className="pt-6 border-t border-border">
+        <h3 className="font-medium mb-4 text-red-600">Danger Zone</h3>
+        <button className="text-red-500 hover:text-red-700 font-medium border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
           Delete Account
         </button>
+        <p className="text-xs text-text-muted mt-2">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
       </div>
     </div>
   )
 }
+

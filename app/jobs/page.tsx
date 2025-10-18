@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { Search, MapPin, Building, Clock, DollarSign, Bookmark, Filter, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -20,61 +20,50 @@ interface Job {
 }
 
 export default function JobsPage() {
+  const [jobs, setJobs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
-  const jobs: Job[] = [
-    {
-      id: '1',
-      title: 'Senior React Developer',
-      company: 'TechCorp',
-      location: 'San Francisco, CA',
-      type: 'Full-time',
-      salary: '$120k - $160k',
-      description: 'We are looking for a senior React developer to join our growing team...',
-      requirements: ['5+ years React experience', 'TypeScript proficiency', 'Leadership skills'],
-      postedDate: '2 days ago',
-      applicants: 23,
-      logo: '/companies/techcorp.jpg'
-    },
-    {
-      id: '2',
-      title: 'Product Manager',
-      company: 'StartupXYZ',
-      location: 'Remote',
-      type: 'Full-time',
-      salary: '$90k - $130k',
-      description: 'Join our product team to help build the next generation of SaaS tools...',
-      requirements: ['3+ years PM experience', 'B2B SaaS background', 'Data-driven mindset'],
-      postedDate: '1 week ago',
-      applicants: 45,
-      logo: '/companies/startupxyz.jpg'
-    },
-    {
-      id: '3',
-      title: 'UX Designer',
-      company: 'DesignCo',
-      location: 'New York, NY',
-      type: 'Contract',
-      salary: '$80k - $100k',
-      description: 'We need a talented UX designer to help redesign our mobile application...',
-      requirements: ['Portfolio required', 'Figma expertise', 'User research experience'],
-      postedDate: '3 days ago',
-      applicants: 18,
-      logo: '/companies/designco.jpg'
+  useEffect(() => {
+    fetchJobs()
+  }, [])
+
+  const fetchJobs = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams({
+        search: searchTerm,
+        location: locationFilter,
+        type: typeFilter
+      })
+
+      const response = await fetch(`/api/jobs?${params}`)
+      const data = await response.json()
+
+      if (data.success) {
+        setJobs(data.data)
+      } else {
+        setError(data.error || 'Failed to fetch jobs')
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error)
+      setError('Failed to fetch jobs')
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesLocation = !locationFilter || job.location.includes(locationFilter)
-    const matchesType = !typeFilter || job.type === typeFilter
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchJobs()
+    }, 500)
 
-    return matchesSearch && matchesLocation && matchesType
-  })
+    return () => clearTimeout(debounceTimer)
+  }, [searchTerm, locationFilter, typeFilter])
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,34 +182,61 @@ export default function JobsPage() {
         </motion.div>
 
         {/* Results Header */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-text-muted">
-            Showing {filteredJobs.length} of {jobs.length} jobs
-          </p>
+        {!loading && (
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-text-muted">
+              Showing {jobs.length} jobs
+            </p>
 
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-text-muted">Sort by:</span>
-            <select className="px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm">
-              <option>Most Recent</option>
-              <option>Most Relevant</option>
-              <option>Highest Salary</option>
-              <option>Most Applicants</option>
-            </select>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-text-muted">Sort by:</span>
+              <select className="px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm">
+                <option>Most Recent</option>
+                <option>Most Relevant</option>
+                <option>Highest Salary</option>
+                <option>Most Applicants</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Job Listings */}
         <div className="space-y-4">
-          {filteredJobs.map((job, index) => (
-            <motion.div
-              key={job.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <JobCard job={job} />
-            </motion.div>
-          ))}
+          {loading ? (
+            <div className="bg-card rounded-xl shadow-soft border border-border p-8 text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-text-muted">Loading jobs...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={fetchJobs}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : jobs.length > 0 ? (
+            jobs.map((job, index) => (
+              <motion.div
+                key={job.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <JobCard job={job} />
+              </motion.div>
+            ))
+          ) : (
+            <div className="bg-card rounded-xl shadow-soft border border-border p-12 text-center">
+              <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-text-muted" />
+              </div>
+              <h3 className="text-lg font-semibold text-text mb-2">No jobs found</h3>
+              <p className="text-text-muted">Try adjusting your search criteria or filters</p>
+            </div>
+          )}
         </div>
 
         {/* Load More */}
@@ -234,8 +250,28 @@ export default function JobsPage() {
   )
 }
 
-function JobCard({ job }: { job: Job }) {
+function JobCard({ job }: { job: any }) {
   const [isBookmarked, setIsBookmarked] = useState(false)
+
+  const formatSalary = (min?: number | null, max?: number | null) => {
+    if (!min && !max) return 'Salary not disclosed'
+    if (min && max) return `$${(min / 1000).toFixed(0)}k - $${(max / 1000).toFixed(0)}k`
+    if (min) return `$${min}+`
+    if (max) return `Up to $${max}`
+    return 'Competitive salary'
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 1) return '1 day ago'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`
+    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`
+  }
 
   return (
     <div className="bg-card rounded-xl shadow-soft border border-border p-6 hover:shadow-lg transition-shadow">
@@ -260,11 +296,11 @@ function JobCard({ job }: { job: Job }) {
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="w-4 h-4" />
-                    <span>{job.type}</span>
+                    <span>{job.type.replace('_', '-').toLowerCase()}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <DollarSign className="w-4 h-4" />
-                    <span>{job.salary}</span>
+                    <span>{formatSalary(job.salaryMin, job.salaryMax)}</span>
                   </div>
                 </div>
               </div>
@@ -284,22 +320,24 @@ function JobCard({ job }: { job: Job }) {
             <p className="text-text-muted mb-4 line-clamp-2">{job.description}</p>
 
             {/* Requirements */}
-            <div className="mb-4">
-              <h4 className="font-medium text-text mb-2">Requirements:</h4>
-              <div className="flex flex-wrap gap-2">
-                {job.requirements.map((req, index) => (
-                  <span key={index} className="px-3 py-1 bg-secondary/50 text-text-muted rounded-full text-sm">
-                    {req}
-                  </span>
-                ))}
+            {job.requirements && job.requirements.length > 0 && (
+              <div className="mb-4">
+                <h4 className="font-medium text-text mb-2">Requirements:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {job.requirements.map((req: string, index: number) => (
+                    <span key={index} className="px-3 py-1 bg-secondary/50 text-text-muted rounded-full text-sm">
+                      {req}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Job Meta */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-sm text-text-muted">
-                <span>{job.postedDate}</span>
-                <span>{job.applicants} applicants</span>
+                <span>{formatDate(job.createdAt)}</span>
+                <span>{job.applicationsCount || 0} applicants</span>
               </div>
 
               <div className="flex items-center space-x-3">

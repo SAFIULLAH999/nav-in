@@ -4,8 +4,14 @@ import React, { useState } from 'react'
 import { Image, Video, Calendar, MapPin, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from './FirebaseProvider'
+import { useSocket } from './SocketProvider'
 
-export const CreatePostCard = () => {
+interface CreatePostCardProps {
+  onPostCreated?: (post: any) => void
+}
+
+export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
+  const { socket, isConnected } = useSocket()
   const [content, setContent] = useState('')
   const [isExpanded, setIsExpanded] = useState(false)
   const { user } = useFirebase()
@@ -15,10 +21,19 @@ export const CreatePostCard = () => {
     if (!content.trim()) return
 
     try {
+      // Get authentication token
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token) {
+        alert('Authentication required. Please log in again.')
+        return
+      }
+
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           content: content.trim(),
@@ -32,11 +47,19 @@ export const CreatePostCard = () => {
         console.log('Post created successfully:', data.data)
         setContent('')
         setIsExpanded(false)
-        // Optionally trigger a callback to refresh the feed
-        window.location.reload() // Simple refresh for now
+
+        // Call the callback if provided
+        if (onPostCreated) {
+          onPostCreated(data.data)
+        }
+
+        // Emit socket event for real-time updates
+        if (isConnected && socket) {
+          socket.emit('new_post', data.data)
+        }
       } else {
         console.error('Failed to create post:', data.error)
-        alert('Failed to create post: ' + data.error)
+        alert('Failed to create post: ' + (data.error || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error creating post:', error)

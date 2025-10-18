@@ -30,7 +30,7 @@ export default function LoginPage() {
         toast.error('Invalid credentials')
       } else {
         toast.success('Welcome back!')
-        router.push('/')
+        router.push('/profile')
       }
     } catch (error) {
       toast.error('Something went wrong')
@@ -42,7 +42,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/' })
+      await signIn('google', { callbackUrl: '/profile' })
     } catch (error) {
       toast.error('Google sign in failed')
       setLoading(false)

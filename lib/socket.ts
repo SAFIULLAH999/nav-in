@@ -246,6 +246,201 @@ export const initSocketIO = (httpServer: NetServer) => {
       }
     })
 
+    // Handle post interactions (likes, comments, shares)
+    socket.on('post_interaction', async (data: {
+      postId: string
+      type: 'like' | 'comment' | 'share'
+      action?: string
+      content?: string
+    }) => {
+      try {
+        if (!socket.userId) {
+          socket.emit('error', 'Not authenticated')
+          return
+        }
+
+        const { postId, type, action, content } = data
+
+        // Get current user info
+        const user = await prisma.user.findUnique({
+          where: { id: socket.userId },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+            title: true
+          }
+        })
+
+        if (!user) {
+          socket.emit('error', 'User not found')
+          return
+        }
+
+        let updateData: any = {}
+
+        switch (type) {
+          case 'like':
+            // Check if user already liked the post
+            const existingLike = await prisma.like.findFirst({
+              where: {
+                postId,
+                userId: socket.userId
+              }
+            })
+
+            if (action === 'unlike' && existingLike) {
+              // Remove like
+              await prisma.like.delete({
+                where: { id: existingLike.id }
+              })
+              updateData.likesCount = { decrement: 1 }
+              updateData.liked = false
+            } else if (action === 'like' && !existingLike) {
+              // Add like
+              await prisma.like.create({
+                data: {
+                  postId,
+                  userId: socket.userId
+                }
+              })
+              updateData.likesCount = { increment: 1 }
+              updateData.liked = true
+            }
+
+            // Get updated like count
+            const likeCount = await prisma.like.count({
+              where: { postId }
+            })
+            updateData.likesCount = likeCount
+            break
+
+          case 'comment':
+            if (!content) {
+              socket.emit('error', 'Comment content required')
+              return
+            }
+
+            // Create comment
+            const comment = await prisma.comment.create({
+              data: {
+                content: content.trim(),
+                postId,
+                userId: socket.userId
+              },
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    avatar: true,
+                    title: true
+                  }
+                }
+              }
+            })
+
+            // Get updated comment count
+            const commentCount = await prisma.comment.count({
+              where: { postId }
+            })
+
+            updateData = {
+              commentsCount: commentCount,
+              newComment: {
+                id: comment.id,
+                content: comment.content,
+                timestamp: comment.createdAt.toISOString(),
+                author: comment.user
+              }
+            }
+            break
+
+          case 'share':
+            // Increment share count
+            updateData.sharesCount = { increment: 1 }
+            break
+        }
+
+        // Update post with new counts
+        await prisma.post.update({
+          where: { id: postId },
+          data: updateData
+        })
+
+        // Broadcast update to all connected users except sender
+        socket.broadcast.emit('post_liked', {
+          postId,
+          type,
+          ...updateData
+        })
+
+        // Send confirmation to sender
+        socket.emit('post_interaction_success', {
+          postId,
+          type,
+          ...updateData
+        })
+
+        console.log(`Post ${postId} ${type} by user ${socket.userId}`)
+
+      } catch (error) {
+        console.error('Error handling post interaction:', error)
+        socket.emit('error', 'Failed to process post interaction')
+      }
+    })
+
+    // Handle new post creation (for real-time feed updates)
+    socket.on('new_post', async (postData: any) => {
+      try {
+        if (!socket.userId) {
+          socket.emit('error', 'Not authenticated')
+          return
+        }
+
+        // Get the full post with author details
+        const post = await prisma.post.findUnique({
+          where: { id: postData.id },
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true
+              }
+            }
+          }
+        })
+
+        if (post) {
+          const formattedPost = {
+            id: post.id,
+            content: post.content,
+            image: post.image,
+            video: post.video,
+            author: post.author,
+            timestamp: post.createdAt.toLocaleString(),
+            likes: 0,
+            comments: 0,
+            shares: 0,
+            liked: false
+          }
+
+          // Broadcast new post to all connected users
+          socket.broadcast.emit('new_post_created', formattedPost)
+          console.log(`New post ${post.id} broadcasted by user ${socket.userId}`)
+        }
+
+      } catch (error) {
+        console.error('Error handling new post:', error)
+        socket.emit('error', 'Failed to broadcast new post')
+      }
+    })
+
     // Handle user disconnect
     socket.on('disconnect', () => {
       if (socket.userId) {
