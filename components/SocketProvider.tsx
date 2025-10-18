@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 interface SocketContextType {
   socket: Socket | null
   isConnected: boolean
+  isServerless: boolean
   activeUsers: string[]
   sendMessage: (receiverId: string, content: string) => void
   joinConversation: (otherUserId: string) => void
@@ -35,6 +36,7 @@ interface SocketProviderProps {
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [isServerless, setIsServerless] = useState(false)
   const [activeUsers, setActiveUsers] = useState<string[]>([])
   const { data: session } = useSession()
   const messageCallbacks = useRef<((message: any) => void)[]>([])
@@ -45,8 +47,19 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (session?.user && !socket) {
-      // Initialize socket connection
-      const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
+      // Check if we're in a serverless environment (Vercel)
+      const isServerless = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ||
+                          process.env.NODE_ENV === 'production'
+
+      if (isServerless) {
+        console.log('Serverless environment detected - real-time features disabled')
+        setIsConnected(false)
+        setIsServerless(true)
+        return
+      }
+
+      // Initialize socket connection for development
+      const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
         path: '/api/socket',
         auth: {
           token: localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
@@ -124,18 +137,30 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, [session, socket])
 
   const sendMessage = (receiverId: string, content: string) => {
+    if (isServerless) {
+      console.log('Serverless environment - real-time messaging not available')
+      return
+    }
     if (socket && isConnected) {
       socket.emit('send_message', { receiverId, content })
     }
   }
 
   const joinConversation = (otherUserId: string) => {
+    if (isServerless) {
+      console.log('Serverless environment - conversation rooms not available')
+      return
+    }
     if (socket && isConnected) {
       socket.emit('join_conversation', otherUserId)
     }
   }
 
   const leaveConversation = (otherUserId: string) => {
+    if (isServerless) {
+      console.log('Serverless environment - conversation rooms not available')
+      return
+    }
     if (socket && isConnected) {
       socket.emit('leave_conversation', otherUserId)
     }
@@ -179,6 +204,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const value: SocketContextType = {
     socket,
     isConnected,
+    isServerless,
     activeUsers,
     sendMessage,
     joinConversation,
