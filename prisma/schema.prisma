@@ -10,20 +10,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ConnectionStatus {
-  PENDING
-  ACCEPTED
-  BLOCKED
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
-  TEMPORARY
-}
+// Enums as strings for SQLite compatibility
+// ConnectionStatus: PENDING, ACCEPTED, BLOCKED
+// JobType: FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE, TEMPORARY
 
 model Account {
   id                String  @id @default(cuid())
@@ -167,7 +156,7 @@ model Connection {
   id         String   @id @default(cuid())
   senderId   String
   receiverId String
-  status     ConnectionStatus @default(PENDING)
+  status     String @default("PENDING")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -230,9 +219,9 @@ model Job {
   id           String   @id @default(cuid())
   title        String
   description  String
-  company      String   // Company name (denormalized for search)
+  companyName  String   // Company name (denormalized for search)
   location     String
-  type         JobType  @default(FULL_TIME)
+  type         String   @default("FULL_TIME")
   salaryMin    Int?
   salaryMax    Int?
   requirements String?  // JSON string of requirement strings
