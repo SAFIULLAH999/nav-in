@@ -2,12 +2,20 @@ import { Server as NetServer } from 'http'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { Server as ServerIO } from 'socket.io'
 import jwt from 'jsonwebtoken'
+import { prisma } from '@/lib/prisma'
 
 export type NextApiResponseServerIo = NextApiResponse & {
   socket: any & {
     server: NetServer & {
       io: ServerIO
     }
+  }
+}
+
+// Extend Socket.IO socket interface to include userId
+declare module 'socket.io' {
+  interface Socket {
+    userId?: string
   }
 }
 
@@ -83,19 +91,50 @@ export const initSocketIO = (httpServer: NetServer) => {
 
         const { receiverId, content } = data
 
-        // Check if users are connected (you might want to implement this check)
-        // For now, we'll allow messaging between any authenticated users
+        // Check if users are connected
+        const connection = await prisma.connection.findFirst({
+          where: {
+            OR: [
+              { senderId: socket.userId, receiverId, status: 'ACCEPTED' },
+              { senderId: receiverId, receiverId: socket.userId, status: 'ACCEPTED' }
+            ]
+          }
+        })
 
-        // Create message in database (you might want to do this via API call)
-        // For real-time demo, we'll just broadcast the message
+        if (!connection) {
+          socket.emit('error', 'You can only message users you are connected with')
+          return
+        }
+
+        // Create message in database
+        const message = await prisma.message.create({
+          data: {
+            content: content.trim(),
+            senderId: socket.userId,
+            receiverId,
+            isRead: false
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true
+              }
+            }
+          }
+        })
 
         const messageData = {
-          id: `temp_${Date.now()}`,
-          content,
-          senderId: socket.userId,
-          receiverId,
-          timestamp: new Date().toISOString(),
-          isRead: false
+          id: message.id,
+          content: message.content,
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          timestamp: message.createdAt.toISOString(),
+          isRead: message.isRead,
+          sender: message.sender
         }
 
         // Send to receiver's personal room
@@ -104,11 +143,87 @@ export const initSocketIO = (httpServer: NetServer) => {
         // Send confirmation to sender
         socket.emit('message_sent', messageData)
 
-        console.log(`Message from ${socket.userId} to ${receiverId}`)
+        // Create notification for receiver if they're offline
+        const receiverSocketId = activeUsers.get(receiverId)
+        if (!receiverSocketId) {
+          await prisma.notification.create({
+            data: {
+              userId: receiverId,
+              type: 'MESSAGE',
+              title: 'New Message',
+              message: `${message.sender.name || 'Someone'} sent you a message`,
+              data: JSON.stringify({
+                messageId: message.id,
+                senderId: socket.userId
+              })
+            }
+          })
+        }
+
+        console.log(`Message from ${socket.userId} to ${receiverId} saved to database`)
 
       } catch (error) {
         console.error('Error sending message:', error)
         socket.emit('error', 'Failed to send message')
+      }
+    })
+
+    // Handle loading conversation history
+    socket.on('load_conversation', async (otherUserId: string) => {
+      try {
+        if (!socket.userId) {
+          socket.emit('error', 'Not authenticated')
+          return
+        }
+
+        // Get conversation messages
+        const messages = await prisma.message.findMany({
+          where: {
+            OR: [
+              { senderId: socket.userId, receiverId: otherUserId },
+              { senderId: otherUserId, receiverId: socket.userId }
+            ]
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 50 // Last 50 messages
+        })
+
+        // Mark messages as read
+        await prisma.message.updateMany({
+          where: {
+            senderId: otherUserId,
+            receiverId: socket.userId,
+            isRead: false
+          },
+          data: { isRead: true }
+        })
+
+        const conversationData = messages.map(message => ({
+          id: message.id,
+          content: message.content,
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          timestamp: message.createdAt.toISOString(),
+          isRead: message.isRead,
+          sender: message.sender
+        }))
+
+        socket.emit('conversation_loaded', conversationData)
+
+      } catch (error) {
+        console.error('Error loading conversation:', error)
+        socket.emit('error', 'Failed to load conversation')
       }
     })
 

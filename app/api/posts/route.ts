@@ -21,34 +21,109 @@ export async function GET(request: NextRequest) {
     const authResult = await authenticateRequest(request)
     const currentUserId = ('user' in authResult) ? authResult.user.userId : null
 
-    // Enhanced feed algorithm: combine recency + engagement
-    const posts = await prisma.post.findMany({
-      take: limit,
-      skip: offset,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
-            title: true,
-          }
+    // Enhanced feed algorithm: combine recency + engagement + personalization
+    let posts
+
+    if (currentUserId) {
+      // Get user's connections and followed users for personalized feed
+      const userConnections = await prisma.connection.findMany({
+        where: {
+          OR: [
+            { senderId: currentUserId, status: 'ACCEPTED' },
+            { receiverId: currentUserId, status: 'ACCEPTED' }
+          ]
         },
-        likes: currentUserId ? {
-          where: { userId: currentUserId },
-          select: { id: true }
-        } : false,
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
-            shares: true
+        select: {
+          senderId: true,
+          receiverId: true
+        }
+      })
+
+      const followedUsers = await prisma.follow.findMany({
+        where: { followerId: currentUserId },
+        select: { followingId: true }
+      })
+
+      // Extract connection and followed user IDs
+      const connectionIds = userConnections.flatMap(conn =>
+        [conn.senderId, conn.receiverId].filter(id => id !== currentUserId)
+      )
+      const followedIds = followedUsers.map(f => f.followingId)
+
+      // Prioritize posts from connections and followed users
+      const priorityUserIds = [...connectionIds, ...followedIds]
+
+      posts = await prisma.post.findMany({
+        take: limit,
+        skip: offset,
+        where: {
+          OR: [
+            { authorId: { in: priorityUserIds } },
+            { authorId: { notIn: priorityUserIds } } // Include all posts as fallback
+          ]
+        },
+        orderBy: [
+          // Then order by engagement score (likes + comments + shares)
+          { likes: { _count: 'desc' } },
+          { comments: { _count: 'desc' } },
+          { shares: { _count: 'desc' } },
+          // Finally by recency
+          { createdAt: 'desc' }
+        ],
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true,
+              title: true,
+            }
+          },
+          likes: {
+            where: { userId: currentUserId },
+            select: { id: true }
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+              shares: true
+            }
           }
         }
-      }
-    })
+      })
+    } else {
+      // Public feed for non-authenticated users - order by engagement and recency
+      posts = await prisma.post.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: [
+          { likes: { _count: 'desc' } },
+          { comments: { _count: 'desc' } },
+          { shares: { _count: 'desc' } },
+          { createdAt: 'desc' }
+        ],
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true,
+              title: true,
+            }
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+              shares: true
+            }
+          }
+        }
+      })
+    }
 
     // Transform the data for frontend
     const transformedPosts = posts.map(post => ({
@@ -64,7 +139,7 @@ export async function GET(request: NextRequest) {
       likes: post._count.likes,
       comments: post._count.comments,
       shares: post._count.shares,
-      liked: post.likes.length > 0,
+      liked: (post as any).likes?.length > 0 || false,
       image: post.image,
       video: post.video
     }))

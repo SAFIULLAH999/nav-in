@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { prisma } from '@/lib/prisma'
+import { EmailService } from '@/lib/email'
 import { z } from 'zod'
 
 const forgotPasswordSchema = z.object({
@@ -29,21 +30,30 @@ export async function POST(request: NextRequest) {
     const resetToken = crypto.randomBytes(32).toString('hex')
     const resetTokenExpiry = new Date(Date.now() + 3600000) // 1 hour from now
 
-    // Store reset token in database (you might want to create a PasswordReset model)
-    // For now, we'll use a simple approach with the RefreshToken model
-    await prisma.refreshToken.create({
-      data: {
-        token: resetToken,
+    // Clean up any existing unused reset tokens for this user
+    await prisma.passwordResetToken.deleteMany({
+      where: {
         userId: user.id,
-        expiresAt: resetTokenExpiry
+        used: false
       }
     })
 
-    // TODO: Send email with reset link
-    // const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`
-    // await sendPasswordResetEmail(email, resetUrl)
+    // Store reset token in database
+    await prisma.passwordResetToken.create({
+      data: {
+        token: resetToken,
+        userId: user.id,
+        expires: resetTokenExpiry
+      }
+    })
 
-    console.log(`Password reset token for ${email}: ${resetToken}`)
+    // Send password reset email
+    try {
+      await EmailService.sendPasswordResetEmail(user.email, user.name || 'User', resetToken)
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError)
+      // Don't reveal email sending failures to the user
+    }
 
     return NextResponse.json(
       { message: 'If an account with that email exists, a password reset link has been sent.' },

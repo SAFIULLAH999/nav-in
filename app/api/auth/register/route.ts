@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { EmailService } from '@/lib/email'
 import { z } from 'zod'
+import { randomBytes } from 'crypto'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user
+    // Create user (unverified initially)
     const user = await prisma.user.create({
       data: {
         name,
@@ -39,16 +41,39 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         title,
         company,
+        emailVerified: null, // User starts unverified
       }
     })
 
+    // Generate verification token
+    const verificationToken = randomBytes(32).toString('hex')
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    // Store verification token
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token: verificationToken,
+        expires: tokenExpiry
+      }
+    })
+
+    // Send verification email (don't block registration if email fails)
+    try {
+      await EmailService.sendEmailVerification(email, name, verificationToken)
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError)
+      // Continue with registration even if email fails
+    }
+
     // Remove password from response
-    const { ...userWithoutPassword } = user
+    const { password: _, ...userWithoutPassword } = user
 
     return NextResponse.json(
       {
-        message: 'User created successfully',
-        user: userWithoutPassword
+        message: 'User created successfully. Please check your email to verify your account.',
+        user: userWithoutPassword,
+        requiresVerification: true
       },
       { status: 201 }
     )
