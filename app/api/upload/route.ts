@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FileUploadService, CloudinaryService } from '@/lib/cloudinary'
-import { JWTManager } from '@/lib/jwt'
+import { verifyAccessToken } from '@/lib/jwt'
 import { Logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const payload = JWTManager.verifyAccessToken(token)
+    const payload = verifyAccessToken(token)
 
     if (!payload) {
       return NextResponse.json(
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const payload = JWTManager.verifyAccessToken(token)
+    const payload = verifyAccessToken(token)
 
     if (!payload) {
       return NextResponse.json(

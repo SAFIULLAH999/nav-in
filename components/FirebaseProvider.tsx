@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { firebaseAuth, AuthUser, FirebaseAuthError } from '@/lib/firebase-auth';
 
 interface FirebaseContextType {
@@ -32,20 +33,59 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
-    try {
-      const unsubscribe = firebaseAuth.onAuthStateChange((user) => {
-        setUser(user);
-        setLoading(false);
-      });
+    // If we have a NextAuth session, create a mock Firebase user
+    if (session?.user) {
+      const mockFirebaseUser: AuthUser = {
+        uid: session.user.id || `user_${session.user.email}`,
+        email: session.user.email!,
+        displayName: session.user.name || session.user.email?.split('@')[0] || null,
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: {
+          creationTime: new Date().toISOString(),
+          lastSignInTime: new Date().toISOString(),
+        },
+        providerData: [],
+        refreshToken: '',
+        tenantId: null,
+        phoneNumber: null,
+        photoURL: session.user.image || null,
+        providerId: 'nextauth',
+        delete: async () => Promise.resolve(),
+        getIdToken: async () => Promise.resolve(`mock-token-${session.user.id}`),
+        getIdTokenResult: async () => Promise.resolve({
+          token: `mock-token-${session.user.id}`,
+          expirationTime: new Date(Date.now() + 3600000).toISOString(),
+          issuedAtTime: new Date().toISOString(),
+          authTime: new Date().toISOString(),
+          signInProvider: 'nextauth',
+          signInSecondFactor: null,
+          claims: { user_id: session.user.id, email: session.user.email }
+        }),
+        reload: async () => Promise.resolve(),
+        toJSON: () => ({ uid: session.user.id, email: session.user.email }),
+      };
 
-      return () => unsubscribe();
-    } catch (error) {
-      console.error('Firebase auth state listener failed:', error);
+      setUser(mockFirebaseUser as AuthUser);
       setLoading(false);
+    } else {
+      // No session, try Firebase auth state
+      try {
+        const unsubscribe = firebaseAuth.onAuthStateChange((user) => {
+          setUser(user);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Firebase auth state listener failed:', error);
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [session]);
 
   // Force re-render when auth state might have changed
   useEffect(() => {

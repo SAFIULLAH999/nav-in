@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { JWTManager } from '@/lib/jwt'
+import { verifyAccessToken } from '@/lib/jwt'
 import { validateData, profileUpdateSchema, ProfileUpdateInput } from '@/lib/validations'
-import { sanitizeInput } from '@/lib/security'
 
 // GET - Fetch user profile
 export async function GET(request: NextRequest) {
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const payload = JWTManager.verifyAccessToken(token)
+    const payload = verifyAccessToken(token)
 
     if (!payload) {
       return NextResponse.json(
@@ -93,7 +92,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const payload = JWTManager.verifyAccessToken(token)
+    const payload = verifyAccessToken(token)
 
     if (!payload) {
       return NextResponse.json(
@@ -143,7 +142,7 @@ export async function PUT(request: NextRequest) {
         company: updateData.company,
         location: updateData.location,
         website: updateData.website,
-        skills: updateData.skills,
+        skills: updateData.skills ? JSON.stringify(updateData.skills) : null,
         avatar: updateData.avatar,
         summary: updateData.summary,
         socialLinks: updateData.socialLinks,
@@ -169,8 +168,6 @@ export async function PUT(request: NextRequest) {
       avatar: updatedUser.avatar,
       summary: updatedUser.summary,
       socialLinks: updatedUser.socialLinks,
-      experiences: updatedUser.experiences,
-      education: updatedUser.education,
       updatedAt: updatedUser.updatedAt
     }
 

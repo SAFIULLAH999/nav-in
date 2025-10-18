@@ -8,8 +8,10 @@ import { RightSidebar } from '@/components/RightSidebar'
 import { CreatePostCard } from '@/components/CreatePostCard'
 import { PostCard } from '@/components/PostCard'
 import { Post } from '@/types'
+import { useSocket } from '@/components/SocketProvider'
 
 export default function FeedPage() {
+  const { socket, onPostUpdate } = useSocket()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -17,6 +19,39 @@ export default function FeedPage() {
   useEffect(() => {
     fetchPosts()
   }, [])
+
+  // Socket listeners for real-time feed updates
+  useEffect(() => {
+    const handleNewPost = (newPost: Post) => {
+      setPosts(prevPosts => [newPost, ...prevPosts])
+    }
+
+    const handlePostUpdate = (data: any) => {
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === data.postId
+            ? {
+                ...post,
+                likes: data.likesCount ?? post.likes,
+                comments: data.commentsCount ?? post.comments,
+                shares: data.sharesCount ?? post.shares,
+                liked: data.liked ?? post.liked
+              }
+            : post
+        )
+      )
+    }
+
+    // Listen for new posts from other users
+    socket?.on('new_post_created', handleNewPost)
+
+    // Listen for post updates (likes, comments, shares)
+    onPostUpdate(handlePostUpdate)
+
+    return () => {
+      socket?.off('new_post_created', handleNewPost)
+    }
+  }, [onPostUpdate])
 
   const fetchPosts = async () => {
     try {
@@ -56,7 +91,7 @@ export default function FeedPage() {
               <p className="text-text-muted">Discover what's happening in your network and share your thoughts with others.</p>
             </div>
 
-            <CreatePostCard />
+            <CreatePostCard onPostCreated={handlePostCreated} />
 
             {/* Loading State */}
             {loading && (

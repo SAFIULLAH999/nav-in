@@ -2,6 +2,7 @@
 
 import { Info, ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { OnlineUsersList } from '@/components/OnlineUsersList'
 
 export function RightSidebar() {
   return (
@@ -34,6 +35,9 @@ export function RightSidebar() {
           />
         </div>
       </div>
+
+      {/* Online Users */}
+      <OnlineUsersList />
 
       {/* Suggested People */}
       <div className="bg-surface rounded-3xl border border-border p-6 shadow-soft">

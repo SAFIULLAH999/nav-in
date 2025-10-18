@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-        { companyName: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
         { requirements: { contains: search, mode: 'insensitive' } },
         { benefits: { contains: search, mode: 'insensitive' } }
       ]
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (company) {
-      where.companyName = { contains: company, mode: 'insensitive' }
+      where.company = { contains: company, mode: 'insensitive' }
     }
 
     if (type) {
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: jobData.title,
         description: jobData.description,
-        companyName: jobData.companyName,
+        company: jobData.companyName,
         location: jobData.location,
         type: jobData.type,
         salaryMin: jobData.salaryMin,
@@ -177,6 +177,13 @@ export async function POST(request: NextRequest) {
             avatar: true,
             title: true,
           }
+        },
+        company: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+          }
         }
       }
     })
@@ -186,7 +193,7 @@ export async function POST(request: NextRequest) {
       id: newJob.id,
       title: newJob.title,
       description: newJob.description,
-      company: newJob.company,
+      company: newJob.companyName,
       location: newJob.location,
       type: newJob.type,
       salaryMin: newJob.salaryMin,
@@ -200,10 +207,10 @@ export async function POST(request: NextRequest) {
       applicationsCount: newJob.applicationsCount,
       createdAt: newJob.createdAt.toISOString(),
       author: {
-        name: newJob.author.name || 'Unknown Recruiter',
-        username: newJob.author.username || 'user',
-        avatar: newJob.author.avatar || '',
-        title: newJob.author.title || 'Recruiter'
+        name: (newJob as any).author?.name || 'Unknown Recruiter',
+        username: (newJob as any).author?.username || 'user',
+        avatar: (newJob as any).author?.avatar || '',
+        title: (newJob as any).author?.title || 'Recruiter'
       }
     }
 

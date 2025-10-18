@@ -1,66 +1,87 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/Navbar'
 import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Plus, MessageCircle, UserPlus, MoreHorizontal } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from '@/components/FirebaseProvider'
 
-export default function ProfilePage() {
-  const { user } = useFirebase()
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState('posts')
-  const [profileData, setProfileData] = useState<any>(null)
+interface UserProfile {
+  id: string
+  name: string | null
+  username: string | null
+  bio: string | null
+  title: string | null
+  company: string | null
+  location: string | null
+  website: string | null
+  avatar: string | null
+  createdAt: string
+}
+
+interface ProfilePageProps {
+  params: {
+    username: string
+  }
+}
+
+export default function PublicProfilePage({ params }: ProfilePageProps) {
+  const { user: currentUser } = useFirebase()
+  const [profileUser, setProfileUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('posts')
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const fetchUserProfile = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-
-        if (!token) {
-          setLoading(false)
-          return
-        }
-
-        const response = await fetch('/api/profile', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        const result = await response.json()
-
-        if (result.success) {
-          setProfileData(result.data)
+        const response = await fetch(`/api/profile/public/${params.username}`)
+        if (response.ok) {
+          const userData = await response.json()
+          setProfileUser(userData)
+        } else {
+          setProfileUser(null)
         }
       } catch (error) {
-        console.error('Error loading profile:', error)
+        console.error('Error fetching profile:', error)
+        setProfileUser(null)
       } finally {
         setLoading(false)
       }
     }
 
-    if (user) {
-      loadProfile()
-    } else {
-      setLoading(false)
+    if (params.username) {
+      fetchUserProfile()
     }
-  }, [user])
+  }, [params.username])
 
-  if (!user) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-text mb-4">Please sign in to view your profile</h2>
-          <button className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
-            Sign In
-          </button>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-4xl mx-auto pt-20 px-4">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
         </div>
       </div>
     )
   }
+
+  if (!profileUser) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-4xl mx-auto pt-20 px-4">
+          <div className="text-center py-20">
+            <h2 className="text-2xl font-bold text-text mb-4">Profile not found</h2>
+            <p className="text-text-muted">The user you're looking for doesn't exist.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const isOwnProfile = currentUser && currentUser.uid === profileUser.id
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,31 +96,27 @@ export default function ProfilePage() {
         >
           {/* Cover Photo */}
           <div className="h-48 bg-gradient-to-r from-primary to-secondary relative">
-            <button className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition-colors">
-              <Camera className="w-5 h-5" />
-            </button>
           </div>
 
           {/* Profile Info */}
           <div className="relative px-6 pb-6">
             {/* Profile Picture */}
             <div className="absolute -top-16 left-6">
-              <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-card overflow-hidden">
-                {profileData?.avatar ? (
+              <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-card">
+                {profileUser.avatar ? (
                   <img
-                    src={profileData.avatar}
-                    alt={profileData.name || 'Profile'}
-                    className="w-full h-full object-cover"
+                    src={profileUser.avatar}
+                    alt={profileUser.name || 'Profile'}
+                    className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  (profileData?.name || user.displayName)
-                    ? (profileData?.name || user.displayName)!.charAt(0).toUpperCase()
-                    : user.email?.charAt(0).toUpperCase()
+                  profileUser.name
+                    ? profileUser.name.charAt(0).toUpperCase()
+                    : profileUser.username
+                    ? profileUser.username.charAt(0).toUpperCase()
+                    : 'U'
                 )}
               </div>
-              <button className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors">
-                <Camera className="w-4 h-4" />
-              </button>
             </div>
 
             {/* Profile Details */}
@@ -107,30 +124,32 @@ export default function ProfilePage() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-text mb-2">
-                    {profileData?.name || user.displayName || user.email?.split('@')[0] || 'User'}
+                    {profileUser.name || profileUser.username || 'User'}
                   </h1>
-                  <p className="text-text-muted mb-2">{profileData?.title || 'Professional'}</p>
+                  {profileUser.title && (
+                    <p className="text-text-muted mb-2">{profileUser.title}</p>
+                  )}
 
                   <div className="flex items-center space-x-4 text-sm text-text-muted mb-4">
-                    {profileData?.location && (
+                    {profileUser.location && (
                       <div className="flex items-center space-x-1">
                         <MapPin className="w-4 h-4" />
-                        <span>{profileData.location}</span>
+                        <span>{profileUser.location}</span>
                       </div>
                     )}
                     <div className="flex items-center space-x-1">
                       <LinkIcon className="w-4 h-4" />
-                      <span>nav-in.com/in/{profileData?.username || user.displayName?.toLowerCase().replace(/\s+/g, '') || user.email?.split('@')[0]}</span>
+                      <span>nav-in.com/in/{profileUser.username}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Calendar className="w-4 h-4" />
-                      <span>Joined {profileData?.createdAt ? new Date(profileData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'}</span>
+                      <span>Joined {new Date(profileUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-6 text-sm">
                     <div>
-                      <span className="font-semibold text-text">{profileData?.connections || 0}</span>
+                      <span className="font-semibold text-text">147</span>
                       <span className="text-text-muted ml-1">Connections</span>
                     </div>
                     <div>
@@ -141,16 +160,28 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => router.push('/profile/edit')}
-                    className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit Profile</span>
-                  </button>
-                  <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
-                    <MoreHorizontal className="w-5 h-5 text-text-muted" />
-                  </button>
+                  {!isOwnProfile ? (
+                    <>
+                      <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Message</span>
+                      </button>
+                      <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors">
+                        <UserPlus className="w-4 h-4" />
+                        <span>Connect</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        <Edit className="w-4 h-4" />
+                        <span>Edit Profile</span>
+                      </button>
+                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                        <MoreHorizontal className="w-5 h-5 text-text-muted" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -194,7 +225,7 @@ export default function ProfilePage() {
           {/* Tab Content */}
           <div className="min-h-[400px]">
             {activeTab === 'posts' && <PostsTab />}
-            {activeTab === 'about' && <AboutTab />}
+            {activeTab === 'about' && <AboutTab user={profileUser} />}
             {activeTab === 'experience' && <ExperienceTab />}
             {activeTab === 'education' && <EducationTab />}
             {activeTab === 'connections' && <ConnectionsTab />}
@@ -215,25 +246,28 @@ function PostsTab() {
   )
 }
 
-function AboutTab() {
+function AboutTab({ user }: { user: UserProfile }) {
   return (
     <div className="space-y-6">
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <h3 className="font-semibold text-text mb-4">About</h3>
-        <p className="text-text-muted">
-          Passionate software engineer with 5+ years of experience in full-stack development.
-          Love building scalable web applications and mentoring junior developers.
-        </p>
-      </div>
+      {user.bio && (
+        <div className="bg-card rounded-lg p-6 border border-border">
+          <h3 className="font-semibold text-text mb-4">About</h3>
+          <p className="text-text-muted">{user.bio}</p>
+        </div>
+      )}
 
       <div className="bg-card rounded-lg p-6 border border-border">
         <h3 className="font-semibold text-text mb-4">Skills</h3>
         <div className="flex flex-wrap gap-2">
-          {['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker'].map((skill) => (
-            <span key={skill} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-              {skill}
-            </span>
-          ))}
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+            React
+          </span>
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+            TypeScript
+          </span>
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+            Node.js
+          </span>
         </div>
       </div>
     </div>
@@ -245,10 +279,6 @@ function ExperienceTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-text">Experience</h3>
-        <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors">
-          <Plus className="w-4 h-4" />
-          <span>Add Experience</span>
-        </button>
       </div>
 
       <div className="bg-card rounded-lg p-6 border border-border">
@@ -276,10 +306,6 @@ function EducationTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-text">Education</h3>
-        <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors">
-          <Plus className="w-4 h-4" />
-          <span>Add Education</span>
-        </button>
       </div>
 
       <div className="bg-card rounded-lg p-6 border border-border">

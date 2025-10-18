@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { Heart, MessageCircle, UserPlus, Briefcase, Award, Settings, Check, X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useSocket } from '@/components/SocketProvider'
 
 interface Notification {
   id: string
@@ -17,54 +18,53 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'like',
-      title: 'John Doe liked your post',
-      message: 'Great insights on React performance optimization!',
-      timestamp: '2 minutes ago',
-      isRead: false,
-      avatar: '/avatars/john.jpg'
-    },
-    {
-      id: '2',
-      type: 'connection',
-      title: 'New connection request',
-      message: 'Alice Johnson wants to connect with you',
-      timestamp: '1 hour ago',
-      isRead: false,
-      avatar: '/avatars/alice.jpg'
-    },
-    {
-      id: '3',
-      type: 'comment',
-      title: 'New comment on your post',
-      message: 'Thanks for sharing this! Very helpful information.',
-      timestamp: '3 hours ago',
-      isRead: true,
-      avatar: '/avatars/bob.jpg'
-    },
-    {
-      id: '4',
-      type: 'job',
-      title: 'New job recommendation',
-      message: 'Senior Frontend Developer at TechCorp matches your profile',
-      timestamp: '5 hours ago',
-      isRead: true,
-      avatar: '/companies/techcorp.jpg'
-    },
-    {
-      id: '5',
-      type: 'achievement',
-      title: 'Achievement unlocked!',
-      message: 'You\'ve reached 100 connections! 🎉',
-      timestamp: '1 day ago',
-      isRead: true
-    }
-  ])
+  const { onNotification } = useSocket()
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+
+  // Load initial notifications
+  useEffect(() => {
+    loadNotifications()
+  }, [])
+
+  // Socket notification listener
+  useEffect(() => {
+    const handleNewNotification = (notification: any) => {
+      setNotifications(prev => [notification, ...prev])
+    }
+
+    onNotification(handleNewNotification)
+  }, [onNotification])
+
+  const loadNotifications = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setNotifications(data.data)
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredNotifications = notifications.filter(notif =>
     filter === 'all' || (filter === 'unread' && !notif.isRead)
@@ -72,18 +72,52 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    )
+  const markAsRead = async (id: string) => {
+    try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token) return
+
+      const response = await fetch(`/api/notifications/${id}/read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif.id === id ? { ...notif, isRead: true } : notif
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+    }
   }
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, isRead: true }))
-    )
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      if (!token) return
+
+      const response = await fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(notif => ({ ...notif, isRead: true }))
+        )
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error)
+    }
   }
 
   const getNotificationIcon = (type: string) => {
@@ -169,7 +203,12 @@ export default function NotificationsPage() {
 
         {/* Notifications List */}
         <div className="space-y-4">
-          {filteredNotifications.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-text-muted">Loading notifications...</p>
+            </div>
+          ) : filteredNotifications.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
