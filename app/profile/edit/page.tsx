@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar'
 import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Save, X, Upload } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from '@/components/FirebaseProvider'
+import { OpenToStatus } from '@/components/OpenToStatus'
 import toast from 'react-hot-toast'
 
 export default function ProfileEditPage() {
@@ -367,6 +368,11 @@ export default function ProfileEditPage() {
                   placeholder="Tell us about yourself..."
                 />
               </div>
+            </div>
+
+            {/* Open To Status Section */}
+            <div className="mt-8">
+              <OpenToStatus />
             </div>
 
             {/* Profile URL Preview */}

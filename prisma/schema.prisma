@@ -61,6 +61,7 @@ model User {
   role          String    @default("USER") // User role for authorization
   isActive      Boolean   @default(true)
   lastLoginAt   DateTime?
+  openToStatus  String?   // Current "Open To" status
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -90,6 +91,240 @@ model User {
   companyMemberships    CompanyEmployee[]
   passwordResetTokens   PasswordResetToken[]
   userSkills            UserSkill[]
+  documents             Document[]
+  generatedURLs         GeneratedURL[]
+  sentRecruiterMessages RecruiterMessage[] @relation("RecruiterMessageSender")
+  receivedRecruiterMessages RecruiterMessage[] @relation("RecruiterMessageReceiver")
+  messageTemplates      MessageTemplate[]
+  openToStatuses        OpenTo[]
+  createdQuizzes        Quiz[] @relation("QuizCreator")
+  quizAttempts          QuizAttempt[]
+  createdGroups         Group[] @relation("GroupCreator")
+  groupMemberships      GroupMembership[]
+  groupPosts            GroupPost[]
+  articles              Article[]
+  articleComments       ArticleComment[]
+  articleLikes          ArticleLike[]
+  articleShares         ArticleShare[]
+  articleBookmarks      ArticleBookmark[]
+  atsIntegrations       AtsIntegration[]
+  scrapingSessions      ScrapingSession[]
+  scrapingQueue         JobScrapingQueue[]
+}
+
+model OpenTo {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "WORK", "HIRING", "FREELANCE", "MENTORSHIP", "COLLABORATION", etc.
+  isActive    Boolean  @default(true)
+  visibility  String   @default("PUBLIC") // PUBLIC, CONNECTIONS_ONLY, PRIVATE
+  message     String?  // Custom message with the status
+  expiresAt   DateTime? // Optional expiration date
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique
+  coverImage  String?
+  isPrivate   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  memberCount Int      @default(0)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator      User             @relation("GroupCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  memberships  GroupMembership[]
+  posts        GroupPost[]
+  count        GroupCount?
+
+  @@index([slug])
+}
+
+model GroupMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  role      String   @default("MEMBER") // ADMIN, MODERATOR, MEMBER
+  status    String   @default("ACTIVE") // ACTIVE, PENDING, BLOCKED
+  joinedAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+}
+
+model GroupPost {
+  id        String   @id @default(cuid())
+  content   String
+  image     String?
+  video     String?
+  authorId  String
+  groupId   String
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  shares    Int      @default(0)
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  group  Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+model GroupCount {
+  id            String @id @default(cuid())
+  groupId       String @unique
+  posts         Int    @default(0)
+  members       Int    @default(0)
+  activeMembers Int    @default(0)
+
+  group  Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+model Article {
+  id            String   @id @default(cuid())
+  title         String
+  subtitle      String?
+  content       String   // Rich text content
+  excerpt       String?  // Short summary for previews
+  coverImage    String?
+  tags          String?  // JSON array of tags
+  category      String?  // Article category (e.g., "Technology", "Career", "Business")
+  readTime      Int?     // Estimated reading time in minutes
+  isPublished   Boolean  @default(false)
+  isFeatured    Boolean  @default(false)
+  views         Int      @default(0)
+  likesCount    Int      @default(0)
+  commentsCount Int      @default(0)
+  sharesCount   Int      @default(0)
+  authorId      String
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  author    User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  ArticleComment[]
+  likes     ArticleLike[]
+  shares    ArticleShare[]
+  bookmarks ArticleBookmark[]
+
+  @@index([authorId, isPublished])
+  @@index([isPublished, publishedAt])
+  @@index([category, isPublished])
+}
+
+model ArticleComment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  articleId String
+  parentId  String?  // For nested comments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  article  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  parent   ArticleComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  ArticleComment[] @relation("CommentReplies")
+}
+
+model ArticleLike {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+}
+
+model ArticleShare {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+}
+
+model ArticleBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  skillId     String
+  difficulty  String   @default("INTERMEDIATE") // BEGINNER, INTERMEDIATE, ADVANCED
+  timeLimit   Int?     // Time limit in minutes
+  passingScore Int    @default(70) // Percentage needed to pass
+  isActive    Boolean  @default(true)
+  createdBy   String   // User ID who created the quiz
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  skill     Skill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  creator   User            @relation("QuizCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  id        String   @id @default(cuid())
+  quizId    String
+  question  String
+  type      String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER
+  options   String?  // JSON array of options for multiple choice
+  correctAnswer String // The correct answer
+  points    Int      @default(1)
+  order     Int      // Order of question in quiz
+  explanation String? // Explanation for the correct answer
+  createdAt DateTime @default(now())
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id            String   @id @default(cuid())
+  userId        String
+  quizId        String
+  score         Int      // Percentage score (0-100)
+  totalPoints   Int      // Total possible points
+  earnedPoints  Int      // Points earned
+  answers       String   // JSON object with questionId -> userAnswer
+  timeSpent     Int      // Time spent in seconds
+  passed        Boolean  @default(false)
+  completedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, quizId])
 }
 
 model VerificationToken {
@@ -121,6 +356,7 @@ model Skill {
 
   // Relations
   userSkills UserSkill[]
+  quizzes    Quiz[]
 }
 
 model UserSkill {
@@ -267,6 +503,7 @@ model Company {
   employees   CompanyEmployee[]
   jobs        Job[]
   posts       CompanyPost[]
+  atsIntegrations AtsIntegration[]
 }
 
 model CompanyEmployee {
@@ -301,17 +538,24 @@ model Job {
   experience   String?  // Experience level required
   authorId     String   // Recruiter who posted
   companyId    String?  // Associated company page (optional)
+  sourceId     String?  // Job source for scraped jobs
   isActive     Boolean  @default(true)
   isRemote     Boolean  @default(false)
   applicationDeadline DateTime?
   views        Int      @default(0)
   applicationsCount Int @default(0)
+  isScraped    Boolean  @default(false)
+  lastScraped  DateTime?
+  expiresAt    DateTime? // When the job posting expires
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   company      Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   applications Application[]
+  messageThreads MessageThread[]
+  recruiterMessages RecruiterMessage[]
+  scrapingSource JobSource?  @relation("JobScrapingSource", fields: [sourceId], references: [id], onDelete: SetNull)
 }
 
 model CompanyPost {
@@ -358,6 +602,60 @@ model Message {
   receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
+model MessageTemplate {
+  id         String   @id @default(cuid())
+  recruiterId String
+  name       String
+  subject    String
+  content    String
+  category   String   @default("custom")
+  variables  String?  // JSON array of variable names
+  isPublic   Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  recruiter User @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+}
+
+model MessageThread {
+  id            String   @id @default(cuid())
+  participants  String   // JSON array of user IDs
+  jobId         String?
+  subject       String
+  lastMessage   String?
+  lastMessageAt DateTime @default(now())
+  unreadCount   String   @default("{}") // JSON object with userId -> count
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  job      Job?             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  messages RecruiterMessage[]
+}
+
+model RecruiterMessage {
+  id         String   @id @default(cuid())
+  recruiterId String
+  candidateId String
+  jobId       String?
+  subject     String
+  content     String
+  type        String   @default("general")
+  status      String   @default("sent")
+  isTemplate  Boolean  @default(false)
+  templateId  String?
+  threadId    String
+  metadata    String?  // JSON string for additional data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recruiter User           @relation("RecruiterMessageSender", fields: [recruiterId], references: [id], onDelete: Cascade)
+  candidate User           @relation("RecruiterMessageReceiver", fields: [candidateId], references: [id], onDelete: Cascade)
+  job       Job?           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  thread    MessageThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}
+
 model Notification {
   id      String   @id @default(cuid())
   userId  String
@@ -369,6 +667,135 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AtsIntegration {
+  id              String   @id @default(cuid())
+  companyId       String   // Company that owns this integration
+  name            String   // Human-readable name for the integration
+  provider        String   // ATS provider (e.g., "greenhouse", "lever", "workday", "custom")
+  apiEndpoint     String?  // Base URL for ATS API
+  apiKey          String?  // Encrypted API key
+  accessToken     String?  // Encrypted access token
+  refreshToken    String?  // Encrypted refresh token
+  webhookSecret   String?  // For webhook verification
+  webhookUrl      String?  // Webhook URL for ATS callbacks
+  configuration   String?  // JSON configuration for provider-specific settings
+  status          String   @default("INACTIVE") // INACTIVE, ACTIVE, ERROR, SYNCING
+  lastSyncAt      DateTime?
+  syncFrequency   Int      @default(3600) // Sync interval in seconds (default 1 hour)
+  isActive        Boolean  @default(true)
+  createdBy       String   // User who created the integration
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company   Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  creator   User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  syncLogs  AtsSyncLog[]
+  jobMappings AtsJobMapping[]
+  candidateMappings AtsCandidateMapping[]
+
+  @@unique([companyId, provider])
+}
+
+model AtsSyncLog {
+  id            String   @id @default(cuid())
+  integrationId String
+  syncType      String   // FULL, INCREMENTAL, WEBHOOK
+  status        String   // SUCCESS, ERROR, PARTIAL
+  recordsProcessed Int    @default(0)
+  recordsCreated   Int    @default(0)
+  recordsUpdated   Int    @default(0)
+  recordsFailed    Int    @default(0)
+  errorMessage     String?
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+  metadata         String?  // JSON metadata about the sync
+
+  integration AtsIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
+
+model AtsJobMapping {
+  id              String   @id @default(cuid())
+  integrationId   String
+  atsJobId        String   // Job ID in the external ATS
+  platformJobId   String   // Job ID in our platform
+  lastSyncedAt    DateTime @default(now())
+  syncStatus      String   @default("ACTIVE") // ACTIVE, OUTDATED, ERROR
+  mappingData     String?  // JSON field mapping configuration
+
+  integration AtsIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, atsJobId])
+  @@unique([integrationId, platformJobId])
+}
+
+model AtsCandidateMapping {
+  id                String   @id @default(cuid())
+  integrationId     String
+  atsCandidateId    String   // Candidate ID in the external ATS
+  platformUserId    String   // User ID in our platform
+  lastSyncedAt      DateTime @default(now())
+  syncStatus        String   @default("ACTIVE") // ACTIVE, OUTDATED, ERROR
+  mappingData       String?  // JSON field mapping configuration
+
+  integration AtsIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, atsCandidateId])
+  @@unique([integrationId, platformUserId])
+}
+
+model JobSource {
+  id          String   @id @default(cuid())
+  name        String   // e.g., "LinkedIn", "Indeed", "Glassdoor"
+  baseUrl     String   // Base URL for scraping
+  isActive    Boolean  @default(true)
+  rateLimit   Int      @default(1000) // Requests per hour
+  lastScraped DateTime?
+  totalJobs   Int      @default(0)
+  config      String?  // JSON configuration for scraping
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  scrapingJobs Job[] @relation("JobScrapingSource")
+  scrapingSessions ScrapingSession[]
+  queue JobScrapingQueue[]
+}
+
+model ScrapingSession {
+  id            String   @id @default(cuid())
+  sourceId      String
+  status        String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  jobsFound     Int      @default(0)
+  jobsCreated   Int      @default(0)
+  jobsUpdated   Int      @default(0)
+  jobsFailed    Int      @default(0)
+  errorMessage  String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  metadata      String?  // JSON metadata about the session
+  createdBy     String   // User who initiated the scraping
+
+  source JobSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  creator User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+}
+
+model JobScrapingQueue {
+  id          String   @id @default(cuid())
+  sourceId    String
+  url         String   // URL to scrape
+  priority    Int      @default(0)
+  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  scheduledFor DateTime @default(now())
+  processedAt DateTime?
+  error       String?
+  metadata    String?  // JSON metadata for scraping context
+  createdBy   String   // User who created the queue item
+
+  source JobSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  creator User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 }
 
 model Experience {
@@ -506,4 +933,95 @@ model AnalyticsEvent {
   timestamp DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id            String   @id @default(cuid())
+  title         String
+  content       String   @default("")
+  authorId      String
+  isPublic      Boolean  @default(false)
+  collaborators String   @default("[]") // JSON array of user IDs
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model GeneratedURL {
+  id        String   @id @default(cuid())
+  userId    String
+  slug      String   @unique
+  type      String   @default("profile") // profile, portfolio, resume, custom
+  isActive  Boolean  @default(true)
+  clickCount Int     @default(0)
+  expiresAt DateTime?
+  metadata  String?  // JSON string for additional data
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JobSource {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  baseUrl     String
+  rateLimit   Int      @default(1000) // milliseconds between requests
+  config      String?  // JSON configuration for scraping
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  scrapingJobs    ScrapingJob[]
+  scrapingSessions ScrapingSession[]
+  queue           JobQueue[]
+}
+
+model ScrapingJob {
+  id          String   @id @default(cuid())
+  sourceId    String
+  url         String
+  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  data        String?  // JSON scraped data
+  error       String?
+  retryCount  Int      @default(0)
+  maxRetries  Int      @default(3)
+  scheduledFor DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  source ScrapingSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model ScrapingSession {
+  id          String   @id @default(cuid())
+  sourceId    String
+  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, FAILED
+  jobsProcessed Int    @default(0)
+  jobsSucceeded Int    @default(0)
+  jobsFailed    Int    @default(0)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  source ScrapingSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model ScrapingSource {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  baseUrl     String
+  rateLimit   Int      @default(1000) // milliseconds between requests
+  config      String?  // JSON configuration for scraping
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  scrapingJobs    ScrapingJob[]
+  scrapingSessions ScrapingSession[]
 }

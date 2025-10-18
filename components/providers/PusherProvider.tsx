@@ -46,7 +46,7 @@ export const PusherProvider: React.FC<PusherProviderProps> = ({
 
     const pusherClient = new Pusher(appKey, {
       cluster,
-      encrypted: true,
+      useTLS: true,
       authEndpoint: '/api/pusher/auth',
       auth: {
         headers: {

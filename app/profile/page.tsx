@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar'
 import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Plus, MessageCircle, UserPlus, MoreHorizontal } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from '@/components/FirebaseProvider'
+import { OpenToBadge } from '@/components/OpenToBadge'
 
 export default function ProfilePage() {
   const { user } = useFirebase()
@@ -153,6 +154,13 @@ export default function ProfilePage() {
                   </button>
                 </div>
               </div>
+
+              {/* Open To Status */}
+              {profileData?.id && (
+                <div className="mt-4">
+                  <OpenToBadge userId={profileData.id} showMessage={true} />
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
