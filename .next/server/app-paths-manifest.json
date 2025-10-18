@@ -1,12 +1,15 @@
 {
-  "/page": "app/page.js",
-  "/jobs/page": "app/jobs/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/not-found": "app/not-found.js",
   "/feed/page": "app/feed/page.js",
   "/api/socket/route": "app/api/socket/route.js",
-  "/login/page": "app/login/page.js",
-  "/api/profile/route": "app/api/profile/route.js",
+  "/jobs/page": "app/jobs/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/notifications/page": "app/notifications/page.js",
   "/api/posts/route": "app/api/posts/route.js",
-  "/profile/page": "app/profile/page.js"
+  "/profile/page": "app/profile/page.js",
+  "/page": "app/page.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/register/page": "app/register/page.js",
+  "/profile/edit/page": "app/profile/edit/page.js",
+  "/login/page": "app/login/page.js"
 }

@@ -32,7 +32,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
-  const { socket, isConnected, sendMessage, joinConversation, leaveConversation, onMessage, onUserOnline, onUserOffline } = useSocket()
+  const { socket, isConnected, isServerless, sendMessage, joinConversation, leaveConversation, onMessage, onUserOnline, onUserOffline } = useSocket()
   const [conversations, setConversations] = useState<any[]>([])
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
@@ -261,6 +261,20 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+
+      {/* Serverless Environment Warning */}
+      {isServerless && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Serverless Mode:</strong> Real-time messaging is not available in this deployment environment.
+                Messages will be sent via HTTP requests instead.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto pt-20 h-screen flex">
         {/* Conversations List */}

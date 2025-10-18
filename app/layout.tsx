@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar'
 import { FirebaseProvider } from '@/components/FirebaseProvider'
 import { DarkModeProvider } from '@/components/DarkModeProvider'
 import { SocketProvider } from '@/components/SocketProvider'
+import { RealTimeProvider } from '@/components/providers/RealTimeProvider'
 import { SessionProvider } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 

@@ -1,7 +1,13 @@
 import { NextRequest } from 'next/server'
-import { initSocketIO } from '@/lib/socket'
 
 export async function GET(req: NextRequest) {
-  // Socket.io setup will be handled by the client-side connection
-  return new Response('Socket.io endpoint', { status: 200 })
+  // For Vercel deployment, we'll use a different approach
+  // Socket.io doesn't work well with serverless functions
+  return new Response(JSON.stringify({
+    error: 'Socket.io not available in serverless environment',
+    fallback: 'Real-time features disabled for serverless deployment'
+  }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  })
 }

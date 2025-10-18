@@ -13,7 +13,7 @@ export function Navbar() {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 bg-surface/95 backdrop-blur-sm shadow-soft border-b border-border z-50"
+      className="fixed top-0 left-0 right-0 bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow-soft border-b border-border dark:border-dark-border z-50"
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo and Search */}
@@ -25,12 +25,12 @@ export function Navbar() {
             <span className="text-xl font-bold text-text">NavIN</span>
           </Link>
 
-          <div className="hidden md:flex items-center bg-secondary rounded-full px-4 py-2 flex-1 max-w-md">
-            <Search className="w-5 h-5 text-text-muted mr-3" />
+          <div className="hidden md:flex items-center bg-secondary dark:bg-dark-secondary rounded-full px-4 py-2 flex-1 max-w-md">
+            <Search className="w-5 h-5 text-text-muted dark:text-dark-text-muted mr-3" />
             <input
               type="text"
               placeholder="Search for people, jobs, posts..."
-              className="bg-transparent outline-none flex-1 text-sm placeholder:text-text-muted"
+              className="bg-transparent outline-none flex-1 text-sm placeholder:text-text-muted dark:placeholder:text-dark-text-muted text-text dark:text-dark-text"
             />
           </div>
         </div>
@@ -53,8 +53,8 @@ export function Navbar() {
         </div>
 
         {/* Mobile Menu Button */}
-        <button className="lg:hidden p-2 hover:bg-secondary rounded-lg transition-colors">
-          <Menu className="w-6 h-6 text-text" />
+        <button className="lg:hidden p-2 hover:bg-secondary dark:hover:bg-dark-secondary rounded-lg transition-colors">
+          <Menu className="w-6 h-6 text-text dark:text-dark-text" />
         </button>
       </div>
     </motion.nav>
@@ -65,10 +65,10 @@ function NavIcon({ icon: Icon, label, href }: { icon: any, label: string, href: 
   return (
     <Link
       href={href}
-      className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50 group"
+      className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-dark-secondary/50 group"
     >
-      <Icon className="w-6 h-6 group-hover:scale-110 transition-transform" />
-      <span className="text-xs mt-1 font-medium">{label}</span>
+      <Icon className="w-6 h-6 text-text dark:text-dark-text group-hover:scale-110 transition-transform" />
+      <span className="text-xs mt-1 font-medium text-text dark:text-dark-text">{label}</span>
     </Link>
   )
 }
@@ -79,15 +79,15 @@ function DarkModeToggle() {
   return (
     <button
       onClick={toggleDarkMode}
-      className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50 group"
+      className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-dark-secondary/50 group"
       aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
     >
       {isDarkMode ? (
-        <Sun className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <Sun className="w-6 h-6 text-text dark:text-dark-text group-hover:scale-110 transition-transform" />
       ) : (
-        <Moon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <Moon className="w-6 h-6 text-text dark:text-dark-text group-hover:scale-110 transition-transform" />
       )}
-      <span className="text-xs mt-1 font-medium">
+      <span className="text-xs mt-1 font-medium text-text dark:text-dark-text">
         {isDarkMode ? 'Light' : 'Dark'}
       </span>
     </button>
@@ -135,7 +135,7 @@ function ProfileMenu() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-dark-secondary/50 transition-colors"
       >
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
           {user.displayName
@@ -143,10 +143,10 @@ function ProfileMenu() {
             : user.email?.split('@')[0].charAt(0).toUpperCase()
           }
         </div>
-        <span className="text-sm font-medium text-text">
+        <span className="text-sm font-medium text-text dark:text-dark-text">
           {user.displayName || user.email?.split('@')[0]}
         </span>
-        <ChevronDown className="w-4 h-4 text-text-muted" />
+        <ChevronDown className="w-4 h-4 text-text-muted dark:text-dark-text-muted" />
       </button>
 
       {isOpen && (
@@ -154,28 +154,28 @@ function ProfileMenu() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="absolute right-0 mt-2 w-48 bg-surface rounded-lg border border-border shadow-soft py-2 z-50"
+          className="absolute right-0 mt-2 w-48 bg-surface dark:bg-dark-surface rounded-lg border border-border dark:border-dark-border shadow-soft py-2 z-50"
         >
           <Link
             href="/profile"
-            className="flex items-center space-x-3 px-4 py-2 hover:bg-secondary transition-colors"
+            className="flex items-center space-x-3 px-4 py-2 hover:bg-secondary dark:hover:bg-dark-secondary transition-colors text-text dark:text-dark-text"
             onClick={() => setIsOpen(false)}
           >
-            <User className="w-4 h-4" />
+            <User className="w-4 h-4 text-text dark:text-dark-text" />
             <span className="text-sm">View Profile</span>
           </Link>
           <Link
             href="/settings"
-            className="flex items-center space-x-3 px-4 py-2 hover:bg-secondary transition-colors"
+            className="flex items-center space-x-3 px-4 py-2 hover:bg-secondary dark:hover:bg-dark-secondary transition-colors text-text dark:text-dark-text"
             onClick={() => setIsOpen(false)}
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-4 h-4 text-text dark:text-dark-text" />
             <span className="text-sm">Settings</span>
           </Link>
-          <div className="border-t border-border mt-2 pt-2">
+          <div className="border-t border-border dark:border-dark-border mt-2 pt-2">
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-3 px-4 py-2 hover:bg-secondary transition-colors w-full text-left text-red-500"
+              className="flex items-center space-x-3 px-4 py-2 hover:bg-secondary dark:hover:bg-dark-secondary transition-colors w-full text-left text-red-500 text-text dark:text-dark-text"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm">Sign Out</span>
