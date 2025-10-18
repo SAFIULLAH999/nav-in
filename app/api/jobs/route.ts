@@ -6,7 +6,7 @@ import { z } from 'zod'
 const createJobSchema = z.object({
   title: z.string().min(1, 'Job title is required').max(200, 'Title too long'),
   description: z.string().min(10, 'Description too short').max(10000, 'Description too long'),
-  company: z.string().min(1, 'Company name is required').max(100, 'Company name too long'),
+  companyName: z.string().min(1, 'Company name is required').max(100, 'Company name too long'),
   location: z.string().min(1, 'Location is required').max(100, 'Location too long'),
   type: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'FREELANCE', 'TEMPORARY']),
   salaryMin: z.number().min(0).optional(),
