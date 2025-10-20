@@ -5,22 +5,107 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Create a demo user first
-  const demoUser = await prisma.user.upsert({
-    where: { id: 'demo-user-id' },
+  // Create demo users
+  const demoUser1 = await prisma.user.upsert({
+    where: { id: 'demo-user-1' },
     update: {},
     create: {
-      id: 'demo-user-id',
-      name: 'Demo Recruiter',
-      email: 'demo@navin.com',
+      id: 'demo-user-1',
+      name: 'Alice Johnson',
+      email: 'alice@navin.com',
       password: 'demo-password',
-      username: 'demo-recruiter',
-      title: 'HR Manager',
-      role: 'RECRUITER',
+      username: 'alice-johnson',
+      title: 'Senior Software Engineer',
+      company: 'TechCorp Inc.',
+      location: 'San Francisco, CA',
+      bio: 'Passionate software engineer with 5+ years of experience in full-stack development.',
+      skills: JSON.stringify(['React', 'TypeScript', 'Node.js', 'Python', 'AWS']),
+      role: 'USER',
     },
   });
 
-  console.log('Demo user created:', demoUser.id);
+  const demoUser2 = await prisma.user.upsert({
+    where: { id: 'demo-user-2' },
+    update: {},
+    create: {
+      id: 'demo-user-2',
+      name: 'Bob Smith',
+      email: 'bob@navin.com',
+      password: 'demo-password',
+      username: 'bob-smith',
+      title: 'Product Manager',
+      company: 'InnovateLab',
+      location: 'New York, NY',
+      bio: 'Product manager focused on building user-centric solutions.',
+      skills: JSON.stringify(['Product Strategy', 'Agile', 'User Research', 'Data Analysis']),
+      role: 'USER',
+    },
+  });
+
+  const demoUser3 = await prisma.user.upsert({
+    where: { id: 'demo-user-3' },
+    update: {},
+    create: {
+      id: 'demo-user-3',
+      name: 'Carol Davis',
+      email: 'carol@navin.com',
+      password: 'demo-password',
+      username: 'carol-davis',
+      title: 'UX Designer',
+      company: 'DesignStudio',
+      location: 'Austin, TX',
+      bio: 'Creative UX designer with a passion for intuitive user experiences.',
+      skills: JSON.stringify(['Figma', 'User Research', 'Prototyping', 'Design Systems']),
+      role: 'USER',
+    },
+  });
+
+  console.log('Demo users created:', demoUser1.id, demoUser2.id, demoUser3.id);
+
+  // Create connections between users
+  const connection1 = await prisma.connection.upsert({
+    where: {
+      id: 'connection-1-2'
+    },
+    update: {},
+    create: {
+      id: 'connection-1-2',
+      senderId: demoUser1.id,
+      receiverId: demoUser2.id,
+      status: 'ACCEPTED',
+      connectionType: 'PROFESSIONAL',
+    },
+  });
+
+  const connection2 = await prisma.connection.upsert({
+    where: {
+      id: 'connection-1-3'
+    },
+    update: {},
+    create: {
+      id: 'connection-1-3',
+      senderId: demoUser1.id,
+      receiverId: demoUser3.id,
+      status: 'ACCEPTED',
+      connectionType: 'PROFESSIONAL',
+    },
+  });
+
+  const connection3 = await prisma.connection.upsert({
+    where: {
+      id: 'connection-2-3'
+    },
+    update: {},
+    create: {
+      id: 'connection-2-3',
+      senderId: demoUser2.id,
+      receiverId: demoUser3.id,
+      status: 'ACCEPTED',
+      connectionType: 'PROFESSIONAL',
+    },
+  });
+
+  console.log('Connections created between users');
 
   // Create sample jobs
   const jobs = [

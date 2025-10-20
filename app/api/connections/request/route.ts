@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 import { z } from 'zod'
+import { canSendConnectionRequest } from '@/lib/privacy'
 
 const sendConnectionSchema = z.object({
-  receiverId: z.string().min(1, 'Receiver ID is required')
+  receiverId: z.string().min(1, 'Receiver ID is required'),
+  connectionType: z.enum(['PROFESSIONAL', 'COLLEAGUE', 'FRIEND', 'MENTOR', 'MENTEE']).default('PROFESSIONAL'),
+  message: z.string().optional(),
+  tags: z.array(z.string()).optional()
 })
 
 // POST - Send a connection request
@@ -21,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { receiverId } = sendConnectionSchema.parse(body)
+    const { receiverId, connectionType, message, tags } = sendConnectionSchema.parse(body)
 
     const senderId = authResult.user.userId
 
@@ -34,14 +38,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if receiver exists and is active
-    const receiver = await prisma.user.findUnique({
+    const receiverUser = await prisma.user.findUnique({
       where: { id: receiverId }
     })
 
-    if (!receiver || !receiver.isActive) {
+    if (!receiverUser || !receiverUser.isActive) {
       return NextResponse.json(
         { success: false, error: 'User not found or inactive' },
         { status: 404 }
+      )
+    }
+
+    // Check privacy settings for connection requests
+    const canRequest = await canSendConnectionRequest(receiverId, senderId)
+    if (!canRequest) {
+      return NextResponse.json(
+        { success: false, error: 'User does not accept connection requests' },
+        { status: 403 }
       )
     }
 
@@ -63,33 +76,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Create connection request
-    const connection = await prisma.connection.create({
+    const connection = await (prisma.connection.create as any)({
       data: {
         senderId,
         receiverId,
-        status: 'PENDING'
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
-            title: true,
-          }
-        },
-        receiver: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
-            title: true,
-          }
-        }
+        status: 'PENDING',
+        connectionType,
+        notes: message,
+        tags: tags ? JSON.stringify(tags) : null
       }
     })
+
+    // Get sender and receiver details for response
+    const [sender, receiver] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: senderId },
+        select: { id: true, name: true, username: true, avatar: true, title: true }
+      }),
+      prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { id: true, name: true, username: true, avatar: true, title: true }
+      })
+    ])
 
     // Create notification for receiver
     await prisma.notification.create({
@@ -97,7 +105,7 @@ export async function POST(request: NextRequest) {
         userId: receiverId,
         type: 'CONNECTION_REQUEST',
         title: 'New Connection Request',
-        message: `${connection.sender.name || 'Someone'} wants to connect with you`,
+        message: `${sender?.name || 'Someone'} wants to connect with you`,
         data: JSON.stringify({
           connectionId: connection.id,
           senderId: senderId
@@ -112,10 +120,10 @@ export async function POST(request: NextRequest) {
         status: connection.status,
         createdAt: connection.createdAt.toISOString(),
         sender: {
-          name: connection.sender.name || 'Unknown User',
-          username: connection.sender.username || 'user',
-          avatar: connection.sender.avatar || '',
-          title: connection.sender.title || 'NavIN User'
+          name: sender?.name || 'Unknown User',
+          username: sender?.username || 'user',
+          avatar: sender?.avatar || '',
+          title: sender?.title || 'NavIN User'
         }
       },
       message: 'Connection request sent successfully'

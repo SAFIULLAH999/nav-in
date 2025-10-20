@@ -4,16 +4,15 @@ import { authenticateRequest } from '@/lib/jwt'
 import { z } from 'zod'
 
 const followSchema = z.object({
-  action: z.enum(['follow', 'unfollow'])
+  followType: z.enum(['USER', 'COMPANY', 'TOPIC']).default('USER')
 })
 
-// POST - Follow/Unfollow a user
+// POST - Follow a user/company/topic
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Authenticate user
     const authResult = await authenticateRequest(request)
 
     if ('error' in authResult) {
@@ -24,128 +23,65 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { action } = followSchema.parse(body)
+    const { followType } = followSchema.parse(body)
 
-    const targetUserId = params.id
-    const currentUserId = authResult.user.userId
+    const followerId = authResult.user.userId
+    const followingId = params.id
 
-    // Prevent self-follow
-    if (currentUserId === targetUserId) {
+    // Prevent self-following
+    if (followerId === followingId) {
       return NextResponse.json(
         { success: false, error: 'Cannot follow yourself' },
         { status: 400 }
       )
     }
 
-    // Check if target user exists and is active
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetUserId }
-    })
-
-    if (!targetUser || !targetUser.isActive) {
-      return NextResponse.json(
-        { success: false, error: 'User not found or inactive' },
-        { status: 404 }
-      )
-    }
-
-    if (action === 'follow') {
-      // Check if already following
-      const existingFollow = await prisma.follow.findUnique({
-        where: {
-          followerId_followingId: {
-            followerId: currentUserId,
-            followingId: targetUserId
-          }
-        }
+    // Check if target exists and is active (for users)
+    if (followType === 'USER') {
+      const targetUser = await prisma.user.findUnique({
+        where: { id: followingId }
       })
 
-      if (existingFollow) {
+      if (!targetUser || !targetUser.isActive) {
         return NextResponse.json(
-          { success: false, error: 'Already following this user' },
-          { status: 400 }
-        )
-      }
-
-      // Check if there's a connection request
-      const existingConnection = await prisma.connection.findFirst({
-        where: {
-          OR: [
-            { senderId: currentUserId, receiverId: targetUserId },
-            { senderId: targetUserId, receiverId: currentUserId }
-          ]
-        }
-      })
-
-      // Create follow relationship
-      const follow = await prisma.follow.create({
-        data: {
-          followerId: currentUserId,
-          followingId: targetUserId
-        },
-        include: {
-          following: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatar: true,
-              title: true,
-            }
-          }
-        }
-      })
-
-      // Create notification for followed user
-      await prisma.notification.create({
-        data: {
-          userId: targetUserId,
-          type: 'NEW_FOLLOWER',
-          title: 'New Follower',
-          message: `${follow.following.name || 'Someone'} started following you`,
-          data: JSON.stringify({
-            followerId: currentUserId
-          })
-        }
-      })
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: follow.id,
-          following: {
-            name: follow.following.name || 'Unknown User',
-            username: follow.following.username || 'user',
-            avatar: follow.following.avatar || '',
-            title: follow.following.title || 'NavIN User'
-          },
-          createdAt: follow.createdAt.toISOString()
-        },
-        message: 'User followed successfully'
-      })
-    } else {
-      // Unfollow user
-      const deletedFollow = await prisma.follow.delete({
-        where: {
-          followerId_followingId: {
-            followerId: currentUserId,
-            followingId: targetUserId
-          }
-        }
-      })
-
-      if (!deletedFollow) {
-        return NextResponse.json(
-          { success: false, error: 'Follow relationship not found' },
+          { success: false, error: 'User not found or inactive' },
           { status: 404 }
         )
       }
-
-      return NextResponse.json({
-        success: true,
-        message: 'User unfollowed successfully'
-      })
     }
+
+    // Check if already following
+    const existingFollow = await prisma.follow.findFirst({
+      where: {
+        followerId,
+        followingId
+      }
+    })
+
+    if (existingFollow) {
+      return NextResponse.json(
+        { success: false, error: 'Already following' },
+        { status: 400 }
+      )
+    }
+
+    // Create follow relationship
+    const follow = await prisma.follow.create({
+      data: {
+        followerId,
+        followingId
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: follow.id,
+        followingId: follow.followingId,
+        createdAt: follow.createdAt.toISOString()
+      },
+      message: 'Successfully followed'
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -154,21 +90,20 @@ export async function POST(
       )
     }
 
-    console.error('Error toggling follow:', error)
+    console.error('Error following:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to toggle follow' },
+      { success: false, error: 'Failed to follow' },
       { status: 500 }
     )
   }
 }
 
-// GET - Check if current user is following target user
-export async function GET(
+// DELETE - Unfollow a user/company/topic
+export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Authenticate user
     const authResult = await authenticateRequest(request)
 
     if ('error' in authResult) {
@@ -178,29 +113,36 @@ export async function GET(
       )
     }
 
-    const targetUserId = params.id
-    const currentUserId = authResult.user.userId
+    const followerId = authResult.user.userId
+    const followingId = params.id
 
-    const follow = await prisma.follow.findUnique({
+    // Find and delete follow relationship
+    const follow = await prisma.follow.findFirst({
       where: {
-        followerId_followingId: {
-          followerId: currentUserId,
-          followingId: targetUserId
-        }
+        followerId,
+        followingId
       }
+    })
+
+    if (!follow) {
+      return NextResponse.json(
+        { success: false, error: 'Not following this user' },
+        { status: 404 }
+      )
+    }
+
+    await prisma.follow.delete({
+      where: { id: follow.id }
     })
 
     return NextResponse.json({
       success: true,
-      data: {
-        isFollowing: !!follow,
-        followId: follow?.id || null
-      }
+      message: 'Successfully unfollowed'
     })
   } catch (error) {
-    console.error('Error checking follow status:', error)
+    console.error('Error unfollowing:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to check follow status' },
+      { success: false, error: 'Failed to unfollow' },
       { status: 500 }
     )
   }

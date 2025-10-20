@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, Save, User, Settings as SettingsIcon, Bell, Shield, Lock, Eye, EyeOff } from 'lucide-react'
+import { useDarkMode } from '@/components/DarkModeProvider'
+import { ArrowLeft, Save, User, Settings as SettingsIcon, Bell, Shield, Lock, Eye, EyeOff, Palette, Sun, Moon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -62,6 +63,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'account', label: 'Account', icon: SettingsIcon },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'privacy', label: 'Privacy', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
@@ -80,23 +82,25 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-surface rounded-lg border border-border p-4">
-            <nav className="space-y-2">
+          <div className="bg-gradient-to-br from-surface via-surface/80 to-surface/60 rounded-xl border border-border/50 p-6 shadow-lg">
+            <nav className="space-y-3">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
-                  <button
+                  <motion.button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 ${
                       activeTab === tab.id
-                        ? 'bg-primary text-white'
-                        : 'text-text-muted hover:bg-secondary'
+                        ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
+                        : 'text-text-muted hover:bg-secondary/50 hover:text-text'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{tab.label}</span>
-                  </button>
+                  </motion.button>
                 )
               })}
             </nav>
@@ -107,23 +111,27 @@ export default function SettingsPage() {
         <div className="lg:col-span-3">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-surface rounded-lg border border-border p-6"
+            initial={{ opacity: 0, x: 20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="bg-gradient-to-br from-surface via-surface/80 to-surface/60 rounded-xl border border-border/50 p-6 shadow-lg hover:shadow-xl transition-all duration-300"
           >
             {activeTab === 'account' && <AccountSettings formData={formData} setFormData={setFormData} />}
+            {activeTab === 'appearance' && <AppearanceSettings />}
             {activeTab === 'privacy' && <PrivacySettings formData={formData} setFormData={setFormData} />}
             {activeTab === 'notifications' && <NotificationSettings formData={formData} setFormData={setFormData} />}
             {activeTab === 'security' && <SecuritySettings formData={formData} setFormData={setFormData} />}
 
-            <div className="flex justify-end mt-6 pt-6 border-t border-border">
-              <button
+            <div className="flex justify-end mt-6 pt-6 border-t border-border/50">
+              <motion.button
                 onClick={handleSave}
-                className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center space-x-2"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-primary to-primary/90 text-white px-8 py-3 rounded-xl font-medium hover:from-primary/90 hover:to-primary transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
               >
                 <Save className="w-4 h-4" />
                 <span>Save Changes</span>
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </div>
@@ -293,6 +301,116 @@ function NotificationSettings({ formData, setFormData }: { formData: any, setFor
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
           </label>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function AppearanceSettings() {
+  const { isDarkMode, toggleDarkMode } = useDarkMode()
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Appearance Settings</h2>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+              {isDarkMode ? (
+                <Moon className="w-5 h-5 text-yellow-400" />
+              ) : (
+                <Sun className="w-5 h-5 text-yellow-600" />
+              )}
+            </div>
+            <div>
+              <h3 className="font-medium">Dark Mode</h3>
+              <p className="text-sm text-text-muted">Toggle between light and dark themes</p>
+            </div>
+          </div>
+          <motion.button
+            onClick={toggleDarkMode}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ${
+              isDarkMode ? 'bg-gradient-to-r from-primary to-primary/80' : 'bg-gradient-to-r from-gray-300 to-gray-400'
+            } shadow-lg`}
+          >
+            <motion.span
+              animate={{ x: isDarkMode ? 20 : 4 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className="inline-block h-5 w-5 rounded-full bg-white shadow-md border border-gray-200"
+            />
+          </motion.button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div>
+            <h3 className="font-medium">Theme Preference</h3>
+            <p className="text-sm text-text-muted">Choose your preferred color scheme</p>
+          </div>
+          <div className="flex space-x-3">
+            <motion.button
+              onClick={() => {/* Set light mode */}}
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                !isDarkMode
+                  ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
+                  : 'bg-gradient-to-r from-secondary to-secondary/80 text-text-muted hover:text-text hover:shadow-md'
+              }`}
+            >
+              Light
+            </motion.button>
+            <motion.button
+              onClick={() => {/* Set dark mode */}}
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
+                  : 'bg-gradient-to-r from-secondary to-secondary/80 text-text-muted hover:text-text hover:shadow-md'
+              }`}
+            >
+              Dark
+            </motion.button>
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+          className="p-6 border border-border/50 rounded-xl bg-gradient-to-br from-card/50 to-card/30 shadow-lg"
+        >
+          <h3 className="font-medium mb-4">Preview</h3>
+          <div className="space-y-4">
+            <motion.div
+              animate={{ opacity: isDarkMode ? 0.8 : 1 }}
+              transition={{ duration: 0.3 }}
+              className={`p-4 rounded-xl border transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-gradient-to-br from-gray-800/80 to-gray-900/60 border-gray-700/50 shadow-inner'
+                  : 'bg-gradient-to-br from-gray-50 to-gray-100/80 border-gray-200/60 shadow-sm'
+              }`}
+            >
+              <div className={`h-3 w-3/4 rounded-full mb-3 ${isDarkMode ? 'bg-gray-700/60' : 'bg-gray-200'}`}></div>
+              <div className={`h-2 w-1/2 rounded-full ${isDarkMode ? 'bg-gray-600/60' : 'bg-gray-300'}`}></div>
+            </motion.div>
+            <motion.div
+              animate={{ opacity: isDarkMode ? 0.9 : 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className={`p-3 rounded-lg border transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-gradient-to-br from-gray-800/60 to-gray-850/40 border-gray-700/40'
+                  : 'bg-gradient-to-br from-white to-gray-50/80 border-gray-200/50'
+              }`}
+            >
+              <div className={`h-2 w-full rounded-full mb-2 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'}`}></div>
+              <div className={`h-2 w-2/3 rounded-full ${isDarkMode ? 'bg-gray-600/50' : 'bg-gray-200'}`}></div>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     </div>
   )

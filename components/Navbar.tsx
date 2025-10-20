@@ -5,8 +5,6 @@ import { Search, Home, Users, Briefcase, MessageCircle, Bell, ChevronDown, Menu,
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useFirebase } from './FirebaseProvider'
-import { useDarkMode } from './DarkModeProvider'
-import { Moon, Sun } from 'lucide-react'
 
 export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -152,8 +150,6 @@ export function Navbar() {
           <NavIcon icon={MessageCircle} label="Messages" href="/messages" />
           <NavIcon icon={Bell} label="Notifications" href="/notifications" />
 
-          {/* Dark Mode Toggle */}
-          <DarkModeToggle />
 
           {/* Profile Menu */}
           <div className="ml-4 pl-4 border-l border-border">
@@ -182,31 +178,10 @@ function NavIcon({ icon: Icon, label, href }: { icon: any, label: string, href: 
   )
 }
 
-function DarkModeToggle() {
-  const { isDarkMode, toggleDarkMode } = useDarkMode()
-
-  return (
-    <button
-      onClick={toggleDarkMode}
-      className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-dark-secondary/50 group"
-      aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-    >
-      {isDarkMode ? (
-        <Sun className="w-6 h-6 text-text dark:text-dark-text group-hover:scale-110 transition-transform" />
-      ) : (
-        <Moon className="w-6 h-6 text-text dark:text-dark-text group-hover:scale-110 transition-transform" />
-      )}
-      <span className="text-xs mt-1 font-medium text-text dark:text-dark-text">
-        {isDarkMode ? 'Light' : 'Dark'}
-      </span>
-    </button>
-  )
-}
 
 function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const { user, signOut } = useFirebase()
-  const { isDarkMode, toggleDarkMode } = useDarkMode()
 
   const handleSignOut = async () => {
     try {

@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -62,6 +62,11 @@ model User {
   isActive      Boolean   @default(true)
   lastLoginAt   DateTime?
   openToStatus  String?   // Current "Open To" status
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?  // Encrypted TOTP secret
+  backupCodes    String?  // JSON array of encrypted backup codes
+  isVerified     Boolean @default(false) // Overall verification status
+  verificationStatus String @default("UNVERIFIED") // UNVERIFIED, PENDING, VERIFIED, REJECTED
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -110,6 +115,9 @@ model User {
   atsIntegrations       AtsIntegration[]
   scrapingSessions      ScrapingSession[]
   scrapingQueue         JobScrapingQueue[]
+  verificationRequests  VerificationRequest[]
+  verificationBadges    VerificationBadge[]
+  reviewedVerifications VerificationRequest[] @relation("VerificationReviewer")
 }
 
 model OpenTo {
@@ -460,29 +468,39 @@ model Share {
 }
 
 model Connection {
-  id         String   @id @default(cuid())
-  senderId   String
-  receiverId String
-  status     String @default("PENDING")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+    id             String   @id @default(cuid())
+    senderId       String
+    receiverId     String
+    status         String   @default("PENDING")
+    connectionType String   @default("PROFESSIONAL") // PROFESSIONAL, COLLEAGUE, FRIEND, MENTOR, MENTEE
+    strength       Int      @default(1) // Connection strength 1-10
+    notes          String?  // Private notes about the connection
+    tags           String?  // JSON array of connection tags/categories
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
 
-  sender   User @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    sender   User @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
+    receiver User @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  @@unique([senderId, receiverId])
+    @@unique([senderId, receiverId])
+    @@index([status, connectionType])
+    @@index([strength])
 }
 
 model Follow {
-  id          String   @id @default(cuid())
-  followerId  String   // User who is following
-  followingId String   // User being followed
-  createdAt   DateTime @default(now())
+   id          String   @id @default(cuid())
+   followerId  String   // User who is following
+   followingId String   // User being followed
+   followType  String   @default("USER") // USER, COMPANY, TOPIC
+   isMuted     Boolean  @default(false)
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
 
-  follower  User @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
-  following User @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+   follower  User @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+   following User @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
 
-  @@unique([followerId, followingId])
+   @@unique([followerId, followingId, followType])
+   @@index([followingId, createdAt])
 }
 
 model Company {
@@ -667,6 +685,45 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // IDENTITY, EMPLOYMENT, EDUCATION, CERTIFICATION
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXPIRED
+  documents     String   // JSON array of document URLs
+  metadata      String?  // JSON object with verification details
+  submittedAt   DateTime @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?  // Admin user ID who reviewed
+  reviewNotes   String?
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("VerificationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId, type])
+  @@index([status])
+}
+
+model VerificationBadge {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // VERIFIED_ID, VERIFIED_EMPLOYMENT, VERIFIED_EDUCATION, PREMIUM
+  badgeData   String   // JSON object with badge information
+  issuedAt    DateTime @default(now())
+  expiresAt   DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([isActive])
 }
 
 model AtsIntegration {
@@ -961,67 +1018,4 @@ model GeneratedURL {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model JobSource {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  baseUrl     String
-  rateLimit   Int      @default(1000) // milliseconds between requests
-  config      String?  // JSON configuration for scraping
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  scrapingJobs    ScrapingJob[]
-  scrapingSessions ScrapingSession[]
-  queue           JobQueue[]
-}
-
-model ScrapingJob {
-  id          String   @id @default(cuid())
-  sourceId    String
-  url         String
-  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  data        String?  // JSON scraped data
-  error       String?
-  retryCount  Int      @default(0)
-  maxRetries  Int      @default(3)
-  scheduledFor DateTime @default(now())
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  source ScrapingSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-}
-
-model ScrapingSession {
-  id          String   @id @default(cuid())
-  sourceId    String
-  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, FAILED
-  jobsProcessed Int    @default(0)
-  jobsSucceeded Int    @default(0)
-  jobsFailed    Int    @default(0)
-  startedAt   DateTime @default(now())
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
-
-  source ScrapingSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-}
-
-model ScrapingSource {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  baseUrl     String
-  rateLimit   Int      @default(1000) // milliseconds between requests
-  config      String?  // JSON configuration for scraping
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  scrapingJobs    ScrapingJob[]
-  scrapingSessions ScrapingSession[]
 }

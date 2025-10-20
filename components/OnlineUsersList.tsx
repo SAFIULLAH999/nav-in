@@ -31,36 +31,24 @@ export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({ className = ''
       }
 
       try {
-        const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+        // Use the activity API to get user details for online users
+        const response = await fetch('/api/user/activity?limit=100')
 
-        if (!token) {
-          setLoading(false)
-          return
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            // Filter to only include users who are currently active
+            const currentTime = new Date()
+            const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000)
+
+            const recentUsers = data.data.activeUsers.filter((user: any) => {
+              const lastSeen = new Date(user.lastSeen)
+              return lastSeen >= fiveMinutesAgo
+            })
+
+            setOnlineUsers(recentUsers)
+          }
         }
-
-        // Get user details for online users
-        const usersData = await Promise.all(
-          activeUsers.map(async (userId) => {
-            try {
-              const response = await fetch(`/api/profile/public/${userId}`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              })
-
-              if (response.ok) {
-                const data = await response.json()
-                return data.user
-              }
-            } catch (error) {
-              console.error(`Error loading user ${userId}:`, error)
-            }
-            return null
-          })
-        )
-
-        const validUsers = usersData.filter(user => user !== null) as OnlineUser[]
-        setOnlineUsers(validUsers)
       } catch (error) {
         console.error('Error loading online users:', error)
       } finally {

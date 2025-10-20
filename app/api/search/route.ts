@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 
+// Helper function to get connected user IDs
+async function getConnectedUserIds(userId: string): Promise<Set<string>> {
+  const connections = await prisma.connection.findMany({
+    where: {
+      OR: [
+        { senderId: userId, status: 'ACCEPTED' },
+        { receiverId: userId, status: 'ACCEPTED' }
+      ]
+    },
+    select: {
+      senderId: true,
+      receiverId: true
+    }
+  })
+
+  const connectedUserIds = new Set<string>()
+  connections.forEach(conn => {
+    if (conn.senderId === userId) {
+      connectedUserIds.add(conn.receiverId)
+    } else {
+      connectedUserIds.add(conn.senderId)
+    }
+  })
+
+  return connectedUserIds
+}
+
 // GET - Global search across all content
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +41,10 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') // 'all', 'users', 'jobs', 'posts', 'companies'
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50)
     const offset = parseInt(searchParams.get('offset') || '0')
+    const excludeConnected = searchParams.get('excludeConnected') === 'true'
+    const locationFilter = searchParams.get('location')?.trim()
+    const companyFilter = searchParams.get('company')?.trim()
+    const skillsFilter = searchParams.get('skills')?.trim()
 
     if (!query || query.length < 2) {
       return NextResponse.json({
@@ -31,18 +62,38 @@ export async function GET(request: NextRequest) {
     const searchQuery = `%${query}%`
 
     // Build where conditions for each entity
-    const userWhere = {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { username: { contains: query, mode: 'insensitive' } },
-        { title: { contains: query, mode: 'insensitive' } },
-        { company: { contains: query, mode: 'insensitive' } },
-        { location: { contains: query, mode: 'insensitive' } },
-        { bio: { contains: query, mode: 'insensitive' } },
-        { skills: { contains: query, mode: 'insensitive' } }
-      ],
-      isActive: true
-    }
+     let userWhereConditions: any[] = []
+
+     if (query) {
+       userWhereConditions.push(
+         { name: { contains: query, mode: 'insensitive' } },
+         { username: { contains: query, mode: 'insensitive' } },
+         { title: { contains: query, mode: 'insensitive' } },
+         { company: { contains: query, mode: 'insensitive' } },
+         { location: { contains: query, mode: 'insensitive' } },
+         { bio: { contains: query, mode: 'insensitive' } },
+         { skills: { contains: query, mode: 'insensitive' } }
+       )
+     } else {
+       userWhereConditions.push({}) // Empty condition for when only filters are used
+     }
+
+     if (locationFilter) {
+       userWhereConditions.push({ location: { contains: locationFilter, mode: 'insensitive' } })
+     }
+
+     if (companyFilter) {
+       userWhereConditions.push({ company: { contains: companyFilter, mode: 'insensitive' } })
+     }
+
+     if (skillsFilter) {
+       userWhereConditions.push({ skills: { contains: skillsFilter, mode: 'insensitive' } })
+     }
+
+     const userWhere = {
+       OR: userWhereConditions.length > 0 ? userWhereConditions : [{ id: { not: null } }], // Fallback condition
+       isActive: true
+     }
 
     const jobWhere = {
       OR: [
@@ -75,24 +126,119 @@ export async function GET(request: NextRequest) {
     const searchPromises = []
 
     if (type === 'users' || type === 'all') {
-      searchPromises.push(
-        prisma.user.findMany({
-          where: userWhere,
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
-            title: true,
-            company: true,
-            location: true,
-            bio: true,
-          },
-          take: limit,
-          orderBy: { name: 'asc' }
-        }).then(users => ({ users, type: 'users' }))
-      )
-    }
+       searchPromises.push(
+         (async () => {
+           let baseWhere = userWhere
+
+           // If excludeConnected is true and we have a current user, filter out connected users
+           if (excludeConnected && currentUserId) {
+             const connectedUserIds = await getConnectedUserIds(currentUserId)
+             // Filter results after fetching
+             const allUsers = await prisma.user.findMany({
+               where: baseWhere,
+               select: {
+                 id: true,
+                 name: true,
+                 username: true,
+                 avatar: true,
+                 title: true,
+                 company: true,
+                 location: true,
+                 bio: true,
+               },
+               take: limit,
+               orderBy: { name: 'asc' }
+             })
+
+             const filteredUsers = allUsers.filter(user => !connectedUserIds.has(user.id))
+             return { users: filteredUsers, type: 'users' }
+           } else {
+             const users = await prisma.user.findMany({
+               where: baseWhere,
+               select: {
+                 id: true,
+                 name: true,
+                 username: true,
+                 avatar: true,
+                 title: true,
+                 company: true,
+                 location: true,
+                 bio: true,
+               },
+               take: limit,
+               orderBy: { name: 'asc' }
+             })
+
+             // Calculate mutual connections for each user
+             const usersWithMutualConnections = await Promise.all(
+               users.map(async (user) => {
+                 if (!currentUserId) {
+                   return { ...user, mutualConnections: 0 }
+                 }
+
+                 const userConnections = await prisma.connection.findMany({
+                   where: {
+                     OR: [
+                       { senderId: user.id, status: 'ACCEPTED' },
+                       { receiverId: user.id, status: 'ACCEPTED' }
+                     ]
+                   },
+                   select: {
+                     senderId: true,
+                     receiverId: true
+                   }
+                 })
+
+                 const currentUserConnections = await prisma.connection.findMany({
+                   where: {
+                     OR: [
+                       { senderId: currentUserId, status: 'ACCEPTED' },
+                       { receiverId: currentUserId, status: 'ACCEPTED' }
+                     ]
+                   },
+                   select: {
+                     senderId: true,
+                     receiverId: true
+                   }
+                 })
+
+                 const userConnectedIds = new Set([
+                   ...userConnections.map(c => c.senderId === user.id ? c.receiverId : c.senderId)
+                 ])
+
+                 const currentUserConnectedIds = new Set([
+                   ...currentUserConnections.map(c => c.senderId === currentUserId ? c.receiverId : c.senderId)
+                 ])
+
+                 const mutualConnections = Array.from(userConnectedIds).filter(id => currentUserConnectedIds.has(id)).length
+
+                 return { ...user, mutualConnections }
+               })
+             )
+
+             return { users: usersWithMutualConnections, type: 'users' }
+           }
+
+           const users = await prisma.user.findMany({
+             where: baseWhere,
+             select: {
+               id: true,
+               name: true,
+               username: true,
+               avatar: true,
+               title: true,
+               company: true,
+               location: true,
+               bio: true,
+             },
+             take: limit,
+             orderBy: { name: 'asc' }
+           })
+
+           return { users, type: 'users' }
+         })()
+       )
+     }
 
     if (type === 'jobs' || type === 'all') {
       searchPromises.push(

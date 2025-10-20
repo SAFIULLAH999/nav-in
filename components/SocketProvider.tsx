@@ -45,6 +45,48 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const notificationCallbacks = useRef<((notification: any) => void)[]>([])
   const postUpdateCallbacks = useRef<((data: any) => void)[]>([])
 
+  // Function to update user activity in serverless environment
+  const updateUserActivity = async () => {
+    if (session?.user && isServerless) {
+      try {
+        await fetch('/api/user/activity', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+            action: 'heartbeat',
+            timestamp: new Date().toISOString()
+          })
+        })
+
+        // Also fetch and update active users list
+        await fetchActiveUsers()
+      } catch (error) {
+        console.error('Failed to update user activity:', error)
+      }
+    }
+  }
+
+  // Function to fetch active users in serverless environment
+  const fetchActiveUsers = async () => {
+    if (isServerless) {
+      try {
+        const response = await fetch('/api/user/activity?limit=100')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            const activeUserIds = data.data.activeUsers.map((user: any) => user.id)
+            setActiveUsers(activeUserIds)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch active users:', error)
+      }
+    }
+  }
+
   useEffect(() => {
     if (session?.user && !socket) {
       // Check if we're in a serverless environment (Vercel)
@@ -52,10 +94,21 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                           process.env.NODE_ENV === 'production'
 
       if (isServerless) {
-        console.log('Serverless environment detected - real-time features disabled')
-        setIsConnected(false)
+        console.log('Serverless environment detected - using API-based real-time features')
+        setIsConnected(true)
         setIsServerless(true)
-        return
+
+        // Set up periodic activity updates for serverless environment
+        const activityInterval = setInterval(() => {
+          updateUserActivity()
+        }, 30000) // Update every 30 seconds
+
+        // Initial activity update
+        updateUserActivity()
+
+        return () => {
+          clearInterval(activityInterval)
+        }
       }
 
       // Initialize socket connection for development
