@@ -12,7 +12,15 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "worker": "tsx backend/src/worker.ts",
+    "worker:prod": "node --loader tsx/esm backend/src/worker.ts",
+    "worker:runner": "tsx backend/src/worker-runner.ts",
+    "worker:runner:prod": "node --loader tsx/esm backend/src/worker-runner.ts",
+    "worker:bull": "tsx backend/src/worker-bullmq.ts",
+    "worker:bull:prod": "node --loader tsx/esm backend/src/worker-bullmq.ts",
+    "worker:dev": "concurrently \"npm run dev\" \"npm run worker\"",
+    "worker:background": "npm run worker"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -77,7 +85,10 @@
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^3.21.0",
-    "zustand": "^4.4.0"
+    "zustand": "^4.4.0",
+    "concurrently": "^8.2.0",
+    "bullmq": "^4.15.0",
+    "ioredis": "^5.3.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
