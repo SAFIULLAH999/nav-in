@@ -33,7 +33,7 @@ export class IndeedScraper {
       const $ = cheerio.load(response.data)
       const jobCards = $('.jobsearch-SerpJobCard').slice(0, limit)
 
-      for (const card of jobCards) {
+      jobCards.each((index, card) => {
         try {
           const title = $(card).find('.title a').text().trim()
           const company = $(card).find('.company').text().trim()
@@ -57,13 +57,13 @@ export class IndeedScraper {
               postedDate,
               applyUrl,
               source: 'indeed',
-              externalId
-            })
-          }
-        } catch (error) {
-          console.error('Error parsing Indeed job card:', error)
+            externalId
+          })
         }
+      } catch (error) {
+        console.error('Error parsing Indeed job card:', error)
       }
+      })
 
       console.log(`Successfully scraped ${jobs.length} jobs from Indeed`)
       return jobs

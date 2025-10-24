@@ -80,36 +80,60 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform jobs for frontend
-    const transformedJobs = jobs.map(job => ({
-      id: job.id,
-      title: job.title,
-      description: job.description,
-      companyName: job.companyName,
-      location: job.location,
-      type: job.type,
-      salaryMin: job.salaryMin,
-      salaryMax: job.salaryMax,
-      requirements: job.requirements ? JSON.parse(job.requirements) : [],
-      benefits: job.benefits,
-      experience: job.experience,
-      isRemote: job.isRemote,
-      applicationDeadline: job.applicationDeadline?.toISOString(),
-      views: job.views,
-      applicationsCount: job._count.applications,
-      createdAt: job.createdAt.toISOString(),
-      author: {
-        name: job.author.name || 'Unknown Recruiter',
-        username: job.author.username || 'user',
-        avatar: job.author.avatar || '',
-        title: job.author.title || 'Recruiter'
-      },
-      companyInfo: null
-    }))
+    const transformedJobs = jobs.map(job => {
+      let requirements = []
+      try {
+        if (job.requirements) {
+          requirements = JSON.parse(job.requirements)
+        }
+      } catch (e) {
+        // If parsing fails, treat as a single requirement string
+        requirements = job.requirements ? [job.requirements] : []
+      }
 
-    return NextResponse.json(transformedJobs)
+      return {
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        company: job.companyName,
+        companyName: job.companyName,
+        location: job.location,
+        type: job.type,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+        requirements,
+        benefits: job.benefits,
+        experience: job.experience,
+        isRemote: job.isRemote,
+        applicationDeadline: job.applicationDeadline?.toISOString(),
+        views: job.views,
+        applicationsCount: job._count.applications,
+        createdAt: job.createdAt.toISOString(),
+        author: {
+          name: job.author.name || 'Unknown Recruiter',
+          username: job.author.username || 'user',
+          avatar: job.author.avatar || '',
+          title: job.author.title || 'Recruiter'
+        }
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: transformedJobs,
+      pagination: {
+        page,
+        limit,
+        total: transformedJobs.length,
+        hasMore: transformedJobs.length === limit
+      }
+    })
   } catch (error) {
     console.error('Error fetching jobs:', error)
-    return NextResponse.json([])
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch jobs', data: [] },
+      { status: 500 }
+    )
   }
 }
 
@@ -151,49 +175,68 @@ export async function POST(request: NextRequest) {
             title: true,
           }
         },
-        company: {
+        _count: {
           select: {
-            id: true,
-            name: true,
-            logo: true,
+            applications: true
           }
         }
       }
     })
+
+    // Parse requirements safely
+    let requirements = []
+    try {
+      if (newJob.requirements) {
+        requirements = JSON.parse(newJob.requirements)
+      }
+    } catch (e) {
+      requirements = newJob.requirements ? [newJob.requirements] : []
+    }
 
     // Transform for frontend response
     const transformedJob = {
       id: newJob.id,
       title: newJob.title,
       description: newJob.description,
+      company: newJob.companyName,
       companyName: newJob.companyName,
       location: newJob.location,
       type: newJob.type,
       salaryMin: newJob.salaryMin,
       salaryMax: newJob.salaryMax,
-      requirements: newJob.requirements,
+      requirements,
       benefits: newJob.benefits,
       experience: newJob.experience,
       isRemote: newJob.isRemote,
       applicationDeadline: newJob.applicationDeadline?.toISOString(),
       views: newJob.views,
-      applicationsCount: newJob.applicationsCount,
+      applicationsCount: newJob._count.applications,
       createdAt: newJob.createdAt.toISOString(),
       author: {
-        name: (newJob as any).author?.name || 'Unknown Recruiter',
-        username: (newJob as any).author?.username || 'user',
-        avatar: (newJob as any).author?.avatar || '',
-        title: (newJob as any).author?.title || 'Recruiter'
+        name: newJob.author?.name || 'Unknown Recruiter',
+        username: newJob.author?.username || 'user',
+        avatar: newJob.author?.avatar || '',
+        title: newJob.author?.title || 'Recruiter'
       }
     }
 
-    return NextResponse.json(transformedJob)
+    return NextResponse.json({
+      success: true,
+      data: transformedJob,
+      message: 'Job created successfully'
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
-    return NextResponse.json([])
+      return NextResponse.json(
+        { success: false, error: 'Validation error', details: error.errors },
+        { status: 400 }
+      )
     }
 
     console.error('Error creating job:', error)
-    return NextResponse.json([])
+    return NextResponse.json(
+      { success: false, error: 'Failed to create job' },
+      { status: 500 }
+    )
   }
 }

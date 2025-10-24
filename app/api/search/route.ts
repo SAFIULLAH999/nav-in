@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 
-// Helper function to get connected user IDs
+// Helper function to get connected user IDs and pending requests
 async function getConnectedUserIds(userId: string): Promise<Set<string>> {
   const connections = await prisma.connection.findMany({
     where: {
@@ -27,6 +27,31 @@ async function getConnectedUserIds(userId: string): Promise<Set<string>> {
   })
 
   return connectedUserIds
+}
+
+// Helper function to get all users with pending connection requests (sent or received)
+async function getPendingConnectionUserIds(userId: string): Promise<{ sent: Set<string>, received: Set<string> }> {
+  const [sentRequests, receivedRequests] = await Promise.all([
+    prisma.connection.findMany({
+      where: {
+        senderId: userId,
+        status: 'PENDING'
+      },
+      select: { receiverId: true }
+    }),
+    prisma.connection.findMany({
+      where: {
+        receiverId: userId,
+        status: 'PENDING'
+      },
+      select: { senderId: true }
+    })
+  ])
+
+  return {
+    sent: new Set(sentRequests.map(req => req.receiverId)),
+    received: new Set(receivedRequests.map(req => req.senderId))
+  }
 }
 
 // GET - Global search across all content
@@ -132,7 +157,11 @@ export async function GET(request: NextRequest) {
 
            // If excludeConnected is true and we have a current user, filter out connected users
            if (excludeConnected && currentUserId) {
-             const connectedUserIds = await getConnectedUserIds(currentUserId)
+             const [connectedUserIds, pendingConnections] = await Promise.all([
+               getConnectedUserIds(currentUserId),
+               getPendingConnectionUserIds(currentUserId)
+             ])
+             
              // Filter results after fetching
              const allUsers = await prisma.user.findMany({
                where: baseWhere,
@@ -146,11 +175,22 @@ export async function GET(request: NextRequest) {
                  location: true,
                  bio: true,
                },
-               take: limit,
+               take: limit * 2,
                orderBy: { name: 'asc' }
              })
 
-             const filteredUsers = allUsers.filter(user => !connectedUserIds.has(user.id))
+             const filteredUsers = allUsers
+               .filter(user => 
+                 !connectedUserIds.has(user.id) && 
+                 !pendingConnections.received.has(user.id)
+               )
+               .slice(0, limit)
+               .map(user => ({
+                 ...user,
+                 connectionStatus: pendingConnections.sent.has(user.id) ? 'pending' : 'none',
+                 mutualConnections: 0
+               }))
+
              return { users: filteredUsers, type: 'users' }
            } else {
              const users = await prisma.user.findMany({

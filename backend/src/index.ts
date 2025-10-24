@@ -37,6 +37,7 @@ import { requestLogger } from './middleware/requestLogger';
 
 // Import background jobs
 import './services/queue';
+import { scheduleRecurringJobFetching } from './schedule-jobs';
 
 // Load environment variables
 dotenv.config();
@@ -225,6 +226,11 @@ const startServer = async () => {
       logger.info(`🚀 NavIN Backend Server running on port ${PORT}`);
       logger.info(`📚 API Documentation available at http://localhost:${PORT}${API_PREFIX}/docs`);
       logger.info(`🏥 Health check available at http://localhost:${PORT}/health`);
+
+      // Schedule recurring job fetching (runs every hour)
+      scheduleRecurringJobFetching().catch(error => {
+        logger.error('Failed to schedule recurring job fetching:', error);
+      });
     });
 
     // Setup API documentation

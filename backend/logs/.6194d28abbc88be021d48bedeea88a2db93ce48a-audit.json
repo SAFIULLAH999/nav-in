@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Coding\\nav-in\\backend\\logs\\.6194d28abbc88be021d48bedeea88a2db93ce48a-audit.json",
+    "files": [
+        {
+            "date": 1761308351251,
+            "name": "C:\\Coding\\nav-in\\backend\\logs\\navin-2025-10-24.log",
+            "hash": "6238517994bb5a4bd125565c25123c21737f8c85eecb849ed31daa0555c083af"
+        }
+    ],
+    "hashType": "sha256"
+}

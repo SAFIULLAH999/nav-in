@@ -5,13 +5,20 @@ const nextConfig = {
   },
   output: 'standalone',
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma', 'cheerio', 'undici'],
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Exclude cheerio and undici from webpack bundling on server
+      config.externals = [...(config.externals || []), 'cheerio', 'undici']
+    }
+    return config
   },
   // Force static optimization for pages that don't need server features
   generateBuildId: async () => {

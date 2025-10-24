@@ -94,8 +94,11 @@ export async function GET(request: NextRequest) {
       if (connectedUserIds.has(user.id)) {
         connectionStatus = 'connected'
       } else if (sentRequestUserIds.has(user.id)) {
+        // Current user sent a request to this user
         connectionStatus = 'pending'
       } else if (receivedRequestUserIds.has(user.id)) {
+        // Current user received a request from this user
+        // Don't show them in browse - they should respond in Pending Requests tab
         connectionStatus = 'received'
       }
 
@@ -108,9 +111,12 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Filter out users who sent requests to current user (they appear in Pending Requests tab)
+    const filteredUsers = usersWithStatus.filter(user => user.connectionStatus !== 'received')
+
     return NextResponse.json({
       success: true,
-      data: usersWithStatus
+      data: filteredUsers
     })
   } catch (error) {
     console.error('Error browsing users:', error)

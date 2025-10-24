@@ -56,17 +56,25 @@ export default function FeedPage() {
   const fetchPosts = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await fetch('/api/posts')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
 
       if (data.success) {
-        setPosts(data.data)
+        setPosts(data.data || [])
       } else {
         setError(data.error || 'Failed to fetch posts')
+        setPosts([])
       }
     } catch (error) {
       console.error('Error fetching posts:', error)
-      setError('Failed to fetch posts')
+      setError('Failed to fetch posts. Please try again.')
+      setPosts([])
     } finally {
       setLoading(false)
     }

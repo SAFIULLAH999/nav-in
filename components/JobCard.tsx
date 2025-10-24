@@ -56,12 +56,12 @@ export function JobCard({ job }: JobCardProps) {
       <div className="mb-4">
         <h4 className="font-medium text-sm text-gray-900 mb-2">Requirements:</h4>
         <div className="flex flex-wrap gap-2">
-          {job.requirements.slice(0, 3).map((requirement, index) => (
+          {Array.isArray(job.requirements) && job.requirements.slice(0, 3).map((requirement, index) => (
             <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs">
               {requirement}
             </span>
           ))}
-          {job.requirements.length > 3 && (
+          {Array.isArray(job.requirements) && job.requirements.length > 3 && (
             <span className="text-gray-500 text-xs px-2 py-1">
               +{job.requirements.length - 3} more
             </span>
@@ -74,7 +74,10 @@ export function JobCard({ job }: JobCardProps) {
           Posted {job.postedDate}
         </span>
         <div className="flex space-x-3">
-          <button className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors">
+          <button
+            onClick={() => window.location.href = `/apply/${job.id}`}
+            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+          >
             Apply Now
           </button>
           <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">

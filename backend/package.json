@@ -15,7 +15,10 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx src/utils/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "schedule-jobs": "tsx src/schedule-jobs.ts",
+    "worker": "tsx src/worker-bullmq.ts",
+    "seed-jobs": "tsx src/utils/seed-jobs.ts"
   },
   "keywords": [
     "professional-networking",

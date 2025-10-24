@@ -1,6 +1,8 @@
 import { Queue, Worker, Job } from 'bullmq';
 import { redisClient } from './redis';
 import { logger } from '../utils/logger';
+import { JobScraperManager } from '../../../lib/job-scrapers/scraper-manager';
+import { prisma } from '../utils/prisma';
 
 // Create queue instance
 export const jobQueue = new Queue('job-processing', {
@@ -14,7 +16,7 @@ export const jobQueue = new Queue('job-processing', {
 
 // Queue job types
 export interface JobData {
-  type: 'email' | 'notification' | 'data-processing' | 'cleanup' | 'backup';
+  type: 'email' | 'notification' | 'data-processing' | 'cleanup' | 'backup' | 'job-fetching';
   payload: any;
   priority?: number;
   delay?: number;
@@ -110,6 +112,40 @@ const processBackupJob = async (job: Job<JobData>) => {
   }
 };
 
+// Job fetching processor
+const processJobFetchingJob = async (job: Job<JobData>) => {
+  logger.info('Processing job fetching job:', job.data);
+
+  try {
+    const scraperManager = new JobScraperManager();
+    const { searchQuery, location, limit } = job.data.payload;
+
+    // Check current job count in database
+    const currentJobCount = await prisma.job.count({
+      where: { isActive: true }
+    });
+
+    // Stop fetching if we have 100 or more jobs
+    if (currentJobCount >= 100) {
+      logger.info(`Job limit reached (${currentJobCount} jobs). Stopping job fetching.`);
+      return { success: true, message: 'Job limit reached' };
+    }
+
+    // Calculate how many jobs to fetch (max 20 at a time to reach 100)
+    const jobsToFetch = Math.min(limit || 20, 100 - currentJobCount);
+
+    logger.info(`Current jobs: ${currentJobCount}, Fetching: ${jobsToFetch} new jobs`);
+
+    await scraperManager.scrapeAllJobs(searchQuery || 'software engineer', location || 'remote', jobsToFetch);
+
+    logger.info('Job fetching completed successfully');
+    return { success: true, fetched: jobsToFetch, total: currentJobCount + jobsToFetch };
+  } catch (error) {
+    logger.error('Job fetching failed:', error);
+    throw error;
+  }
+};
+
 // Create worker instance
 export const jobWorker = new Worker<JobData>(
   'job-processing',
@@ -127,6 +163,8 @@ export const jobWorker = new Worker<JobData>(
         return await processCleanupJob(job);
       case 'backup':
         return await processBackupJob(job);
+      case 'job-fetching':
+        return await processJobFetchingJob(job);
       default:
         throw new Error(`Unknown job type: ${job.data.type}`);
     }
@@ -214,6 +252,15 @@ export const addCleanupJob = async (payload: any, priority?: number, delay?: num
 export const addBackupJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
   return addJob({
     type: 'backup',
+    payload,
+    priority,
+    delay,
+  });
+};
+
+export const addJobFetchingJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+  return addJob({
+    type: 'job-fetching',
     payload,
     priority,
     delay,
