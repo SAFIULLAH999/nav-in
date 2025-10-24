@@ -39,7 +39,7 @@ export const emailTemplates = {
           <li>Sharing your insights and updates</li>
         </ul>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Start Exploring</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Start Exploring</a>
         </div>
       </div>
     `
@@ -60,8 +60,8 @@ export const emailTemplates = {
           </ul>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL}/network" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">View Request</a>
-          <a href="${process.env.NEXTAUTH_URL}/profile/${senderUsername}" style="background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Profile</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/network" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">View Request</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/profile/${senderUsername}" style="background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Profile</a>
         </div>
       </div>
     `
@@ -81,8 +81,8 @@ export const emailTemplates = {
           <li>Stay updated with each other's activities</li>
         </ul>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL}/messages" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">Send Message</a>
-          <a href="${process.env.NEXTAUTH_URL}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Feed</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/messages" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">Send Message</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Feed</a>
         </div>
       </div>
     `
@@ -100,7 +100,7 @@ export const emailTemplates = {
           <p><strong>Applied on:</strong> ${new Date().toLocaleDateString()}</p>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Applications</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Applications</a>
         </div>
       </div>
     `
@@ -115,7 +115,7 @@ export const emailTemplates = {
         <p>You have requested to reset your password for your NavIN account.</p>
         <p>Please click the button below to reset your password. This link will expire in 1 hour.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Reset Password</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/reset-password?token=${resetToken}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Reset Password</a>
         </div>
         <p style="color: #6b7280; font-size: 14px;">If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
       </div>
@@ -131,7 +131,7 @@ export const emailTemplates = {
         <p>Welcome to NavIN! Please verify your email address to activate your account and start connecting with professionals.</p>
         <p>Click the button below to verify your email address:</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Verify Email</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/verify-email?token=${verificationToken}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Verify Email</a>
         </div>
         <p style="color: #6b7280; font-size: 14px;">This verification link will expire in 24 hours. If you didn't create an account with NavIN, please ignore this email.</p>
         <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -155,7 +155,7 @@ export const emailTemplates = {
         <p>${message}</p>
         ${actionUrl && actionText ? `
           <div style="text-align: center; margin-top: 30px;">
-            <a href="${actionUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">${actionText}</a>
+            <a href="${actionUrl.startsWith('http') ? actionUrl : (process.env.NEXTAUTH_URL || 'http://localhost:3002') + actionUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">${actionText}</a>
           </div>
         ` : ''}
       </div>

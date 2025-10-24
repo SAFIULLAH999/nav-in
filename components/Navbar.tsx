@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Search, Home, Users, Briefcase, MessageCircle, Bell, ChevronDown, Menu, User, Settings, LogOut, LogIn, UserPlus, FileText, ClipboardList, Sparkles, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { useFirebase } from './FirebaseProvider'
+import { useUser, useAuth } from '@clerk/nextjs'
+
 
 export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -12,6 +13,7 @@ export function Navbar() {
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const { getToken } = useAuth()
 
   // Close search results when clicking outside
   useEffect(() => {
@@ -44,7 +46,7 @@ export function Navbar() {
 
     setIsSearching(true)
     try {
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      const token = await getToken()
       const headers: HeadersInit = {
         'Content-Type': 'application/json'
       }
@@ -188,9 +190,11 @@ function NavIcon({ icon: Icon, label, href }: { icon: any, label: string, href: 
 }
 
 
+
 function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false)
-  const { user, signOut } = useFirebase()
+  const { user } = useUser()
+  const { signOut } = useAuth()
 
   const handleSignOut = async () => {
     try {
@@ -206,14 +210,14 @@ function ProfileMenu() {
     return (
       <div className="flex items-center space-x-3">
         <Link
-          href="/login"
+          href="/sign-in"
           className="flex items-center space-x-2 px-4 py-2 text-text hover:text-primary transition-colors glow-on-hover"
         >
           <LogIn className="w-4 h-4" />
           <span className="text-sm font-medium">Sign In</span>
         </Link>
         <Link
-          href="/register"
+          href="/sign-up"
           className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors animate-shimmer"
         >
           <UserPlus className="w-4 h-4" />
@@ -231,10 +235,10 @@ function ProfileMenu() {
         className="flex items-center space-x-2 p-2 hover:bg-secondary dark:hover:bg-dark-secondary rounded-lg transition-colors"
       >
         <div className="w-8 h-8 ios-avatar flex items-center justify-center text-white font-semibold">
-          {user?.photoURL ? (
-            <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full rounded-full object-cover" />
+          {user?.imageUrl ? (
+            <img src={user.imageUrl} alt={user.fullName || 'User'} className="w-full h-full rounded-full object-cover" />
           ) : (
-            user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'
+            user?.fullName?.charAt(0).toUpperCase() || user?.primaryEmailAddress?.emailAddress?.charAt(0).toUpperCase() || 'U'
           )}
         </div>
         <ChevronDown className="w-4 h-4 text-text dark:text-dark-text" />
@@ -249,8 +253,8 @@ function ProfileMenu() {
             className="absolute right-0 mt-2 w-56 ios-card z-50"
           >
             <div className="p-3 border-b border-border dark:border-dark-border">
-              <p className="font-medium text-text dark:text-dark-text">{user?.displayName || 'User'}</p>
-              <p className="text-sm text-text-muted dark:text-dark-text-muted">{user?.email}</p>
+              <p className="font-medium text-text dark:text-dark-text">{user?.fullName || 'User'}</p>
+              <p className="text-sm text-text-muted dark:text-dark-text-muted">{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
 
             <div className="py-2">

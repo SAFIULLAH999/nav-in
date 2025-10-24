@@ -58,8 +58,14 @@ async function getPendingConnectionUserIds(userId: string): Promise<{ sent: Set<
 export async function GET(request: NextRequest) {
   try {
     // Authenticate user (optional for search)
-    const authResult = await authenticateRequest(request)
-    const currentUserId = authResult && 'user' in authResult ? authResult.user.userId : null
+    let currentUserId = null
+    try {
+      const authResult = await authenticateRequest(request)
+      currentUserId = authResult && 'user' in authResult ? authResult.user.userId : null
+    } catch (error) {
+      // Authentication failed, but continue without authentication
+      console.log('Authentication failed for search, continuing without auth')
+    }
 
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')?.trim()

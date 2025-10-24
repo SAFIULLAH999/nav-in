@@ -49,6 +49,9 @@ function generateMockJobs(searchQuery: string, location: string, limit: number, 
     'Atlanta, GA', 'Miami, FL', 'Remote', 'San Diego, CA'
   ]
 
+  const sources = ['internal', 'jobdiva', 'indeed', 'linkedin']
+  const sourceWeights = [0.3, 0.3, 0.2, 0.2] // 30% internal, 30% JobDiva, 20% Indeed, 20% LinkedIn
+
   const jobs = []
 
   for (let i = 0; i < limit; i++) {
@@ -59,7 +62,23 @@ function generateMockJobs(searchQuery: string, location: string, limit: number, 
     const salaryMin = Math.floor(Math.random() * 50000) + 50000
     const salaryMax = salaryMin + Math.floor(Math.random() * 50000) + 20000
 
-    jobs.push({
+    // Determine job source
+    const randomValue = Math.random()
+    let source = 'internal'
+    let externalUrl = null
+
+    if (randomValue < sourceWeights[1]) {
+      source = 'jobdiva'
+      externalUrl = `https://jobdiva.com/jobs/${company.toLowerCase().replace(/\s+/g, '-')}-${searchQuery.toLowerCase().replace(/\s+/g, '-')}-${i}`
+    } else if (randomValue < sourceWeights[1] + sourceWeights[2]) {
+      source = 'indeed'
+      externalUrl = `https://indeed.com/jobs?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(jobLocation)}`
+    } else if (randomValue < sourceWeights[1] + sourceWeights[2] + sourceWeights[3]) {
+      source = 'linkedin'
+      externalUrl = `https://linkedin.com/jobs/search/?keywords=${encodeURIComponent(searchQuery)}&location=${encodeURIComponent(jobLocation)}`
+    }
+
+    const baseJob: any = {
       id: `mock-${Date.now()}-${page}-${i}`,
       title: `${searchQuery} ${['Developer', 'Engineer', 'Manager', 'Specialist', 'Analyst'][Math.floor(Math.random() * 5)]}`,
       description: `We are looking for a talented ${searchQuery} to join our growing team. You will work on exciting projects and collaborate with a dynamic team of professionals.`,
@@ -86,7 +105,15 @@ function generateMockJobs(searchQuery: string, location: string, limit: number, 
         avatar: '',
         title: 'HR Manager'
       }
-    })
+    }
+
+    // Add source-specific properties
+    if (source !== 'internal') {
+      baseJob.source = source
+      baseJob.externalUrl = externalUrl
+    }
+
+    jobs.push(baseJob)
   }
 
   return jobs

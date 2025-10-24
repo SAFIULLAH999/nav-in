@@ -2,27 +2,51 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 
-// GET - Browse all users (for the browse tab)
+// GET - Browse users for network connections
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate user
-    const authResult = await authenticateRequest(request)
-
-    if ('error' in authResult) {
-      return NextResponse.json(
-        { success: false, error: authResult.error },
-        { status: 401 }
-      )
+    // Authenticate user (optional for browsing)
+    let currentUserId = null
+    try {
+      const authResult = await authenticateRequest(request)
+      currentUserId = authResult && 'user' in authResult ? authResult.user.userId : null
+    } catch (error) {
+      // Authentication failed, but continue without authentication
+      console.log('Authentication failed for network browse, continuing without auth')
     }
 
-    const currentUserId = authResult.user.userId
+    const { searchParams } = new URL(request.url)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50)
+    const offset = parseInt(searchParams.get('offset') || '0')
+    const locationFilter = searchParams.get('location')?.trim()
+    const companyFilter = searchParams.get('company')?.trim()
+    const skillsFilter = searchParams.get('skills')?.trim()
 
-    // Get all users except current user
-    const allUsers = await prisma.user.findMany({
-      where: {
-        id: { not: currentUserId },
-        isActive: true
-      },
+    // Build where conditions
+    let userWhereConditions: any[] = []
+
+    // Add filters if provided
+    if (locationFilter) {
+      userWhereConditions.push({ location: { contains: locationFilter, mode: 'insensitive' } })
+    }
+
+    if (companyFilter) {
+      userWhereConditions.push({ company: { contains: companyFilter, mode: 'insensitive' } })
+    }
+
+    if (skillsFilter) {
+      userWhereConditions.push({ skills: { contains: skillsFilter, mode: 'insensitive' } })
+    }
+
+    const userWhere = {
+      OR: userWhereConditions.length > 0 ? userWhereConditions : [{ id: { not: null } }],
+      isActive: true,
+      ...(currentUserId && { id: { not: currentUserId } }) // Exclude current user
+    }
+
+    // Get users with connection status
+    const users = await prisma.user.findMany({
+      where: userWhere,
       select: {
         id: true,
         name: true,
@@ -32,96 +56,89 @@ export async function GET(request: NextRequest) {
         company: true,
         location: true,
         bio: true,
-        createdAt: true,
+        skills: true,
       },
-      orderBy: { createdAt: 'desc' }
+      take: limit,
+      skip: offset,
+      orderBy: { name: 'asc' }
     })
 
-    // Get existing connections and requests for the current user
-    const [connections, sentRequests, receivedRequests] = await Promise.all([
-      prisma.connection.findMany({
-        where: {
-          OR: [
-            { senderId: currentUserId, status: 'ACCEPTED' },
-            { receiverId: currentUserId, status: 'ACCEPTED' }
-          ]
-        },
-        select: {
-          senderId: true,
-          receiverId: true,
-          status: true
+    // Calculate mutual connections for each user
+    const usersWithMutualConnections = await Promise.all(
+      users.map(async (user) => {
+        if (!currentUserId) {
+          return { ...user, mutualConnections: 0, connectionStatus: 'none' }
         }
-      }),
-      prisma.connection.findMany({
-        where: {
-          senderId: currentUserId,
-          status: 'PENDING'
-        },
-        select: {
-          receiverId: true
+
+        // Get user's connections
+        const userConnections = await prisma.connection.findMany({
+          where: {
+            OR: [
+              { senderId: user.id, status: 'ACCEPTED' },
+              { receiverId: user.id, status: 'ACCEPTED' }
+            ]
+          },
+          select: {
+            senderId: true,
+            receiverId: true
+          }
+        })
+
+        // Get current user's connections
+        const currentUserConnections = await prisma.connection.findMany({
+          where: {
+            OR: [
+              { senderId: currentUserId, status: 'ACCEPTED' },
+              { receiverId: currentUserId, status: 'ACCEPTED' }
+            ]
+          },
+          select: {
+            senderId: true,
+            receiverId: true
+          }
+        })
+
+        const userConnectedIds = new Set([
+          ...userConnections.map(c => c.senderId === user.id ? c.receiverId : c.senderId)
+        ])
+
+        const currentUserConnectedIds = new Set([
+          ...currentUserConnections.map(c => c.senderId === currentUserId ? c.receiverId : c.senderId)
+        ])
+
+        const mutualConnections = Array.from(userConnectedIds).filter(id => currentUserConnectedIds.has(id)).length
+
+        // Check connection status
+        const existingConnection = await prisma.connection.findFirst({
+          where: {
+            OR: [
+              { senderId: currentUserId, receiverId: user.id },
+              { senderId: user.id, receiverId: currentUserId }
+            ]
+          }
+        })
+
+        let connectionStatus = 'none'
+        if (existingConnection) {
+          connectionStatus = existingConnection.status.toLowerCase()
         }
-      }),
-      prisma.connection.findMany({
-        where: {
-          receiverId: currentUserId,
-          status: 'PENDING'
-        },
-        select: {
-          senderId: true
+
+        return {
+          ...user,
+          mutualConnections,
+          connectionStatus
         }
       })
-    ])
-
-    // Create sets for quick lookup
-    const connectedUserIds = new Set(
-      connections.flatMap(conn =>
-        [conn.senderId, conn.receiverId].filter(id => id !== currentUserId)
-      )
     )
-
-    const sentRequestUserIds = new Set(
-      sentRequests.map(req => req.receiverId)
-    )
-
-    const receivedRequestUserIds = new Set(
-      receivedRequests.map(req => req.senderId)
-    )
-
-    // Add connection status to each user
-    const usersWithStatus = allUsers.map(user => {
-      let connectionStatus = 'none'
-
-      if (connectedUserIds.has(user.id)) {
-        connectionStatus = 'connected'
-      } else if (sentRequestUserIds.has(user.id)) {
-        // Current user sent a request to this user
-        connectionStatus = 'pending'
-      } else if (receivedRequestUserIds.has(user.id)) {
-        // Current user received a request from this user
-        // Don't show them in browse - they should respond in Pending Requests tab
-        connectionStatus = 'received'
-      }
-
-      return {
-        ...user,
-        connectionStatus,
-        // Add some basic stats for display
-        mutualConnections: 0, // Could be calculated if needed
-        reasons: ['Available to connect']
-      }
-    })
-
-    // Filter out users who sent requests to current user (they appear in Pending Requests tab)
-    const filteredUsers = usersWithStatus.filter(user => user.connectionStatus !== 'received')
 
     return NextResponse.json({
       success: true,
-      data: filteredUsers
+      data: usersWithMutualConnections
     })
   } catch (error) {
     console.error('Error browsing users:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch users' },
+      { success: false, error: 'Failed to browse users' },
       { status: 500 }
     )
   }

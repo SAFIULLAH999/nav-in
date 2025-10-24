@@ -442,18 +442,8 @@ function BrowseUsersTab() {
   const loadUsers = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
 
-      if (!token) {
-        setLoading(false)
-        return
-      }
-
-      const response = await fetch('/api/network/browse', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetch('/api/network/browse')
 
       const data = await response.json()
 
@@ -504,12 +494,6 @@ function BrowseUsersTab() {
 
     try {
       setIsSearching(true)
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-
-      if (!token) {
-        setIsSearching(false)
-        return
-      }
 
       const limit = 10
       const offset = (page - 1) * limit
@@ -529,11 +513,7 @@ function BrowseUsersTab() {
         searchUrl += `&skills=${encodeURIComponent(filters.skills)}`
       }
 
-      const response = await fetch(searchUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetch(searchUrl)
 
       const data = await response.json()
 

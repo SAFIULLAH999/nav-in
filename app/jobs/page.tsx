@@ -514,6 +514,56 @@ function JobCard({ job }: { job: any }) {
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`
   }
 
+  // Check if job is from external source (has external URL)
+  const isExternalJob = job.externalUrl || job.source === 'jobdiva' || job.source === 'indeed' || job.source === 'linkedin'
+  const isJobDivaJob = job.source === 'jobdiva'
+
+  const handleApplyClick = () => {
+    if (isExternalJob) {
+      // For external jobs, redirect to original site
+      if (job.externalUrl) {
+        window.open(job.externalUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        // Fallback for external jobs without URL
+        window.location.href = `/apply/${job.id}`
+      }
+    } else {
+      // For internal jobs, use the application form
+      window.location.href = `/apply/${job.id}`
+    }
+  }
+
+  const getApplyButtonText = () => {
+    if (isJobDivaJob) return 'Apply via JobDiva'
+    if (isExternalJob) return 'Apply on Original Site'
+    return 'Apply Now'
+  }
+
+  const getSourceBadge = () => {
+    if (isJobDivaJob) {
+      return (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+          JobDiva
+        </span>
+      )
+    }
+    if (job.source === 'indeed') {
+      return (
+        <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full font-medium">
+          Indeed
+        </span>
+      )
+    }
+    if (job.source === 'linkedin') {
+      return (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+          LinkedIn
+        </span>
+      )
+    }
+    return null
+  }
+
   return (
     <div className="bg-card rounded-xl shadow-soft border border-border p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-start justify-between">
@@ -526,8 +576,11 @@ function JobCard({ job }: { job: any }) {
           {/* Job Details */}
           <div className="flex-1">
             <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="text-xl font-semibold text-text mb-1">{job.title}</h3>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-1">
+                  <h3 className="text-xl font-semibold text-text">{job.title}</h3>
+                  {getSourceBadge()}
+                </div>
                 <p className="text-primary font-medium mb-2">{job.company}</p>
 
                 <div className="flex items-center space-x-4 text-sm text-text-muted mb-3">
@@ -579,6 +632,12 @@ function JobCard({ job }: { job: any }) {
               <div className="flex items-center space-x-4 text-sm text-text-muted">
                 <span>{formatDate(job.createdAt)}</span>
                 <span>{job.applicationsCount || 0} applicants</span>
+                {isExternalJob && (
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span className="text-green-600">External</span>
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center space-x-3">
@@ -586,10 +645,14 @@ function JobCard({ job }: { job: any }) {
                   View Details
                 </button>
                 <button
-                  onClick={() => window.location.href = `/apply/${job.id}`}
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  onClick={handleApplyClick}
+                  className={`px-6 py-2 rounded-lg transition-colors ${
+                    isExternalJob
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-primary text-white hover:bg-primary/90'
+                  }`}
                 >
-                  Apply Now
+                  {getApplyButtonText()}
                 </button>
               </div>
             </div>

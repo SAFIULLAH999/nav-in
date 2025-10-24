@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { username: string } }
-) {
+// GET - Fetch public user profile by username
+export async function GET(request: NextRequest, { params }: { params: { username: string } }) {
   try {
     const { username } = params
 
     if (!username) {
       return NextResponse.json(
-        { error: 'Username is required' },
+        { success: false, error: 'Username is required' },
         { status: 400 }
       )
     }
 
-    // Find user by username
     const user = await prisma.user.findUnique({
       where: { username },
       select: {
@@ -29,21 +26,47 @@ export async function GET(
         website: true,
         avatar: true,
         createdAt: true,
+        _count: {
+          select: {
+            sentConnections: {
+              where: { status: 'ACCEPTED' }
+            },
+            receivedConnections: {
+              where: { status: 'ACCEPTED' }
+            },
+            posts: true
+          }
+        }
       }
     })
 
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { success: false, error: 'User not found' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json(user)
+    const profile = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      bio: user.bio,
+      title: user.title,
+      company: user.company,
+      location: user.location,
+      website: user.website,
+      avatar: user.avatar,
+      createdAt: user.createdAt,
+      connections: user._count.sentConnections + user._count.receivedConnections,
+      posts: user._count.posts
+    }
+
+    return NextResponse.json({ success: true, data: profile })
   } catch (error) {
-    console.error('Error fetching user profile:', error)
+    console.error('Public profile fetch error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Failed to fetch profile' },
       { status: 500 }
     )
   }

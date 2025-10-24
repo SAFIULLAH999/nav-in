@@ -29,7 +29,6 @@ export default function PublicProfilePage({ params }: ProfilePageProps) {
   const { user: currentUser } = useFirebase()
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('posts')
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -166,7 +165,7 @@ export default function PublicProfilePage({ params }: ProfilePageProps) {
                         <MessageCircle className="w-4 h-4" />
                         <span>Message</span>
                       </button>
-                      <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors">
+                      <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg bg-secondary">
                         <UserPlus className="w-4 h-4" />
                         <span>Connect</span>
                       </button>
@@ -177,7 +176,7 @@ export default function PublicProfilePage({ params }: ProfilePageProps) {
                         <Edit className="w-4 h-4" />
                         <span>Edit Profile</span>
                       </button>
-                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                      <button className="p-2 bg-secondary rounded-lg">
                         <MoreHorizontal className="w-5 h-5 text-text-muted" />
                       </button>
                     </>
@@ -188,49 +187,14 @@ export default function PublicProfilePage({ params }: ProfilePageProps) {
           </div>
         </motion.div>
 
-        {/* Profile Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-center border-b border-border mb-8">
-            {[
-              { id: 'posts', label: 'Posts' },
-              { id: 'about', label: 'About' },
-              { id: 'experience', label: 'Experience' },
-              { id: 'education', label: 'Education' },
-              { id: 'connections', label: 'Connections' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 font-medium transition-colors relative ${
-                  activeTab === tab.id
-                    ? 'text-primary'
-                    : 'text-text-muted hover:text-text'
-                }`}
-              >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab Content */}
-          <div className="min-h-[400px]">
-            {activeTab === 'posts' && <PostsTab />}
-            {activeTab === 'about' && <AboutTab user={profileUser} />}
-            {activeTab === 'experience' && <ExperienceTab />}
-            {activeTab === 'education' && <EducationTab />}
-            {activeTab === 'connections' && <ConnectionsTab />}
-          </div>
-        </motion.div>
+        {/* All sections visible like LinkedIn */}
+        <div className="space-y-8">
+          <PostsTab />
+          <AboutTab user={profileUser} />
+          <ExperienceTab />
+          <EducationTab />
+          <ConnectionsTab />
+        </div>
       </div>
     </div>
   )
@@ -268,6 +232,35 @@ function AboutTab({ user }: { user: UserProfile }) {
           <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
             Node.js
           </span>
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+            Python
+          </span>
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+            AWS
+          </span>
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+            Docker
+          </span>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-lg p-6 border border-border">
+        <h3 className="font-semibold text-text mb-4">Contact Info</h3>
+        <div className="space-y-3">
+          {user.website && (
+            <div className="flex items-center space-x-3">
+              <LinkIcon className="w-4 h-4 text-text-muted" />
+              <a href={user.website} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                {user.website}
+              </a>
+            </div>
+          )}
+          {user.location && (
+            <div className="flex items-center space-x-3">
+              <MapPin className="w-4 h-4 text-text-muted" />
+              <span className="text-text-muted">{user.location}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -290,10 +283,38 @@ function ExperienceTab() {
             <h4 className="font-semibold text-text">Software Engineer</h4>
             <p className="text-primary mb-1">TechCorp</p>
             <p className="text-text-muted text-sm mb-2">Jan 2022 - Present • 2 years</p>
-            <p className="text-text-muted text-sm">
+            <p className="text-text-muted text-sm mb-3">
               Developing and maintaining web applications using React, Node.js, and AWS.
               Led a team of 3 developers on a major product redesign.
             </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">React</span>
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Node.js</span>
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">AWS</span>
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Team Leadership</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-lg p-6 border border-border">
+        <div className="flex items-start space-x-4">
+          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white font-semibold">
+            G
+          </div>
+          <div className="flex-1">
+            <h4 className="font-semibold text-text">Frontend Developer</h4>
+            <p className="text-primary mb-1">GlobalTech Solutions</p>
+            <p className="text-text-muted text-sm mb-2">Jun 2020 - Dec 2021 • 1 year 7 months</p>
+            <p className="text-text-muted text-sm mb-3">
+              Built responsive user interfaces for enterprise applications using modern JavaScript frameworks.
+              Collaborated with design team to implement pixel-perfect designs.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">JavaScript</span>
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">CSS</span>
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">UI/UX</span>
+            </div>
           </div>
         </div>
       </div>
@@ -316,7 +337,31 @@ function EducationTab() {
           <div className="flex-1">
             <h4 className="font-semibold text-text">Bachelor of Science in Computer Science</h4>
             <p className="text-primary mb-1">University of Technology</p>
-            <p className="text-text-muted text-sm">2018 - 2022</p>
+            <p className="text-text-muted text-sm mb-2">2018 - 2022</p>
+            <p className="text-text-muted text-sm mb-3">
+              Graduated Magna Cum Laude. Relevant coursework: Data Structures, Algorithms,
+              Software Engineering, Database Systems, Computer Networks.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Magna Cum Laude</span>
+              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Dean's List</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-lg p-6 border border-border">
+        <div className="flex items-start space-x-4">
+          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white font-semibold">
+            C
+          </div>
+          <div className="flex-1">
+            <h4 className="font-semibold text-text">AWS Certified Solutions Architect</h4>
+            <p className="text-primary mb-1">Amazon Web Services</p>
+            <p className="text-text-muted text-sm mb-2">2023 - Present</p>
+            <p className="text-text-muted text-sm">
+              Professional certification demonstrating expertise in designing distributed systems on AWS platform.
+            </p>
           </div>
         </div>
       </div>
@@ -347,10 +392,10 @@ function ConnectionsTab() {
               <p className="text-text-muted text-xs">{connection.mutual} mutual connections</p>
             </div>
             <div className="flex items-center space-x-2">
-              <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+              <button className="p-2 bg-secondary rounded-lg">
                 <MessageCircle className="w-4 h-4 text-text-muted" />
               </button>
-              <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+              <button className="p-2 bg-secondary rounded-lg">
                 <MoreHorizontal className="w-4 h-4 text-text-muted" />
               </button>
             </div>

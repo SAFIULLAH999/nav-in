@@ -42,6 +42,7 @@ interface Education {
 
 interface ProfileData {
   name: string
+  username: string
   title: string
   company: string
   location: string
@@ -78,6 +79,7 @@ export default function EditProfilePage() {
   // Profile state
   const [profile, setProfile] = useState<ProfileData>({
     name: '',
+    username: '',
     title: '',
     company: '',
     location: '',
@@ -126,8 +128,11 @@ export default function EditProfilePage() {
         return
       }
 
-      // Load experiences and education
-      const [expResponse, eduResponse] = await Promise.all([
+      // Load profile, experiences and education
+      const [profileResponse, expResponse, eduResponse] = await Promise.all([
+        fetch('/api/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
         fetch('/api/profile/experience', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
@@ -136,10 +141,24 @@ export default function EditProfilePage() {
         })
       ])
 
-      const [expData, eduData] = await Promise.all([
+      const [profileData, expData, eduData] = await Promise.all([
+        profileResponse.json(),
         expResponse.json(),
         eduResponse.json()
       ])
+
+      if (profileData.success) {
+        setProfile({
+          name: profileData.data.name || '',
+          username: profileData.data.username || '',
+          title: profileData.data.title || '',
+          company: profileData.data.company || '',
+          location: profileData.data.location || '',
+          bio: profileData.data.bio || '',
+          website: profileData.data.website || '',
+          skills: profileData.data.skills ? JSON.stringify(profileData.data.skills) : ''
+        })
+      }
 
       if (expData.success) {
         setExperiences(expData.data)
@@ -153,6 +172,45 @@ export default function EditProfilePage() {
       toast.error('Failed to load profile data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const saveProfile = async () => {
+    try {
+      setSaving(true)
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
+      const updateData = {
+        name: profile.name,
+        username: profile.username,
+        title: profile.title,
+        company: profile.company,
+        location: profile.location,
+        bio: profile.bio,
+        website: profile.website,
+        skills: profile.skills ? JSON.parse(profile.skills) : []
+      }
+
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Profile updated successfully')
+      } else {
+        toast.error(data.error || 'Failed to update profile')
+      }
+    } catch (error) {
+      toast.error('Failed to update profile')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -256,7 +314,7 @@ export default function EditProfilePage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 mb-8 bg-secondary rounded-lg p-1">
+        <div className="flex flex-col space-y-1 mb-8 bg-secondary rounded-lg p-1">
           {[
             { id: 'profile', label: 'Profile', icon: Award },
             { id: 'experience', label: 'Experience', icon: Briefcase },
@@ -267,7 +325,7 @@ export default function EditProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors text-left ${
                   activeTab === tab.id
                     ? 'bg-background text-primary shadow-soft'
                     : 'text-text-muted hover:text-text'
@@ -304,7 +362,7 @@ export default function EditProfilePage() {
         )}
 
         {activeTab === 'profile' && (
-          <ProfileSection profile={profile} setProfile={setProfile} />
+          <ProfileSection profile={profile} setProfile={setProfile} onSave={saveProfile} saving={saving} />
         )}
       </div>
     </div>
@@ -637,7 +695,7 @@ function EducationSection({ education, newEducation, setNewEducation, onAdd, sav
   )
 }
 
-function ProfileSection({ profile, setProfile }: any) {
+function ProfileSection({ profile, setProfile, onSave, saving }: any) {
   return (
     <div className="bg-card rounded-xl shadow-soft border border-border p-6">
       <h3 className="text-lg font-semibold text-text mb-4">Basic Information</h3>
@@ -654,6 +712,17 @@ function ProfileSection({ profile, setProfile }: any) {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-text mb-2">Username</label>
+          <input
+            type="text"
+            value={profile.username}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile((prev: ProfileData) => ({ ...prev, username: e.target.value }))}
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="yourusername"
+          />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-text mb-2">Professional Title</label>
           <input
             type="text"
@@ -662,7 +731,7 @@ function ProfileSection({ profile, setProfile }: any) {
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Software Engineer"
           />
-       </div>
+        </div>
 
        <div>
          <label className="block text-sm font-medium text-text mb-2">Company</label>
@@ -710,8 +779,12 @@ function ProfileSection({ profile, setProfile }: any) {
       </div>
 
       <div className="mt-6 flex justify-end">
-        <button className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-          Save Changes
+        <button
+          onClick={onSave}
+          disabled={saving}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </div>

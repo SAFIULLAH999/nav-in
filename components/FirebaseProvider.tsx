@@ -55,16 +55,23 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
         photoURL: session.user.image || null,
         providerId: 'nextauth',
         delete: async () => Promise.resolve(),
-        getIdToken: async () => Promise.resolve(`mock-token-${session.user.id}`),
-        getIdTokenResult: async () => Promise.resolve({
-          token: `mock-token-${session.user.id}`,
-          expirationTime: new Date(Date.now() + 3600000).toISOString(),
-          issuedAtTime: new Date().toISOString(),
-          authTime: new Date().toISOString(),
-          signInProvider: 'nextauth',
-          signInSecondFactor: null,
-          claims: { user_id: session.user.id, email: session.user.email }
-        }),
+        getIdToken: async (forceRefresh?: boolean) => {
+          // Generate a longer-lasting token (24 hours)
+          const expirationTime = Date.now() + (24 * 60 * 60 * 1000);
+          return `mock-token-${session.user.id}-${expirationTime}`;
+        },
+        getIdTokenResult: async (forceRefresh?: boolean) => {
+          const expirationTime = new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString();
+          return {
+            token: `mock-token-${session.user.id}-${Date.now()}`,
+            expirationTime,
+            issuedAtTime: new Date().toISOString(),
+            authTime: new Date().toISOString(),
+            signInProvider: 'nextauth',
+            signInSecondFactor: null,
+            claims: { user_id: session.user.id, email: session.user.email }
+          };
+        },
         reload: async () => Promise.resolve(),
         toJSON: () => ({ uid: session.user.id, email: session.user.email }),
       };
@@ -90,14 +97,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
   // Force re-render when auth state might have changed
   useEffect(() => {
     const handleFocus = () => {
-      // Check for current user when window regains focus
-      const currentUser = firebaseAuth.getCurrentUser();
-      setUser(currentUser);
+      // Only check Firebase user if no NextAuth session exists
+      if (!session?.user) {
+        const currentUser = firebaseAuth.getCurrentUser();
+        setUser(currentUser);
+      }
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  }, [session]);
 
   const signIn = async (email: string, password: string) => {
     try {

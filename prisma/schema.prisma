@@ -6,13 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-// Enums as strings for SQLite compatibility
-// ConnectionStatus: PENDING, ACCEPTED, BLOCKED
-// JobType: FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE, TEMPORARY
 
 model Account {
   id                String  @id @default(cuid())

@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Navbar } from '@/components/Navbar'
-import { ArrowLeft, Upload, FileText, Send } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Send, User, X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useFirebase } from '@/components/FirebaseProvider'
 
 interface Job {
   id: string
@@ -20,20 +21,50 @@ export default function ApplyPage() {
   const params = useParams()
   const router = useRouter()
   const jobId = params?.jobId as string
+  const { user } = useFirebase()
 
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
 
   // Application form state
   const [coverLetter, setCoverLetter] = useState('')
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [resumeUrl, setResumeUrl] = useState('')
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+
+  // Suggested skills for job applications
+  const suggestedSkills = [
+    'JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'Java', 'C++', 'C#',
+    'AWS', 'Docker', 'Kubernetes', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis',
+    'GraphQL', 'REST APIs', 'Git', 'CI/CD', 'Agile', 'Scrum', 'Leadership',
+    'Project Management', 'Team Management', 'Mentoring', 'Problem Solving',
+    'Communication', 'Teamwork', 'Time Management', 'Critical Thinking'
+  ]
 
   useEffect(() => {
     fetchJobDetails()
+    fetchUserProfile()
   }, [jobId])
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (token) {
+        const response = await fetch('/api/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        const data = await response.json()
+        if (data.success) {
+          setUserProfile(data.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
 
   const fetchJobDetails = async () => {
     try {
@@ -66,6 +97,23 @@ export default function ApplyPage() {
       // In a real app, you'd upload to a service like Cloudinary or S3
       setResumeUrl(`Uploaded: ${file.name}`)
     }
+  }
+
+  const handleSkillClick = (skill: string) => {
+    if (!selectedSkills.includes(skill)) {
+      setSelectedSkills([...selectedSkills, skill])
+      // Add skill to cover letter if it's not already there
+      if (coverLetter && !coverLetter.toLowerCase().includes(skill.toLowerCase())) {
+        const newCoverLetter = `${coverLetter}\n\nSkills: ${skill}`
+        setCoverLetter(newCoverLetter)
+      } else if (!coverLetter) {
+        setCoverLetter(`I have experience with ${skill}.`)
+      }
+    }
+  }
+
+  const removeSkill = (skillToRemove: string) => {
+    setSelectedSkills(selectedSkills.filter(skill => skill !== skillToRemove))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -195,6 +243,75 @@ export default function ApplyPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* User Information */}
+            {user && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <User className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-900">Application Details</p>
+                    <p className="text-sm text-blue-700">
+                      Application will be submitted from: <span className="font-medium">{user.email}</span>
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Your profile URL: <span className="font-medium">nav-in.com/in/{userProfile?.username || user.displayName?.toLowerCase().replace(/\s+/g, '') || user.email?.split('@')[0]}</span>
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Consider including this link in your cover letter or resume for quick reference.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Suggested Skills */}
+            <div>
+              <label className="block text-sm font-medium text-text mb-3">
+                Suggested Skills (click to add to your cover letter)
+              </label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {suggestedSkills.map((skill) => (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => handleSkillClick(skill)}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSkills.includes(skill)
+                        ? 'bg-primary text-white'
+                        : 'bg-secondary/50 text-text-muted hover:bg-secondary hover:text-text'
+                    }`}
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
+              {selectedSkills.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-text-muted mb-2">Selected skills:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSkills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="inline-flex items-center px-2 py-1 bg-primary/20 text-primary rounded-md text-xs"
+                      >
+                        {skill}
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(skill)}
+                          className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p className="text-xs text-text-muted mt-2">
+                Click on skills to automatically add them to your cover letter
+              </p>
+            </div>
+
             {/* Cover Letter */}
             <div>
               <label className="block text-sm font-medium text-text mb-2">

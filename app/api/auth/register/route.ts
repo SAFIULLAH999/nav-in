@@ -9,6 +9,7 @@ const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username must be less than 30 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores').optional(),
   title: z.string().optional(),
   company: z.string().optional(),
 })
@@ -16,7 +17,31 @@ const registerSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, password, title, company } = registerSchema.parse(body)
+    const { name, email, password, username, title, company } = registerSchema.parse(body)
+
+    // Generate username if not provided
+    let finalUsername = username
+    if (!finalUsername) {
+      // Generate from email or name
+      const baseUsername = name.toLowerCase().replace(/\s+/g, '') || email.split('@')[0]
+      finalUsername = baseUsername
+      let counter = 1
+      while (await prisma.user.findUnique({ where: { username: finalUsername } })) {
+        finalUsername = `${baseUsername}${counter}`
+        counter++
+      }
+    }
+
+    // Check if username is already taken
+    const existingUserByUsername = await prisma.user.findUnique({
+      where: { username: finalUsername }
+    })
+    if (existingUserByUsername) {
+      return NextResponse.json(
+        { error: 'Username already taken' },
+        { status: 400 }
+      )
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -39,6 +64,7 @@ export async function POST(request: NextRequest) {
         name,
         email,
         password: hashedPassword,
+        username: finalUsername,
         title,
         company,
         emailVerified: null, // User starts unverified
