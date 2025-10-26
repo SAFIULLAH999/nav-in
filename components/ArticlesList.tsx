@@ -61,6 +61,9 @@ export function ArticlesList() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showWriteForm, setShowWriteForm] = useState(false);
 
+  // Handle session loading state
+  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+
   useEffect(() => {
     fetchArticles();
   }, [selectedCategory]);

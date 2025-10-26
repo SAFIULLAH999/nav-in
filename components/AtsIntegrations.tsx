@@ -74,13 +74,16 @@ export function AtsIntegrations() {
     syncFrequency: 3600,
   });
 
+  // Handle session loading state
+  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id) {
+    if (isAuthenticated) {
       fetchIntegrations();
     } else if (status === 'unauthenticated') {
       setLoading(false);
     }
-  }, [session, status]);
+  }, [isAuthenticated, status]);
 
   const fetchIntegrations = async () => {
     try {

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { JWTManager } from '@/lib/jwt'
 import { Logger } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+
 // GET - Get system reports and analytics
 export async function GET(request: NextRequest) {
   try {

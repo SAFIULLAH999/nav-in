@@ -57,14 +57,17 @@ export function GroupsBrowser() {
     isPrivate: false,
   });
 
+  // Handle session loading state
+  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+
   useEffect(() => {
     fetchGroups(); // Always fetch groups, even without authentication
-    if (status === 'authenticated' && session?.user?.id) {
+    if (isAuthenticated) {
       fetchUserMemberships();
     } else if (status === 'unauthenticated') {
       setLoading(false);
     }
-  }, [session, status]);
+  }, [isAuthenticated, status]);
 
   const fetchGroups = async () => {
     try {

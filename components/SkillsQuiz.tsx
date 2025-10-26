@@ -60,14 +60,17 @@ export function SkillsQuiz() {
   const [loading, setLoading] = useState(true);
   const [takingQuiz, setTakingQuiz] = useState(false);
 
+  // Handle session loading state
+  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+
   useEffect(() => {
     fetchQuizzes(); // Always fetch quizzes, even without authentication
-    if (status === 'authenticated' && session?.user?.id) {
+    if (isAuthenticated) {
       fetchUserAttempts();
     } else if (status === 'unauthenticated') {
       setLoading(false);
     }
-  }, [session, status]);
+  }, [isAuthenticated, status]);
 
   const fetchQuizzes = async () => {
     try {

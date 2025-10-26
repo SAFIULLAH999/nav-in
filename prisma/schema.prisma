@@ -95,7 +95,6 @@ model User {
   companyMemberships    CompanyEmployee[]
   passwordResetTokens   PasswordResetToken[]
   userSkills            UserSkill[]
-  documents             Document[]
   generatedURLs         GeneratedURL[]
   sentRecruiterMessages RecruiterMessage[] @relation("RecruiterMessageSender")
   receivedRecruiterMessages RecruiterMessage[] @relation("RecruiterMessageReceiver")
@@ -1034,18 +1033,7 @@ model AnalyticsEvent {
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Document {
-  id            String   @id @default(cuid())
-  title         String
-  content       String   @default("")
-  authorId      String
-  isPublic      Boolean  @default(false)
-  collaborators String   @default("[]") // JSON array of user IDs
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-}
 
 model GeneratedURL {
   id        String   @id @default(cuid())
