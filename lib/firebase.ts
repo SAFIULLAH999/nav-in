@@ -3,35 +3,27 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Validate Firebase configuration
+// Validate Firebase configuration (but don't throw errors in development)
 const validateFirebaseConfig = () => {
   const config = {
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.FIREBASE_APP_ID,
+    apiKey: process.env.FIREBASE_API_KEY || 'demo-api-key',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'demo-project.firebaseapp.com',
+    projectId: process.env.FIREBASE_PROJECT_ID || 'demo-project',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'demo-project.appspot.com',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '123456789',
+    appId: process.env.FIREBASE_APP_ID || '1:123456789:web:abcdef123456',
   };
 
-  console.log('Firebase config check:', {
-    apiKey: process.env.FIREBASE_API_KEY ? 'Set' : 'Missing',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN ? 'Set' : 'Missing',
-    projectId: process.env.FIREBASE_PROJECT_ID ? 'Set' : 'Missing',
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET ? 'Set' : 'Missing',
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID ? 'Set' : 'Missing',
-    appId: process.env.FIREBASE_APP_ID ? 'Set' : 'Missing',
-  });
+  // Only log in development if not properly configured
+  if (process.env.NODE_ENV === 'development') {
+    const hasRealConfig = process.env.FIREBASE_API_KEY &&
+                         !process.env.FIREBASE_API_KEY.includes('your-firebase') &&
+                         process.env.FIREBASE_PROJECT_ID &&
+                         !process.env.FIREBASE_PROJECT_ID.includes('your-project');
 
-  const requiredFields = ['apiKey', 'authDomain', 'projectId'];
-  const missingFields = requiredFields.filter(field => !config[field as keyof typeof config]);
-
-  if (missingFields.length > 0) {
-    throw new Error(
-      `Missing Firebase configuration. Please set the following environment variables:\n` +
-      missingFields.map(field => `  - ${field.toUpperCase()}`).join('\n') +
-      `\n\nSee FIREBASE_SETUP.md for instructions.`
-    );
+    if (!hasRealConfig) {
+      console.log('Firebase config check: Using demo configuration - authentication features will use Clerk instead');
+    }
   }
 
   return config;

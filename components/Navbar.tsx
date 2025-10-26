@@ -157,7 +157,6 @@ export function Navbar() {
           <NavIcon icon={Briefcase} label="Jobs" href="/jobs" />
           <NavIcon icon={FileText} label="Documents" href="/documents" />
           <NavIcon icon={ClipboardList} label="Applications" href="/applications" />
-          <NavIcon icon={Sparkles} label="AI" href="/recommendations" />
           <NavIcon icon={MessageCircle} label="Messages" href="/messages" />
           <NavIcon icon={Bell} label="Notifications" href="/notifications" />
 

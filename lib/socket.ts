@@ -22,8 +22,10 @@ declare module 'socket.io' {
 // Store active users and their socket IDs
 const activeUsers = new Map<string, string>()
 
+let io: ServerIO | null = null
+
 export const initSocketIO = (httpServer: NetServer) => {
-  const io = new ServerIO(httpServer, {
+  io = new ServerIO(httpServer, {
     path: '/api/socket',
     cors: {
       origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
@@ -455,6 +457,8 @@ export const initSocketIO = (httpServer: NetServer) => {
 
   return io
 }
+
+export { io }
 
 // Helper function to get active users
 export const getActiveUsers = () => Array.from(activeUsers.keys())

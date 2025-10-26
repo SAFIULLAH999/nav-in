@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const locationFilter = searchParams.get('location')?.trim()
     const companyFilter = searchParams.get('company')?.trim()
     const skillsFilter = searchParams.get('skills')?.trim()
+    const institutionFilter = searchParams.get('institution')?.trim()
 
     // Build where conditions
     let userWhereConditions: any[] = []
@@ -38,8 +39,12 @@ export async function GET(request: NextRequest) {
       userWhereConditions.push({ skills: { contains: skillsFilter, mode: 'insensitive' } })
     }
 
+    if (institutionFilter) {
+      userWhereConditions.push({ education: { some: { institution: { contains: institutionFilter, mode: 'insensitive' } } } })
+    }
+
     const userWhere = {
-      OR: userWhereConditions.length > 0 ? userWhereConditions : [{ id: { not: null } }],
+      ...(userWhereConditions.length > 0 ? { OR: userWhereConditions } : {}),
       isActive: true,
       ...(currentUserId && { id: { not: currentUserId } }) // Exclude current user
     }

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
-import { useSession } from 'next-auth/react'
+import { useUser, useAuth } from '@clerk/nextjs'
 
 interface SocketContextType {
   socket: Socket | null
@@ -38,7 +38,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false)
   const [isServerless, setIsServerless] = useState(false)
   const [activeUsers, setActiveUsers] = useState<string[]>([])
-  const { data: session } = useSession()
+  const { user } = useUser()
+  const { getToken } = useAuth()
   const messageCallbacks = useRef<((message: any) => void)[]>([])
   const userOnlineCallbacks = useRef<((data: { userId: string }) => void)[]>([])
   const userOfflineCallbacks = useRef<((data: { userId: string }) => void)[]>([])
@@ -47,7 +48,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Function to update user activity in serverless environment
   const updateUserActivity = async () => {
-    if (session?.user && isServerless) {
+    if (user && isServerless) {
       try {
         await fetch('/api/user/activity', {
           method: 'POST',
@@ -55,7 +56,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: session.user.id,
+            userId: user.id,
             action: 'heartbeat',
             timestamp: new Date().toISOString()
           })
@@ -88,97 +89,104 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }
 
   useEffect(() => {
-    if (session?.user && !socket) {
-      // Check if we're in a serverless environment (Vercel)
-      const isServerless = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ||
-                          process.env.NODE_ENV === 'production'
+    const initializeSocket = async () => {
+      if (user && !socket) {
+        // Check if we're in a serverless environment (Vercel)
+        const isServerless = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ||
+                            process.env.NODE_ENV === 'production'
 
-      if (isServerless) {
-        console.log('Serverless environment detected - using API-based real-time features')
-        setIsConnected(true)
-        setIsServerless(true)
+        if (isServerless) {
+          console.log('Serverless environment detected - using API-based real-time features')
+          setIsConnected(true)
+          setIsServerless(true)
 
-        // Set up periodic activity updates for serverless environment
-        const activityInterval = setInterval(() => {
+          // Set up periodic activity updates for serverless environment
+          const activityInterval = setInterval(() => {
+            updateUserActivity()
+          }, 30000) // Update every 30 seconds
+
+          // Initial activity update
           updateUserActivity()
-        }, 30000) // Update every 30 seconds
 
-        // Initial activity update
-        updateUserActivity()
-
-        return () => {
-          clearInterval(activityInterval)
+          return () => {
+            clearInterval(activityInterval)
+          }
         }
-      }
 
-      // Initialize socket connection for development
-      const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
-        path: '/api/socket',
-        auth: {
-          token: localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-        }
-      })
+        // Get token for authentication
+        const token = await getToken()
 
-      newSocket.on('connect', () => {
-        console.log('Connected to socket server')
-        setIsConnected(true)
-
-        // Authenticate user
-        newSocket.emit('authenticate', localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'))
-      })
-
-      newSocket.on('disconnect', () => {
-        console.log('Disconnected from socket server')
-        setIsConnected(false)
-      })
-
-      newSocket.on('auth_error', (error: string) => {
-        console.error('Socket authentication failed:', error)
-      })
-
-      // Handle real-time messaging
-      newSocket.on('new_message', (message: any) => {
-        messageCallbacks.current.forEach(callback => callback(message))
-      })
-
-      newSocket.on('message_sent', (message: any) => {
-        messageCallbacks.current.forEach(callback => callback(message))
-      })
-
-      // Handle user presence
-      newSocket.on('user_online', (data: { userId: string }) => {
-        setActiveUsers(prev => {
-          const newUsers = [...prev, data.userId]
-          return Array.from(new Set(newUsers))
+        // Initialize socket connection for development
+        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
+          path: '/api/socket',
+          auth: {
+            token: token
+          }
         })
-        userOnlineCallbacks.current.forEach(callback => callback(data))
-      })
 
-      newSocket.on('user_offline', (data: { userId: string }) => {
-        setActiveUsers(prev => prev.filter(id => id !== data.userId))
-        userOfflineCallbacks.current.forEach(callback => callback(data))
-      })
+        newSocket.on('connect', () => {
+          console.log('Connected to socket server')
+          setIsConnected(true)
 
-      // Handle notifications
-      newSocket.on('new_notification', (notification: any) => {
-        notificationCallbacks.current.forEach(callback => callback(notification))
-      })
+          // Authenticate user
+          newSocket.emit('authenticate', token)
+        })
 
-      // Handle post updates (likes, comments, shares)
-      newSocket.on('post_liked', (data: any) => {
-        postUpdateCallbacks.current.forEach(callback => callback(data))
-      })
+        newSocket.on('disconnect', () => {
+          console.log('Disconnected from socket server')
+          setIsConnected(false)
+        })
 
-      newSocket.on('post_commented', (data: any) => {
-        postUpdateCallbacks.current.forEach(callback => callback(data))
-      })
+        newSocket.on('auth_error', (error: string) => {
+          console.error('Socket authentication failed:', error)
+        })
 
-      newSocket.on('post_shared', (data: any) => {
-        postUpdateCallbacks.current.forEach(callback => callback(data))
-      })
+        // Handle real-time messaging
+        newSocket.on('new_message', (message: any) => {
+          messageCallbacks.current.forEach(callback => callback(message))
+        })
 
-      setSocket(newSocket)
+        newSocket.on('message_sent', (message: any) => {
+          messageCallbacks.current.forEach(callback => callback(message))
+        })
+
+        // Handle user presence
+        newSocket.on('user_online', (data: { userId: string }) => {
+          setActiveUsers(prev => {
+            const newUsers = [...prev, data.userId]
+            return Array.from(new Set(newUsers))
+          })
+          userOnlineCallbacks.current.forEach(callback => callback(data))
+        })
+
+        newSocket.on('user_offline', (data: { userId: string }) => {
+          setActiveUsers(prev => prev.filter(id => id !== data.userId))
+          userOfflineCallbacks.current.forEach(callback => callback(data))
+        })
+
+        // Handle notifications
+        newSocket.on('new_notification', (notification: any) => {
+          notificationCallbacks.current.forEach(callback => callback(notification))
+        })
+
+        // Handle post updates (likes, comments, shares)
+        newSocket.on('post_liked', (data: any) => {
+          postUpdateCallbacks.current.forEach(callback => callback(data))
+        })
+
+        newSocket.on('post_commented', (data: any) => {
+          postUpdateCallbacks.current.forEach(callback => callback(data))
+        })
+
+        newSocket.on('post_shared', (data: any) => {
+          postUpdateCallbacks.current.forEach(callback => callback(data))
+        })
+
+        setSocket(newSocket)
+      }
     }
+
+    initializeSocket()
 
     return () => {
       if (socket) {
@@ -187,7 +195,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setIsConnected(false)
       }
     }
-  }, [session, socket])
+  }, [user, socket, getToken])
 
   const sendMessage = (receiverId: string, content: string) => {
     if (isServerless) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -15,12 +15,9 @@ import {
   Briefcase,
   MessageSquare,
   TrendingUp,
-  Shield,
   Ban,
   Eye,
   Search,
-  Filter,
-  Download,
   RefreshCw
 } from 'lucide-react'
 
@@ -77,13 +74,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true)
     try {
       await Promise.all([
@@ -97,7 +89,11 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])
 
   const loadUsers = async () => {
     try {
@@ -365,7 +361,6 @@ export default function AdminDashboard() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedUser(user)}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>

@@ -1,15 +1,15 @@
 'use client'
 
 import { useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useUser } from '@clerk/nextjs'
 import { usePathname } from 'next/navigation'
 
 export const useActivityTracker = () => {
-  const { data: session } = useSession()
+  const { user } = useUser()
   const pathname = usePathname()
 
   const trackActivity = useCallback(async (action: string, metadata?: Record<string, any>) => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     try {
       await fetch('/api/user/activity', {
@@ -18,7 +18,7 @@ export const useActivityTracker = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: user.id,
           action,
           metadata: {
             ...metadata,
@@ -29,19 +29,23 @@ export const useActivityTracker = () => {
         })
       })
     } catch (error) {
+      // Silently fail in development to avoid console noise
+      if (process.env.NODE_ENV === 'development') {
+        return
+      }
       console.error('Failed to track activity:', error)
     }
-  }, [session?.user?.id, pathname])
+  }, [user?.id, pathname])
 
   // Track page views
   useEffect(() => {
-    if (pathname && session?.user?.id) {
+    if (pathname && user?.id) {
       trackActivity('page_view', {
         page: pathname,
         referrer: document.referrer
       })
     }
-  }, [pathname, session?.user?.id, trackActivity])
+  }, [pathname, user?.id, trackActivity])
 
   // Track user interactions
   const trackClick = useCallback((element: string, metadata?: Record<string, any>) => {

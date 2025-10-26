@@ -51,6 +51,9 @@ model User {
   location      String?
   website       String?
   skills        String?   // JSON string of skill strings
+  interests     String?   // JSON array of professional interests
+  industry      String?   // Industry field
+  language      String?   // JSON array of languages
   avatar        String?   // profile picture URL
   summary       String?   // professional summary
   socialLinks   String?   // JSON string for social media links
@@ -114,6 +117,29 @@ model User {
   verificationRequests  VerificationRequest[]
   verificationBadges    VerificationBadge[]
   reviewedVerifications VerificationRequest[] @relation("VerificationReviewer")
+  givenRecommendations  Recommendation[] @relation("RecommendationGiver")
+  receivedRecommendations Recommendation[] @relation("RecommendationRequester")
+  certifications        Certification[]
+  licenses              License[]
+  profileMedia          ProfileMedia[]
+  salaryInsights        SalaryInsight[]
+  interviewExperiences  InterviewExperience[]
+  companyFollows        CompanyFollower[]
+  companyInsights       CompanyInsight[]
+  contentReports        ContentReport[] @relation("ContentReporter")
+  reviewedReports       ContentReport[] @relation("ContentReviewer")
+  moderationActions     ModerationAction[]
+  apiKeys               ApiKey[]
+  webhooks              Webhook[]
+  resumeImports         ResumeImport[]
+  sentInvitations       NetworkInvitation[]
+  onboardingProgress    OnboardingProgress?
+  premiumSubscription   PremiumSubscription?
+  sentInMails           InMail[] @relation("InMailSender")
+  receivedInMails       InMail[] @relation("InMailReceiver")
+  profileViews          ProfileView[] @relation("ProfileViewed")
+  viewedProfiles        ProfileView[] @relation("ProfileViewer")
+  profileAnalytics      ProfileAnalytics?
 }
 
 model OpenTo {
@@ -408,6 +434,17 @@ model PostAnalytics {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
+model ProfileAnalytics {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  profileViews    Int      @default(0)
+  postImpressions Int      @default(0)
+  totalEngagement Int      @default(0)
+  lastUpdated     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Post {
   id        String   @id @default(cuid())
   content   String
@@ -518,6 +555,8 @@ model Company {
   jobs        Job[]
   posts       CompanyPost[]
   atsIntegrations AtsIntegration[]
+  followers   CompanyFollower[]
+  insights    CompanyInsight[]
 }
 
 model CompanyEmployee {
@@ -1014,4 +1053,328 @@ model GeneratedURL {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id          String   @id @default(cuid())
+  requesterId String   // User who requested the recommendation
+  recommenderId String // User giving the recommendation
+  relationship String   // How they worked together (e.g., "Manager", "Colleague", "Client")
+  position    String?  // Position during collaboration
+  content     String   // The recommendation text
+  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  isVisible   Boolean  @default(true)
+  requestedAt DateTime @default(now())
+  respondedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester   User @relation("RecommendationRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recommender User @relation("RecommendationGiver", fields: [recommenderId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId, status])
+  @@index([recommenderId, status])
+}
+
+model Certification {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String   // Certification name
+  issuingOrg      String   // Organization that issued certification
+  issueDate       DateTime
+  expiryDate      DateTime?
+  credentialId    String?  // Unique credential/license number
+  credentialUrl   String?  // URL to verify certification
+  description     String?
+  isVerified      Boolean  @default(false)
+  media           String?  // JSON array of certificate images/documents
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model License {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String   // License name
+  issuingAuthority String  // Authority that issued license
+  licenseNumber   String
+  issueDate       DateTime
+  expiryDate      DateTime?
+  isActive        Boolean  @default(true)
+  description     String?
+  verificationUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([userId, licenseNumber])
+}
+
+model ProfileMedia {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // IMAGE, VIDEO, DOCUMENT, PRESENTATION
+  url         String   // Media URL (Cloudinary, S3, etc.)
+  thumbnail   String?  // Thumbnail for videos
+  title       String?
+  description String?
+  category    String?  // PROFILE_HIGHLIGHT, WORK_SAMPLE, ACHIEVEMENT
+  order       Int      @default(0)
+  isPublic    Boolean  @default(true)
+  metadata    String?  // JSON with dimensions, duration, file size, etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+}
+
+model SalaryInsight {
+  id          String   @id @default(cuid())
+  userId      String
+  jobTitle    String
+  company     String?
+  companySize String?  // STARTUP, SMB, ENTERPRISE
+  location    String
+  salaryMin   Int
+  salaryMax   Int
+  currency    String   @default("USD")
+  employment  String   @default("FULL_TIME") // FULL_TIME, PART_TIME, CONTRACT
+  experience  String   // ENTRY, JUNIOR, MID, SENIOR, LEAD, EXECUTIVE
+  industry    String?
+  benefits    String?  // JSON array of benefits
+  isAnonymous Boolean  @default(true)
+  isVerified  Boolean  @default(false)
+  upvotes     Int      @default(0)
+  downvotes   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([jobTitle, location])
+  @@index([company])
+}
+
+model InterviewExperience {
+  id            String   @id @default(cuid())
+  userId        String
+  company       String
+  jobTitle      String
+  location      String?
+  interviewType String   // PHONE_SCREEN, TECHNICAL, BEHAVIORAL, ONSITE, VIDEO
+  difficulty    String   // EASY, MEDIUM, HARD
+  outcome       String   // OFFER, REJECTED, NO_RESPONSE, WITHDREW
+  experience    String   // Detailed interview experience
+  questions     String?  // JSON array of interview questions
+  process       String?  // Description of interview process
+  duration      String?  // Interview duration
+  tips          String?  // Tips for future candidates
+  isAnonymous   Boolean  @default(true)
+  helpful       Int      @default(0)
+  notHelpful    Int      @default(0)
+  interviewDate DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([company, jobTitle])
+}
+
+model CompanyFollower {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([companyId])
+}
+
+model CompanyInsight {
+  id             String   @id @default(cuid())
+  companyId      String
+  type           String   // CULTURE, WORK_LIFE_BALANCE, GROWTH, MANAGEMENT
+  rating         Float    // 1-5 rating
+  review         String?
+  pros           String?
+  cons           String?
+  userId         String   // Reviewer
+  position       String?  // Reviewer's position
+  employmentType String?  // CURRENT, FORMER
+  isAnonymous    Boolean  @default(true)
+  helpful        Int      @default(0)
+  notHelpful     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, type])
+}
+
+model ContentReport {
+  id          String   @id @default(cuid())
+  reporterId  String   // User reporting the content
+  contentType String   // POST, COMMENT, ARTICLE, PROFILE, JOB
+  contentId   String   // ID of the reported content
+  reason      String   // SPAM, HARASSMENT, INAPPROPRIATE, MISINFORMATION, OTHER
+  description String?
+  status      String   @default("PENDING") // PENDING, REVIEWING, RESOLVED, DISMISSED
+  reviewerId  String?  // Admin reviewing the report
+  resolution  String?  // Action taken
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reporter User  @relation("ContentReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ContentReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([status, contentType])
+  @@index([reporterId])
+}
+
+model ModerationAction {
+  id          String   @id @default(cuid())
+  moderatorId String
+  targetType  String   // USER, POST, COMMENT, ARTICLE
+  targetId    String
+  action      String   // WARN, HIDE, DELETE, SUSPEND, BAN
+  reason      String
+  notes       String?
+  duration    Int?     // Duration in days for temporary actions
+  createdAt   DateTime @default(now())
+
+  moderator User @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId])
+  @@index([moderatorId])
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  userId      String   // Owner of the API key
+  name        String   // Friendly name for the key
+  key         String   @unique // The actual API key (hashed)
+  scopes      String   // JSON array of permitted scopes
+  rateLimit   Int      @default(1000) // Requests per hour
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Webhook {
+  id          String   @id @default(cuid())
+  userId      String
+  url         String
+  events      String   // JSON array of subscribed events
+  secret      String   // Webhook signature secret
+  isActive    Boolean  @default(true)
+  lastTriggered DateTime?
+  failureCount  Int    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ResumeImport {
+  id          String   @id @default(cuid())
+  userId      String
+  fileName    String
+  fileUrl     String
+  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  parsedData  String?  // JSON of parsed resume data
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+model NetworkInvitation {
+  id          String   @id @default(cuid())
+  senderId    String
+  email       String
+  message     String?
+  status      String   @default("PENDING") // PENDING, ACCEPTED, EXPIRED
+  token       String   @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([email, status])
+}
+
+model OnboardingProgress {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  currentStep    Int      @default(0)
+  completedSteps String   @default("[]") // JSON array of completed step IDs
+  isCompleted    Boolean  @default(false)
+  skipped        Boolean  @default(false)
+  metadata       String?  // JSON for additional tracking
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PremiumSubscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  tier      String   // BASIC, PREMIUM, PRO
+  status    String   @default("ACTIVE")
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProfileView {
+  id        String   @id @default(cuid())
+  viewerId  String
+  profileId String
+  viewedAt  DateTime @default(now())
+
+  viewer  User @relation("ProfileViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  profile User @relation("ProfileViewed", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, profileId])
+}
+
+model InMail {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  sentAt     DateTime @default(now())
+
+  sender   User @relation("InMailSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("InMailReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 }

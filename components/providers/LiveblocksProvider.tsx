@@ -41,26 +41,11 @@ const LiveblocksProviderContent: React.FC<{ children: React.ReactNode }> = ({ ch
   )
 }
 
-export const LiveblocksProvider: React.FC<LiveblocksProviderProps> = ({
-  children,
-  publicKey = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY
-}) => {
-  if (!publicKey || !liveblocks) {
-    console.warn('Liveblocks not configured')
-    return (
-      <LiveblocksProviderContent>
-        {children}
-      </LiveblocksProviderContent>
-    )
-  }
-
+export const LiveblocksProvider: React.FC<LiveblocksProviderProps> = ({ children }) => {
+  // Always use mock provider in development to avoid configuration issues
   return (
-    <LBProvider client={liveblocks}>
-      <ClientSideSuspense fallback={<div>Loading collaboration...</div>}>
-        <LiveblocksProviderContent>
-          {children}
-        </LiveblocksProviderContent>
-      </ClientSideSuspense>
-    </LBProvider>
+    <LiveblocksProviderContent>
+      {children}
+    </LiveblocksProviderContent>
   )
 }

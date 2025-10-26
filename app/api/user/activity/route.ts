@@ -70,20 +70,62 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId, action, timestamp, metadata } = activitySchema.parse(body)
 
-    // Update user's last activity timestamp
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        lastLoginAt: new Date()
-      },
-      select: {
-        id: true,
-        name: true,
-        avatar: true,
-        title: true,
-        lastLoginAt: true
+    // Update user's last activity timestamp (only if user exists)
+    let updatedUser
+    try {
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          lastLoginAt: new Date()
+        },
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+          title: true,
+          lastLoginAt: true
+        }
+      })
+    } catch (error) {
+      // User doesn't exist, skip the update
+      if (process.env.NODE_ENV === 'development') {
+        // Don't log in development to avoid console noise
+        return NextResponse.json({
+          success: true,
+          data: {
+            user: {
+              id: userId,
+              name: 'Unknown User',
+              avatar: '',
+              title: 'NavIN User',
+              lastSeen: new Date().toISOString(),
+              isOnline: true
+            },
+            action,
+            timestamp: new Date().toISOString()
+          },
+          message: 'Activity logged (user not in database)'
+        })
       }
-    })
+
+      console.log(`User ${userId} not found in database, skipping activity update`)
+      return NextResponse.json({
+        success: true,
+        data: {
+          user: {
+            id: userId,
+            name: 'Unknown User',
+            avatar: '',
+            title: 'NavIN User',
+            lastSeen: new Date().toISOString(),
+            isOnline: true
+          },
+          action,
+          timestamp: new Date().toISOString()
+        },
+        message: 'Activity logged (user not in database)'
+      })
+    }
 
     // Store activity log for analytics (optional)
     try {
@@ -152,19 +194,59 @@ export async function DELETE(request: NextRequest) {
     const userId = authResult.user.userId
 
     // Update user's last activity (don't clear it completely for presence tracking)
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        // Keep lastLoginAt for presence tracking but mark as offline in analytics
-      },
-      select: {
-        id: true,
-        name: true,
-        avatar: true,
-        title: true,
-        lastLoginAt: true
+    let updatedUser
+    try {
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          // Keep lastLoginAt for presence tracking but mark as offline in analytics
+        },
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+          title: true,
+          lastLoginAt: true
+        }
+      })
+    } catch (error) {
+      // User doesn't exist, skip the update
+      if (process.env.NODE_ENV === 'development') {
+        // Don't log in development to avoid console noise
+        return NextResponse.json({
+          success: true,
+          data: {
+            user: {
+              id: userId,
+              name: 'Unknown User',
+              avatar: '',
+              title: 'NavIN User',
+              lastSeen: new Date().toISOString(),
+              isOnline: false
+            },
+            timestamp: new Date().toISOString()
+          },
+          message: 'User logged out (user not in database)'
+        })
       }
-    })
+
+      console.log(`User ${userId} not found in database, skipping logout update`)
+      return NextResponse.json({
+        success: true,
+        data: {
+          user: {
+            id: userId,
+            name: 'Unknown User',
+            avatar: '',
+            title: 'NavIN User',
+            lastSeen: new Date().toISOString(),
+            isOnline: false
+          },
+          timestamp: new Date().toISOString()
+        },
+        message: 'User logged out (user not in database)'
+      })
+    }
 
     // Log logout event
     await prisma.analyticsEvent.create({

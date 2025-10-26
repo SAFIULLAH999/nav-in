@@ -76,6 +76,10 @@ export async function GET(request: NextRequest) {
     const locationFilter = searchParams.get('location')?.trim()
     const companyFilter = searchParams.get('company')?.trim()
     const skillsFilter = searchParams.get('skills')?.trim()
+    const institutionFilter = searchParams.get('institution')?.trim()
+    const titleFilter = searchParams.get('title')?.trim()
+    const industryFilter = searchParams.get('industry')?.trim()
+    const languageFilter = searchParams.get('language')?.trim()
 
     if (!query || query.length < 2) {
       return NextResponse.json({
@@ -103,7 +107,8 @@ export async function GET(request: NextRequest) {
          { company: { contains: query, mode: 'insensitive' } },
          { location: { contains: query, mode: 'insensitive' } },
          { bio: { contains: query, mode: 'insensitive' } },
-         { skills: { contains: query, mode: 'insensitive' } }
+         { skills: { contains: query, mode: 'insensitive' } },
+         { education: { some: { institution: { contains: query, mode: 'insensitive' } } } }
        )
      } else {
        userWhereConditions.push({}) // Empty condition for when only filters are used
@@ -119,6 +124,22 @@ export async function GET(request: NextRequest) {
 
      if (skillsFilter) {
        userWhereConditions.push({ skills: { contains: skillsFilter, mode: 'insensitive' } })
+     }
+
+     if (institutionFilter) {
+       userWhereConditions.push({ education: { some: { institution: { contains: institutionFilter, mode: 'insensitive' } } } })
+     }
+
+     if (titleFilter) {
+       userWhereConditions.push({ title: { contains: titleFilter, mode: 'insensitive' } })
+     }
+
+     if (industryFilter) {
+       userWhereConditions.push({ industry: { contains: industryFilter, mode: 'insensitive' } })
+     }
+
+     if (languageFilter) {
+       userWhereConditions.push({ language: { contains: languageFilter, mode: 'insensitive' } })
      }
 
      const userWhere = {

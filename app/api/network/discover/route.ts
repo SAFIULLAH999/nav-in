@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
         select: {
           company: true,
           location: true,
+          interests: true,
           experiences: {
             select: { company: true },
             orderBy: { startDate: 'desc' },
@@ -103,6 +104,17 @@ export async function GET(request: NextRequest) {
         company: true,
         location: true,
         bio: true,
+        interests: true,
+        experiences: {
+          select: { company: true },
+          orderBy: { startDate: 'desc' },
+          take: 3
+        },
+        education: {
+          select: { institution: true },
+          orderBy: { startDate: 'desc' },
+          take: 3
+        },
         _count: {
           select: {
             sentConnections: {
@@ -183,6 +195,15 @@ export async function GET(request: NextRequest) {
           user.avatar
         ].filter(Boolean).length
         score += profileCompleteness * 2
+
+        // Factor 7: Shared interests
+        const userInterests = (user as any).interests ? JSON.parse((user as any).interests) : []
+        const profileInterests = userProfile?.interests ? JSON.parse(userProfile.interests) : []
+        const sharedInterests = userInterests.filter((i: string) => profileInterests.includes(i)).length
+        if (sharedInterests > 0) {
+          score += sharedInterests * 5
+          reasons.push(`${sharedInterests} shared interest${sharedInterests > 1 ? 's' : ''}`)
+        }
 
         return {
           ...user,

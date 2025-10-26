@@ -1,7 +1,7 @@
 'use client'
 
 import { useActivityTracker } from '@/lib/hooks/useActivityTracker'
-import { useSession } from 'next-auth/react'
+import { useUser } from '@clerk/nextjs'
 import { useEffect } from 'react'
 
 interface ActivityTrackerProps {
@@ -9,22 +9,22 @@ interface ActivityTrackerProps {
 }
 
 export const ActivityTracker: React.FC<ActivityTrackerProps> = ({ children }) => {
-  const { data: session } = useSession()
+  const { user } = useUser()
   const { trackActivity } = useActivityTracker()
 
   // Track login when session becomes available
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       trackActivity('login', {
         method: 'session_restored',
-        userId: session.user.id
+        userId: user.id
       })
     }
-  }, [session?.user?.id, trackActivity])
+  }, [user?.id, trackActivity])
 
   // Track clicks on interactive elements
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement
@@ -58,7 +58,7 @@ export const ActivityTracker: React.FC<ActivityTrackerProps> = ({ children }) =>
 
     document.addEventListener('click', handleClick)
     return () => document.removeEventListener('click', handleClick)
-  }, [session?.user?.id, trackActivity])
+  }, [user?.id, trackActivity])
 
   return <>{children}</>
 }

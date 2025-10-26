@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@clerk/nextjs';
 import { firebaseAuth, AuthUser, FirebaseAuthError } from '@/lib/firebase-auth';
 
 interface FirebaseContextType {
@@ -33,15 +33,15 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { data: session } = useSession();
+  const { user: clerkUser } = useUser();
 
   useEffect(() => {
-    // If we have a NextAuth session, create a mock Firebase user
-    if (session?.user) {
+    // If we have a Clerk user, create a mock Firebase user
+    if (clerkUser) {
       const mockFirebaseUser: AuthUser = {
-        uid: session.user.id || `user_${session.user.email}`,
-        email: session.user.email!,
-        displayName: session.user.name || session.user.email?.split('@')[0] || null,
+        uid: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress!,
+        displayName: clerkUser.fullName || clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] || null,
         emailVerified: true,
         isAnonymous: false,
         metadata: {
@@ -52,34 +52,34 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
         refreshToken: '',
         tenantId: null,
         phoneNumber: null,
-        photoURL: session.user.image || null,
-        providerId: 'nextauth',
+        photoURL: clerkUser.imageUrl || null,
+        providerId: 'clerk',
         delete: async () => Promise.resolve(),
         getIdToken: async (forceRefresh?: boolean) => {
           // Generate a longer-lasting token (24 hours)
           const expirationTime = Date.now() + (24 * 60 * 60 * 1000);
-          return `mock-token-${session.user.id}-${expirationTime}`;
+          return `mock-token-${clerkUser.id}-${expirationTime}`;
         },
         getIdTokenResult: async (forceRefresh?: boolean) => {
           const expirationTime = new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString();
           return {
-            token: `mock-token-${session.user.id}-${Date.now()}`,
+            token: `mock-token-${clerkUser.id}-${Date.now()}`,
             expirationTime,
             issuedAtTime: new Date().toISOString(),
             authTime: new Date().toISOString(),
-            signInProvider: 'nextauth',
+            signInProvider: 'clerk',
             signInSecondFactor: null,
-            claims: { user_id: session.user.id, email: session.user.email }
+            claims: { user_id: clerkUser.id, email: clerkUser.primaryEmailAddress?.emailAddress }
           };
         },
         reload: async () => Promise.resolve(),
-        toJSON: () => ({ uid: session.user.id, email: session.user.email }),
+        toJSON: () => ({ uid: clerkUser.id, email: clerkUser.primaryEmailAddress?.emailAddress }),
       };
 
       setUser(mockFirebaseUser as AuthUser);
       setLoading(false);
     } else {
-      // No session, try Firebase auth state
+      // No user, try Firebase auth state
       try {
         const unsubscribe = firebaseAuth.onAuthStateChange((user) => {
           setUser(user);
@@ -92,13 +92,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
         setLoading(false);
       }
     }
-  }, [session]);
+  }, [clerkUser]);
 
   // Force re-render when auth state might have changed
   useEffect(() => {
     const handleFocus = () => {
-      // Only check Firebase user if no NextAuth session exists
-      if (!session?.user) {
+      // Only check Firebase user if no Clerk user exists
+      if (!clerkUser) {
         const currentUser = firebaseAuth.getCurrentUser();
         setUser(currentUser);
       }
@@ -106,7 +106,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [session]);
+  }, [clerkUser]);
 
   const signIn = async (email: string, password: string) => {
     try {

@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import { Navbar } from '@/components/Navbar'
-import { Search, UserPlus, Check, X, Clock, Users, UserCheck, UserX, Filter, MapPin, Building, Award, User, ChevronLeft, ChevronRight, Loader } from 'lucide-react'
+import { Search, UserPlus, Check, X, Clock, Users, UserCheck, UserX, Filter, MapPin, Building, Award, User, ChevronLeft, ChevronRight, Loader, GraduationCap, Briefcase, Building2, Languages } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
+import { useAbly } from '@/components/providers/AblyProvider'
 
 interface Connection {
   id: string
@@ -176,7 +177,7 @@ export default function NetworkPage() {
           initial={{ opacity: 0, x: 20, scale: 0.95 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="rounded-[3rem] bg-gradient-to-br from-card/60 via-card/40 to-card/20 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden"
+          className="rounded-3xl bg-gradient-to-br from-card/60 via-card/40 to-card/20 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 100%)',
             boxShadow: '0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.05)'
@@ -187,7 +188,7 @@ export default function NetworkPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="bg-card/60 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/10 p-12 text-center"
+              className="bg-card/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-12 text-center"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
                 boxShadow: '0 20px 40px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.1)'
@@ -422,12 +423,33 @@ function BrowseUsersTab() {
   const [filters, setFilters] = useState({
     location: '',
     company: '',
-    skills: ''
+    skills: '',
+    institution: '',
+    title: '',
+    industry: '',
+    language: ''
   })
+
+  const { subscribe } = useAbly()
 
   useEffect(() => {
     loadUsers()
     loadSuggestedUsers()
+
+    // Subscribe to new user events
+    const unsubscribe = subscribe('new_user', (data: any) => {
+      // Add the new user to the beginning of the list if not already present
+      setUsers(prev => {
+        if (prev.some(user => user.id === data.userId)) {
+          return prev
+        }
+        return [data, ...prev]
+      })
+    })
+
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
@@ -483,7 +505,7 @@ function BrowseUsersTab() {
 
   const performSearch = async (page = 1) => {
     const query = searchQuery.trim()
-    const hasFilters = filters.location.trim() || filters.company.trim() || filters.skills.trim()
+    const hasFilters = filters.location.trim() || filters.company.trim() || filters.skills.trim() || filters.institution.trim() || filters.title.trim() || filters.industry.trim() || filters.language.trim()
 
     if (!query && !hasFilters) {
       setSearchResults([])
@@ -511,6 +533,18 @@ function BrowseUsersTab() {
       }
       if (filters.skills.trim()) {
         searchUrl += `&skills=${encodeURIComponent(filters.skills)}`
+      }
+      if (filters.institution.trim()) {
+        searchUrl += `&institution=${encodeURIComponent(filters.institution)}`
+      }
+      if (filters.title.trim()) {
+        searchUrl += `&title=${encodeURIComponent(filters.title)}`
+      }
+      if (filters.industry.trim()) {
+        searchUrl += `&industry=${encodeURIComponent(filters.industry)}`
+      }
+      if (filters.language.trim()) {
+        searchUrl += `&language=${encodeURIComponent(filters.language)}`
       }
 
       const response = await fetch(searchUrl)
@@ -593,7 +627,7 @@ function BrowseUsersTab() {
 
   if (loading) {
     return (
-      <div className="bg-card/60 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/10 p-12 text-center">
+      <div className="bg-card/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-12 text-center">
         <div className="animate-spin w-10 h-10 border-2 border-white/30 border-t-primary rounded-full mx-auto mb-6"></div>
         <p className="text-text-muted text-lg">Loading users...</p>
       </div>
@@ -607,7 +641,7 @@ function BrowseUsersTab() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="bg-gradient-to-br from-card/90 via-card/70 to-card/50 backdrop-blur-sm rounded-[2rem] shadow-lg border border-border/60 p-6 hover:shadow-xl transition-all duration-300"
+        className="bg-gradient-to-br from-card/90 via-card/70 to-card/50 backdrop-blur-sm rounded-2xl shadow-lg border border-border/60 p-6 hover:shadow-xl transition-all duration-300"
         style={{
           background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
         }}
@@ -643,7 +677,7 @@ function BrowseUsersTab() {
           onClick={() => setShowFilters(!showFilters)}
           whileHover={{ scale: 1.05, y: -1 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center space-x-2 mt-3 px-4 py-2 text-sm text-primary bg-primary/5 hover:bg-primary/15 rounded-[1.5rem] transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary/30"
+          className="flex items-center space-x-2 mt-3 px-4 py-2 text-sm text-primary bg-primary/5 hover:bg-primary/15 rounded-lg transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary/30"
         >
           <Filter className="w-4 h-4" />
           <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
@@ -658,7 +692,7 @@ function BrowseUsersTab() {
             transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="mt-4 p-4 bg-gradient-to-br from-secondary/90 to-secondary/70 backdrop-blur-sm rounded-[1.5rem] space-y-3 border border-border/60 shadow-lg"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
                 <input
@@ -689,13 +723,57 @@ function BrowseUsersTab() {
                   className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
                 />
               </div>
+              <div className="relative">
+                <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Filter by institution..."
+                  value={filters.institution}
+                  onChange={(e) => setFilters(prev => ({ ...prev, institution: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Filter by title..."
+                  value={filters.title}
+                  onChange={(e) => setFilters(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Filter by industry..."
+                  value={filters.industry}
+                  onChange={(e) => setFilters(prev => ({ ...prev, industry: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="relative">
+                <Languages className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Filter by language..."
+                  value={filters.language}
+                  onChange={(e) => setFilters(prev => ({ ...prev, language: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                />
+              </div>
             </div>
-            {(filters.location || filters.company || filters.skills) && (
+            {(filters.location || filters.company || filters.skills || filters.institution || filters.title || filters.industry || filters.language) && (
               <p className="text-xs text-text-muted">
                 Filtering by: {[
                   filters.location && `location: "${filters.location}"`,
                   filters.company && `company: "${filters.company}"`,
-                  filters.skills && `skills: "${filters.skills}"`
+                  filters.skills && `skills: "${filters.skills}"`,
+                  filters.institution && `institution: "${filters.institution}"`,
+                  filters.title && `title: "${filters.title}"`,
+                  filters.industry && `industry: "${filters.industry}"`,
+                  filters.language && `language: "${filters.language}"`
                 ].filter(Boolean).join(', ')}
               </p>
             )}

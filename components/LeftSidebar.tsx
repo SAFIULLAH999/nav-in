@@ -4,27 +4,28 @@ import { useState, useEffect } from 'react'
 import { Users, Briefcase, MessageCircle, Settings, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { useUser, useAuth } from '@clerk/nextjs'
 import { UserPresenceIndicator } from '@/components/UserPresenceIndicator'
 
 export function LeftSidebar() {
-  const { data: session } = useSession()
+  const { user } = useUser()
+  const { getToken } = useAuth()
   const [userProfile, setUserProfile] = useState<any>(null)
   const [connectionsCount, setConnectionsCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       loadUserProfile()
     }
-  }, [session])
+  }, [user])
 
   const loadUserProfile = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      const token = await getToken()
 
-      if (!token || !session?.user) return
+      if (!token || !user) return
 
       // Load user profile
       const profileResponse = await fetch('/api/profile', {
@@ -62,7 +63,7 @@ export function LeftSidebar() {
   }
 
   const getUserDisplayName = () => {
-    return userProfile?.name || session?.user?.name || 'User'
+    return userProfile?.name || user?.fullName || 'User'
   }
 
   const getUserTitle = () => {
@@ -97,7 +98,7 @@ export function LeftSidebar() {
                   {getUserInitials(getUserDisplayName())}
                 </div>
                 <div className="absolute -bottom-1 -right-1">
-                  <UserPresenceIndicator userId={session?.user?.id || ''} size="md" />
+                  <UserPresenceIndicator userId={user?.id || ''} size="md" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
