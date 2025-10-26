@@ -600,6 +600,13 @@ model Job {
   isScraped    Boolean  @default(false)
   lastScraped  DateTime?
   expiresAt    DateTime? // When the job posting expires
+
+  // Employer contact information
+  employerEmail    String?  // Email for job applications
+  employerPhone    String?  // Phone number for contact
+  employerUsername String?  // Username for profile reference
+  employerName     String?  // Name of the hiring contact
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

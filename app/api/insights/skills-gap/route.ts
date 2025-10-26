@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 
+export const dynamic = 'force-dynamic'
+
 // GET - Get skills gap insights for the user
 export async function GET(request: NextRequest) {
   try {

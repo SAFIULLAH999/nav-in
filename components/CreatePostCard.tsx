@@ -5,6 +5,8 @@ import { Image, Video, Calendar, MapPin, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from './FirebaseProvider'
 import { useSocket } from './SocketProvider'
+import { Alert, AlertDescription } from './ui/alert'
+import { useRouter } from 'next/navigation'
 
 interface CreatePostCardProps {
   onPostCreated?: (post: any) => void
@@ -14,7 +16,9 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
   const { socket, isConnected } = useSocket()
   const [content, setContent] = useState('')
   const [isExpanded, setIsExpanded] = useState(false)
+  const [alert, setAlert] = useState<{ type: 'error' | 'success'; message: string } | null>(null)
   const { user } = useFirebase()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +29,10 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
 
       if (!token) {
-        alert('Authentication required. Please log in again.')
+        setAlert({ type: 'error', message: 'Authentication required. Please log in to post.' })
+        setTimeout(() => {
+          router.push('/sign-in')
+        }, 2000)
         return
       }
 
@@ -47,6 +54,7 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
         console.log('Post created successfully:', data.data)
         setContent('')
         setIsExpanded(false)
+        setAlert({ type: 'success', message: 'Post created successfully!' })
 
         // Call the callback if provided
         if (onPostCreated) {
@@ -57,18 +65,42 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
         if (isConnected && socket) {
           socket.emit('new_post', data.data)
         }
+
+        // Clear success alert after 3 seconds
+        setTimeout(() => setAlert(null), 3000)
       } else {
         console.error('Failed to create post:', data.error)
-        alert('Failed to create post: ' + (data.error || 'Unknown error'))
+        setAlert({ type: 'error', message: 'Failed to create post: ' + (data.error || 'Unknown error') })
       }
     } catch (error) {
       console.error('Error creating post:', error)
-      alert('Failed to create post. Please try again.')
+      setAlert({ type: 'error', message: 'Failed to create post. Please try again.' })
     }
   }
 
   if (!user) {
-    return null // Don't show post creation for non-authenticated users
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-xl shadow-soft border border-border p-6"
+      >
+        <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg">
+          <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-semibold">
+            ?
+          </div>
+          <div className="flex-1 text-text-muted">
+            Please log in to share your thoughts.
+          </div>
+          <button
+            onClick={() => router.push('/sign-in')}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Log In
+          </button>
+        </div>
+      </motion.div>
+    )
   }
 
   return (
@@ -77,6 +109,11 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
       animate={{ opacity: 1, y: 0 }}
       className="bg-card rounded-xl shadow-soft border border-border p-6"
     >
+      {alert && (
+        <Alert variant={alert.type === 'error' ? 'destructive' : 'default'} className="mb-4">
+          <AlertDescription>{alert.message}</AlertDescription>
+        </Alert>
+      )}
       {!isExpanded ? (
         <div
           onClick={() => setIsExpanded(true)}

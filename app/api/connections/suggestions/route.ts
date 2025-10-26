@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 import { canSuggestUser, sanitizeUserData } from '@/lib/privacy'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const authResult = await authenticateRequest(request)

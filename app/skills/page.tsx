@@ -3,6 +3,8 @@
 import { Navbar } from '@/components/Navbar';
 import { SkillsQuiz } from '@/components/SkillsQuiz';
 
+export const dynamic = 'force-dynamic';
+
 export default function SkillsPage() {
   return (
     <div className="min-h-screen bg-background">

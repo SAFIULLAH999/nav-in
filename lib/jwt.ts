@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export interface JWTPayload {
   userId: string
@@ -53,6 +54,40 @@ export function verifyRefreshToken(token: string): { userId: string } | null {
   } catch (error) {
     return null
   }
+}
+
+/**
+ * Store refresh token in database
+ */
+export async function storeRefreshToken(userId: string, token: string): Promise<void> {
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+  await prisma.refreshToken.create({
+    data: {
+      token,
+      userId,
+      expiresAt,
+    },
+  })
+}
+
+/**
+ * Check if refresh token is valid in database
+ */
+export async function isRefreshTokenValid(token: string): Promise<boolean> {
+  const refreshToken = await prisma.refreshToken.findUnique({
+    where: { token },
+  })
+  return refreshToken !== null && !refreshToken.isRevoked && refreshToken.expiresAt > new Date()
+}
+
+/**
+ * Revoke refresh token
+ */
+export async function revokeRefreshToken(token: string): Promise<void> {
+  await prisma.refreshToken.updateMany({
+    where: { token },
+    data: { isRevoked: true },
+  })
 }
 
 /**
@@ -129,3 +164,22 @@ export const ROLES = {
 } as const
 
 export type UserRole = typeof ROLES[keyof typeof ROLES]
+
+/**
+ * JWT Manager object
+ */
+export const JWTManager = {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+  storeRefreshToken,
+  isRefreshTokenValid,
+  revokeRefreshToken,
+  extractTokenFromHeader,
+  extractTokenFromCookie,
+  authenticateRequest,
+  hasRole,
+  requireRoles,
+  ROLES,
+}

@@ -31,7 +31,16 @@ export async function GET(request: NextRequest) {
 
     // Build where clause for filtering
     const where: any = {
-      isActive: true
+      isActive: true,
+      // Not expired
+      AND: [
+        {
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        }
+      ]
     }
 
     if (search) {
@@ -173,6 +182,7 @@ export async function POST(request: NextRequest) {
             username: true,
             avatar: true,
             title: true,
+            email: true,
           }
         },
         _count: {

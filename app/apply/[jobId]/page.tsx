@@ -15,6 +15,15 @@ interface Job {
   type: string
   description: string
   requirements: string[]
+  employerEmail?: string
+  employerPhone?: string
+  employerUsername?: string
+  employerName?: string
+  author: {
+    name: string
+    username?: string
+    email: string
+  }
 }
 
 export default function ApplyPage() {
@@ -243,21 +252,31 @@ export default function ApplyPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* User Information */}
-            {user && (
+            {/* Employer Information */}
+            {job && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <User className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="font-medium text-blue-900">Application Details</p>
                     <p className="text-sm text-blue-700">
-                      Application will be submitted from: <span className="font-medium">{user.email}</span>
+                      Application will be sent to: <span className="font-medium">{job.employerEmail || job.author.email}</span>
                     </p>
+                    {job.employerPhone && (
+                      <p className="text-sm text-blue-700 mt-1">
+                        Contact Phone: <span className="font-medium">{job.employerPhone}</span>
+                      </p>
+                    )}
                     <p className="text-sm text-blue-700 mt-1">
-                      Your profile URL: <span className="font-medium">nav-in.com/in/{userProfile?.username || user.displayName?.toLowerCase().replace(/\s+/g, '') || user.email?.split('@')[0]}</span>
+                      Hiring Manager: <span className="font-medium">{job.employerName || job.author.name}</span>
                     </p>
+                    {job.employerUsername && (
+                      <p className="text-sm text-blue-700 mt-1">
+                        Profile URL: <span className="font-medium">nav-in.com/in/{job.employerUsername}</span>
+                      </p>
+                    )}
                     <p className="text-xs text-blue-600 mt-1">
-                      Consider including this link in your cover letter or resume for quick reference.
+                      Consider including this information in your cover letter for quick reference.
                     </p>
                   </div>
                 </div>

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const updatePrivacySchema = z.object({
   profileVisibility: z.enum(['PUBLIC', 'CONNECTIONS_ONLY', 'PRIVATE']).default('PUBLIC'),
   showInSearch: z.boolean().default(true),

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyAccessToken } from '@/lib/jwt'
 import { validateData, profileUpdateSchema, ProfileUpdateInput } from '@/lib/validations'
 
+export const dynamic = 'force-dynamic'
+
 // GET - Fetch user profile
 export async function GET(request: NextRequest) {
   try {

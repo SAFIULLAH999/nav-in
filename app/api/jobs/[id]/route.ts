@@ -18,7 +18,27 @@ export async function GET(
 
     const job = await prisma.job.findUnique({
       where: { id: jobId, isActive: true },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        companyName: true,
+        location: true,
+        type: true,
+        salaryMin: true,
+        salaryMax: true,
+        requirements: true,
+        benefits: true,
+        experience: true,
+        isRemote: true,
+        applicationDeadline: true,
+        views: true,
+        applicationsCount: true,
+        createdAt: true,
+        employerEmail: true,
+        employerPhone: true,
+        employerUsername: true,
+        employerName: true,
         author: {
           select: {
             id: true,
@@ -26,6 +46,7 @@ export async function GET(
             username: true,
             avatar: true,
             title: true,
+            email: true,
           }
         },
         _count: {
@@ -72,11 +93,16 @@ export async function GET(
       views: job.views,
       applicationsCount: job._count.applications,
       createdAt: job.createdAt.toISOString(),
+      employerEmail: job.employerEmail,
+      employerPhone: job.employerPhone,
+      employerUsername: job.employerUsername,
+      employerName: job.employerName,
       author: {
         name: job.author?.name || 'Unknown Recruiter',
         username: job.author?.username || 'user',
         avatar: job.author?.avatar || '',
-        title: job.author?.title || 'Recruiter'
+        title: job.author?.title || 'Recruiter',
+        email: job.author?.email || ''
       }
     }
 

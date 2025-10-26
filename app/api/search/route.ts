@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 
+export const dynamic = 'force-dynamic'
+
 // Helper function to get connected user IDs and pending requests
 async function getConnectedUserIds(userId: string): Promise<Set<string>> {
   const connections = await prisma.connection.findMany({
@@ -156,7 +158,16 @@ export async function GET(request: NextRequest) {
         { requirements: { contains: query, mode: 'insensitive' } },
         { benefits: { contains: query, mode: 'insensitive' } }
       ],
-      isActive: true
+      isActive: true,
+      // Not expired
+      AND: [
+        {
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        }
+      ]
     }
 
     const postWhere = {

@@ -106,6 +106,53 @@ export const emailTemplates = {
     `
   }),
 
+  jobApplicationNotification: (employerEmail: string, employerName: string, applicantName: string, jobTitle: string, company: string, applicantEmail: string, profileUrl?: string) => ({
+    subject: `New Application for ${jobTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #2563eb;">New Job Application Received</h1>
+        <p>Hi <strong>${employerName}</strong>,</p>
+        <p><strong>${applicantName}</strong> has applied for the position:</p>
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3>${jobTitle}</h3>
+          <p><strong>Company:</strong> ${company}</p>
+          <p><strong>Applicant:</strong> ${applicantName}</p>
+          <p><strong>Applicant Email:</strong> ${applicantEmail}</p>
+          ${profileUrl ? `<p><strong>Profile:</strong> <a href="${profileUrl}">${profileUrl}</a></p>` : ''}
+          <p><strong>Applied on:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        <p>Please review the application and contact the candidate if interested.</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View All Applications</a>
+        </div>
+      </div>
+    `
+  }),
+
+  jobApplicationConfirmation: (applicantName: string, jobTitle: string, company: string, employerEmail: string, employerPhone?: string, employerName?: string) => ({
+    subject: `Application Submitted for ${jobTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #059669;">Application Submitted Successfully!</h1>
+        <p>Hi <strong>${applicantName}</strong>,</p>
+        <p>Thank you for applying to the position:</p>
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3>${jobTitle}</h3>
+          <p><strong>Company:</strong> ${company}</p>
+          <p><strong>Application sent to:</strong> ${employerEmail}</p>
+          ${employerName ? `<p><strong>Hiring Manager:</strong> ${employerName}</p>` : ''}
+          ${employerPhone ? `<p><strong>Contact Phone:</strong> ${employerPhone}</p>` : ''}
+          <p><strong>Applied on:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        <p>Your application has been received and is under review. You will be notified of any updates.</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/applications" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">View My Applications</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse More Jobs</a>
+        </div>
+      </div>
+    `
+  }),
+
   passwordReset: (name: string, resetToken: string) => ({
     subject: 'Password Reset Request',
     html: `
@@ -219,6 +266,32 @@ export class EmailService {
     company: string
   ): Promise<void> {
     const template = emailTemplates.jobApplication(applicantName, jobTitle, company)
+    await this.sendEmail(employerEmail, template)
+  }
+
+  static async sendJobApplicationConfirmationEmail(
+    applicantEmail: string,
+    applicantName: string,
+    jobTitle: string,
+    company: string,
+    employerEmail: string,
+    employerPhone?: string,
+    employerName?: string
+  ): Promise<void> {
+    const template = emailTemplates.jobApplicationConfirmation(applicantName, jobTitle, company, employerEmail, employerPhone, employerName)
+    await this.sendEmail(applicantEmail, template)
+  }
+
+  static async sendJobApplicationNotificationEmail(
+    employerEmail: string,
+    employerName: string,
+    applicantName: string,
+    jobTitle: string,
+    company: string,
+    applicantEmail: string,
+    profileUrl?: string
+  ): Promise<void> {
+    const template = emailTemplates.jobApplicationNotification(employerEmail, employerName, applicantName, jobTitle, company, applicantEmail, profileUrl)
     await this.sendEmail(employerEmail, template)
   }
 

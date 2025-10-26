@@ -3,6 +3,8 @@
 import { Navbar } from '@/components/Navbar';
 import { AtsIntegrations } from '@/components/AtsIntegrations';
 
+export const dynamic = 'force-dynamic';
+
 export default function AtsIntegrationsPage() {
   return (
     <div className="min-h-screen bg-background">

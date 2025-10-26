@@ -76,6 +76,15 @@ export class FeedService {
           OR: [
             { authorId: { in: connectedUserIds } },
             { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } // Last 7 days
+          ],
+          // Not expired
+          AND: [
+            {
+              OR: [
+                { expiresAt: null },
+                { expiresAt: { gt: new Date() } }
+              ]
+            }
           ]
         }
         whereConditions.push({ type: 'job', ...jobConditions })
@@ -159,7 +168,12 @@ export class FeedService {
         const jobs = await prisma.job.findMany({
           where: {
             isActive: true,
-            authorId: { in: connectedUserIds }
+            authorId: { in: connectedUserIds },
+            // Not expired
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: new Date() } }
+            ]
           },
           include: {
             author: {

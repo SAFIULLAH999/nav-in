@@ -45,10 +45,19 @@ const processNotificationJob = async (job: Job<JobData>) => {
   logger.info('Processing notification job:', job.data);
 
   try {
-    // TODO: Implement notification sending logic
-    // const { userId, type, title, message } = job.data.payload;
+    const { userId, type, title, message, data } = job.data.payload;
 
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate processing
+    // Create notification in database
+    await prisma.notification.create({
+      data: {
+        userId,
+        type,
+        title,
+        message,
+        data: data ? JSON.stringify(data) : null,
+        isRead: false,
+      },
+    });
 
     logger.info('Notification job completed successfully');
     return { success: true };

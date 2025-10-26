@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { authenticateRequest } from '@/lib/jwt'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const socialAnalyticsSchema = z.object({
   userId: z.string().optional(),
   timeframe: z.enum(['week', 'month', 'quarter', 'year']).default('month')

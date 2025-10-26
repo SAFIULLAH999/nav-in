@@ -3,6 +3,8 @@
 import { Navbar } from '@/components/Navbar';
 import { ArticlesList } from '@/components/ArticlesList';
 
+export const dynamic = 'force-dynamic';
+
 export default function ArticlesPage() {
   return (
     <div className="min-h-screen bg-background">

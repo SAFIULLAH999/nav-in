@@ -4,6 +4,7 @@ import { prisma } from '../utils/prisma';
 import { logger, logAuthEvent } from '../utils/logger';
 import { authenticateToken } from '../middleware/auth';
 import { addNotificationJob } from '../services/queue';
+import { EmailService } from '../../../lib/email';
 
 const router = Router();
 
@@ -22,6 +23,10 @@ const createJobValidation = [
   body('experience').optional().isIn(['ENTRY', 'JUNIOR', 'MID', 'SENIOR', 'EXECUTIVE']).withMessage('Invalid experience level'),
   body('isRemote').optional().isBoolean().withMessage('isRemote must be a boolean'),
   body('applicationDeadline').optional().isISO8601().withMessage('Invalid application deadline'),
+  body('employerEmail').optional().isEmail().withMessage('Invalid employer email'),
+  body('employerPhone').optional().isLength({ min: 10, max: 20 }).withMessage('Phone number must be between 10 and 20 characters'),
+  body('employerUsername').optional().isLength({ min: 3, max: 50 }).withMessage('Username must be between 3 and 50 characters'),
+  body('employerName').optional().isLength({ min: 2, max: 100 }).withMessage('Employer name must be between 2 and 100 characters'),
 ];
 
 const jobSearchValidation = [
@@ -113,10 +118,21 @@ router.get('/', jobSearchValidation, async (req: Request, res: Response) => {
     }
 
     // Application deadline filter (not expired)
-    whereConditions.OR = [
-      { applicationDeadline: null },
-      { applicationDeadline: { gt: new Date() } },
-    ];
+    whereConditions.AND = whereConditions.AND || [];
+    whereConditions.AND.push({
+      OR: [
+        { applicationDeadline: null },
+        { applicationDeadline: { gt: new Date() } },
+      ],
+    });
+
+    // Job expiration filter (not expired)
+    whereConditions.AND.push({
+      OR: [
+        { expiresAt: null },
+        { expiresAt: { gt: new Date() } },
+      ],
+    });
 
     const jobs = await prisma.job.findMany({
       where: whereConditions,
@@ -213,6 +229,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             avatar: true,
             title: true,
             company: true,
+            email: true,
           },
         },
         company: {
@@ -300,6 +317,10 @@ router.post('/', authenticateToken, createJobValidation, async (req: Request, re
       isRemote,
       applicationDeadline,
       companyId,
+      employerEmail,
+      employerPhone,
+      employerUsername,
+      employerName,
     } = req.body;
 
     const job = await prisma.job.create({
@@ -319,6 +340,10 @@ router.post('/', authenticateToken, createJobValidation, async (req: Request, re
         applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : null,
         authorId: currentUserId,
         companyId,
+        employerEmail,
+        employerPhone,
+        employerUsername,
+        employerName,
       },
       include: {
         author: {
@@ -402,6 +427,12 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     if (dataToUpdate.skills) dataToUpdate.skills = JSON.stringify(dataToUpdate.skills);
     if (dataToUpdate.applicationDeadline) dataToUpdate.applicationDeadline = new Date(dataToUpdate.applicationDeadline);
     if (dataToUpdate.isRemote !== undefined) dataToUpdate.isRemote = Boolean(dataToUpdate.isRemote);
+
+    // Handle employer contact fields
+    if (dataToUpdate.employerEmail !== undefined) dataToUpdate.employerEmail = dataToUpdate.employerEmail || null;
+    if (dataToUpdate.employerPhone !== undefined) dataToUpdate.employerPhone = dataToUpdate.employerPhone || null;
+    if (dataToUpdate.employerUsername !== undefined) dataToUpdate.employerUsername = dataToUpdate.employerUsername || null;
+    if (dataToUpdate.employerName !== undefined) dataToUpdate.employerName = dataToUpdate.employerName || null;
 
     const updatedJob = await prisma.job.update({
       where: { id },
@@ -513,6 +544,18 @@ router.post('/:id/apply', authenticateToken, async (req: Request, res: Response)
         authorId: true,
         isActive: true,
         applicationDeadline: true,
+        expiresAt: true,
+        employerEmail: true,
+        employerPhone: true,
+        employerUsername: true,
+        employerName: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -532,6 +575,17 @@ router.post('/:id/apply', authenticateToken, async (req: Request, res: Response)
         success: false,
         error: {
           message: 'Application deadline has passed',
+          statusCode: 400,
+        },
+      });
+    }
+
+    // Check if job has expired
+    if (job.expiresAt && job.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Job has expired',
           statusCode: 400,
         },
       });
@@ -557,6 +611,12 @@ router.post('/:id/apply', authenticateToken, async (req: Request, res: Response)
       });
     }
 
+    // Get user details for email
+    const user = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { name: true, email: true },
+    });
+
     // Create application
     const application = await prisma.application.create({
       data: {
@@ -581,6 +641,48 @@ router.post('/:id/apply', authenticateToken, async (req: Request, res: Response)
     await prisma.job.update({
       where: { id: jobId },
       data: { applicationsCount: { increment: 1 } },
+    });
+
+    // Send confirmation email to applicant
+    if (user) {
+      await EmailService.sendJobApplicationConfirmationEmail(
+        user.email,
+        user.name || 'Applicant',
+        job.title,
+        job.companyName,
+        job.employerEmail || job.author.email,
+        job.employerPhone || undefined,
+        job.employerName || job.author.name
+      );
+    }
+
+    // Send notification email to employer
+    const employerEmail = job.employerEmail || job.author.email;
+    const employerName = job.employerName || job.author.name;
+    if (employerEmail && employerEmail !== user.email) {
+      await EmailService.sendJobApplicationNotificationEmail(
+        employerEmail,
+        employerName,
+        user.name || 'Applicant',
+        job.title,
+        job.companyName,
+        user.email,
+        job.employerUsername ? `nav-in.com/in/${job.employerUsername}` : undefined
+      );
+    }
+
+    // Send notification to applicant
+    await addNotificationJob({
+      userId: currentUserId,
+      type: 'JOB_APPLICATION',
+      title: 'Application Submitted',
+      message: `Your application for ${job.title} at ${job.companyName} has been submitted successfully.`,
+      data: {
+        jobId,
+        applicationId: application.id,
+        jobTitle: job.title,
+        companyName: job.companyName,
+      },
     });
 
     // Send notification to job poster

@@ -3,6 +3,8 @@
 import { Navbar } from '@/components/Navbar';
 import { GroupsBrowser } from '@/components/GroupsBrowser';
 
+export const dynamic = 'force-dynamic';
+
 export default function GroupsPage() {
   return (
     <div className="min-h-screen bg-background">
