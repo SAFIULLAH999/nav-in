@@ -4,15 +4,20 @@ import { logger } from '../utils/logger';
 import { JobScraperManager } from '../../../lib/job-scrapers/scraper-manager';
 import { prisma } from '../utils/prisma';
 
-// Create queue instance
-export const jobQueue = new Queue('job-processing', {
-  connection: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD || undefined,
-    db: parseInt(process.env.REDIS_DB || '0'),
-  },
-});
+// Create queue instance with error handling for build time
+let jobQueue: Queue | null = null;
+try {
+  jobQueue = new Queue('job-processing', {
+    connection: {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      db: parseInt(process.env.REDIS_DB || '0'),
+    },
+  });
+} catch (error) {
+  console.warn('Redis not available during build, queue operations will be disabled');
+}
 
 // Queue job types
 export interface JobData {
@@ -155,55 +160,67 @@ const processJobFetchingJob = async (job: Job<JobData>) => {
   }
 };
 
-// Create worker instance
-export const jobWorker = new Worker<JobData>(
-  'job-processing',
-  async (job: Job<JobData>) => {
-    logger.info(`Processing job ${job.id} of type ${job.data.type}`);
+// Create worker instance with error handling for build time
+let jobWorker: Worker<JobData> | null = null;
+try {
+  jobWorker = new Worker<JobData>(
+    'job-processing',
+    async (job: Job<JobData>) => {
+      logger.info(`Processing job ${job.id} of type ${job.data.type}`);
 
-    switch (job.data.type) {
-      case 'email':
-        return await processEmailJob(job);
-      case 'notification':
-        return await processNotificationJob(job);
-      case 'data-processing':
-        return await processDataJob(job);
-      case 'cleanup':
-        return await processCleanupJob(job);
-      case 'backup':
-        return await processBackupJob(job);
-      case 'job-fetching':
-        return await processJobFetchingJob(job);
-      default:
-        throw new Error(`Unknown job type: ${job.data.type}`);
-    }
-  },
-  {
-    connection: {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      db: parseInt(process.env.REDIS_DB || '0'),
+      switch (job.data.type) {
+        case 'email':
+          return await processEmailJob(job);
+        case 'notification':
+          return await processNotificationJob(job);
+        case 'data-processing':
+          return await processDataJob(job);
+        case 'cleanup':
+          return await processCleanupJob(job);
+        case 'backup':
+          return await processBackupJob(job);
+        case 'job-fetching':
+          return await processJobFetchingJob(job);
+        default:
+          throw new Error(`Unknown job type: ${job.data.type}`);
+      }
     },
-    concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '5'),
-  }
-);
+    {
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD || undefined,
+        db: parseInt(process.env.REDIS_DB || '0'),
+      },
+      concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '5'),
+    }
+  );
+} catch (error) {
+  console.warn('Redis not available during build, worker will be disabled');
+}
 
 // Worker event handlers
-jobWorker.on('completed', (job: Job<JobData>) => {
-  logger.info(`Job ${job.id} completed successfully`);
-});
+if (jobWorker) {
+  jobWorker.on('completed', (job: Job<JobData>) => {
+    logger.info(`Job ${job.id} completed successfully`);
+  });
 
-jobWorker.on('failed', (job: Job<JobData> | undefined, error: Error) => {
-  logger.error(`Job ${job?.id} failed:`, error);
-});
+  jobWorker.on('failed', (job: Job<JobData> | undefined, error: Error) => {
+    logger.error(`Job ${job?.id} failed:`, error);
+  });
 
-jobWorker.on('error', (error: Error) => {
-  logger.error('Worker error:', error);
-});
+  jobWorker.on('error', (error: Error) => {
+    logger.error('Worker error:', error);
+  });
+}
 
 // Queue management functions
-export const addJob = async (jobData: JobData): Promise<Job<JobData>> => {
+export const addJob = async (jobData: JobData): Promise<Job<JobData> | null> => {
+  if (!jobQueue) {
+    logger.warn('Queue not available, skipping job creation');
+    return null;
+  }
+
   const job = await jobQueue.add(
     `${jobData.type}-${Date.now()}`,
     jobData,
@@ -222,7 +239,7 @@ export const addJob = async (jobData: JobData): Promise<Job<JobData>> => {
   return job;
 };
 
-export const addEmailJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+export const addEmailJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData> | null> => {
   return addJob({
     type: 'email',
     payload,
@@ -231,7 +248,7 @@ export const addEmailJob = async (payload: any, priority?: number, delay?: numbe
   });
 };
 
-export const addNotificationJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+export const addNotificationJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData> | null> => {
   return addJob({
     type: 'notification',
     payload,
@@ -240,7 +257,7 @@ export const addNotificationJob = async (payload: any, priority?: number, delay?
   });
 };
 
-export const addDataProcessingJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+export const addDataProcessingJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData> | null> => {
   return addJob({
     type: 'data-processing',
     payload,
@@ -249,7 +266,7 @@ export const addDataProcessingJob = async (payload: any, priority?: number, dela
   });
 };
 
-export const addCleanupJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+export const addCleanupJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData> | null> => {
   return addJob({
     type: 'cleanup',
     payload,
@@ -258,7 +275,7 @@ export const addCleanupJob = async (payload: any, priority?: number, delay?: num
   });
 };
 
-export const addBackupJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+export const addBackupJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData> | null> => {
   return addJob({
     type: 'backup',
     payload,
@@ -267,7 +284,7 @@ export const addBackupJob = async (payload: any, priority?: number, delay?: numb
   });
 };
 
-export const addJobFetchingJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData>> => {
+export const addJobFetchingJob = async (payload: any, priority?: number, delay?: number): Promise<Job<JobData> | null> => {
   return addJob({
     type: 'job-fetching',
     payload,
@@ -278,6 +295,16 @@ export const addJobFetchingJob = async (payload: any, priority?: number, delay?:
 
 // Queue monitoring functions
 export const getQueueStats = async () => {
+  if (!jobQueue) {
+    return {
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+    };
+  }
+
   const [waiting, active, completed, failed, delayed] = await Promise.all([
     jobQueue.getWaiting(),
     jobQueue.getActive(),
@@ -296,6 +323,10 @@ export const getQueueStats = async () => {
 };
 
 export const getQueueJobs = async (status: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' = 'waiting', start = 0, end = 9) => {
+  if (!jobQueue) {
+    return [];
+  }
+
   switch (status) {
     case 'waiting':
       return await jobQueue.getWaiting(start, end);
@@ -315,8 +346,12 @@ export const getQueueJobs = async (status: 'waiting' | 'active' | 'completed' | 
 // Graceful shutdown
 export const closeQueue = async () => {
   logger.info('Closing job queue...');
-  await jobWorker.close();
-  await jobQueue.close();
+  if (jobWorker) {
+    await jobWorker.close();
+  }
+  if (jobQueue) {
+    await jobQueue.close();
+  }
   logger.info('Job queue closed');
 };
 

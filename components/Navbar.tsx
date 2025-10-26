@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, Home, Users, Briefcase, MessageCircle, Bell, ChevronDown, Menu, User, Settings, LogOut, LogIn, UserPlus, FileText, ClipboardList, Sparkles, X } from 'lucide-react'
+import { Search, Home, Users, Briefcase, MessageCircle, Bell, ChevronDown, Menu, User, Settings, LogOut, LogIn, UserPlus, FileText, ClipboardList, Sparkles, X, Crown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useUser, useAuth } from '@clerk/nextjs'
@@ -155,6 +155,7 @@ export function Navbar() {
           <NavIcon icon={Home} label="Home" href="/feed" />
           <NavIcon icon={Users} label="Network" href="/network" />
           <NavIcon icon={Briefcase} label="Jobs" href="/jobs" />
+          <NavIcon icon={Crown} label="Hiring" href="/hiring" />
           <NavIcon icon={FileText} label="Documents" href="/documents" />
           <NavIcon icon={ClipboardList} label="Applications" href="/applications" />
           <NavIcon icon={MessageCircle} label="Messages" href="/messages" />

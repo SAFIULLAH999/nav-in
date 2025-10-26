@@ -57,7 +57,7 @@ const STATUS_CONFIG = {
 };
 
 export function AtsIntegrations() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -75,10 +75,12 @@ export function AtsIntegrations() {
   });
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (status === 'authenticated' && session?.user?.id) {
       fetchIntegrations();
+    } else if (status === 'unauthenticated') {
+      setLoading(false);
     }
-  }, [session]);
+  }, [session, status]);
 
   const fetchIntegrations = async () => {
     try {

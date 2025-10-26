@@ -53,7 +53,7 @@ const DIFFICULTY_COLORS = {
 };
 
 export function SkillsQuiz() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [attempts, setAttempts] = useState<Record<string, QuizAttempt>>({});
@@ -61,11 +61,13 @@ export function SkillsQuiz() {
   const [takingQuiz, setTakingQuiz] = useState(false);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchQuizzes();
+    fetchQuizzes(); // Always fetch quizzes, even without authentication
+    if (status === 'authenticated' && session?.user?.id) {
       fetchUserAttempts();
+    } else if (status === 'unauthenticated') {
+      setLoading(false);
     }
-  }, [session]);
+  }, [session, status]);
 
   const fetchQuizzes = async () => {
     try {
@@ -251,6 +253,7 @@ function QuizTaker({
   onComplete: () => void;
   existingAttempt?: QuizAttempt;
 }) {
+  const { data: session, status } = useSession();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState<number | null>(quiz.timeLimit ? quiz.timeLimit * 60 : null);
@@ -274,6 +277,11 @@ function QuizTaker({
   };
 
   const handleSubmit = async () => {
+    if (status !== 'authenticated' || !session?.user?.id) {
+      toast.error('Please sign in to submit quiz');
+      return;
+    }
+
     if (Object.keys(answers).length !== quiz.questions.length) {
       toast.error('Please answer all questions');
       return;

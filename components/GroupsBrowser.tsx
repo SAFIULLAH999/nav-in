@@ -44,7 +44,7 @@ interface GroupMembership {
 }
 
 export function GroupsBrowser() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [groups, setGroups] = useState<Group[]>([]);
   const [userMemberships, setUserMemberships] = useState<Record<string, GroupMembership>>({});
   const [loading, setLoading] = useState(true);
@@ -58,11 +58,13 @@ export function GroupsBrowser() {
   });
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchGroups();
+    fetchGroups(); // Always fetch groups, even without authentication
+    if (status === 'authenticated' && session?.user?.id) {
       fetchUserMemberships();
+    } else if (status === 'unauthenticated') {
+      setLoading(false);
     }
-  }, [session]);
+  }, [session, status]);
 
   const fetchGroups = async () => {
     try {

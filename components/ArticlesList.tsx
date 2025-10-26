@@ -55,7 +55,7 @@ const CATEGORIES = [
 ];
 
 export function ArticlesList() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -87,7 +87,7 @@ export function ArticlesList() {
   };
 
   const handleLike = async (articleId: string) => {
-    if (!session?.user?.id) {
+    if (status !== 'authenticated' || !session?.user?.id) {
       toast.error('Please sign in to like articles');
       return;
     }
@@ -110,7 +110,7 @@ export function ArticlesList() {
   };
 
   const handleBookmark = async (articleId: string) => {
-    if (!session?.user?.id) {
+    if (status !== 'authenticated' || !session?.user?.id) {
       toast.error('Please sign in to bookmark articles');
       return;
     }
@@ -148,7 +148,7 @@ export function ArticlesList() {
           <h2 className="text-2xl font-bold text-text">Articles</h2>
           <p className="text-text-muted">Discover insights and stories from professionals</p>
         </div>
-        {session?.user?.id && (
+        {status === 'authenticated' && session?.user?.id && (
           <Link href="/articles/write">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
