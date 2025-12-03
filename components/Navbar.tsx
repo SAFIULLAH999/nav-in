@@ -90,7 +90,7 @@ export function Navbar() {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border-b border-gray-200/50 dark:border-gray-700/50 z-50"
+      className="fixed top-0 left-0 right-0 bg-card/95 backdrop-blur-lg shadow-xl border-b border-border z-50"
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo and Search */}
@@ -112,7 +112,7 @@ export function Navbar() {
                 placeholder="Search for people, jobs, posts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-10 py-3 ios-input text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 transition-all duration-200"
+                className="w-full pl-12 pr-10 py-3 ios-input text-sm placeholder:text-text-muted text-text focus:bg-surface transition-all duration-200"
               />
               {searchQuery && (
                 <button
@@ -306,10 +306,10 @@ function SearchResults({ results, onResultClick }: { results: any, onResultClick
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{user.name || 'Unknown User'}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{user.title || 'NavIN User'}</p>
+        <p className="font-medium text-text truncate">{user.name || 'Unknown User'}</p>
+        <p className="text-sm text-text-muted truncate">{user.title || 'NavIN User'}</p>
         {user.company && (
-          <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{user.company}</p>
+          <p className="text-xs text-text-muted truncate">{user.company}</p>
         )}
       </div>
       <div className="ios-badge">

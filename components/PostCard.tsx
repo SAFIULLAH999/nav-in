@@ -21,67 +21,111 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   // Socket event listeners for real-time updates
   useEffect(() => {
-    const handlePostUpdate = (data: any) => {
+    const handlePostLiked = (data: any) => {
       if (data.postId === post.id) {
-        switch (data.type) {
-          case 'like':
-            setLikesCount(data.likesCount)
-            setIsLiked(data.liked)
-            break
-          case 'comment':
-            setComments(prev => [data.comment, ...prev])
-            break
-          case 'share':
-            // Handle share updates if needed
-            break
-        }
+        setLikesCount(data.likesCount)
+        setIsLiked(data.liked)
       }
     }
 
-    onPostUpdate(handlePostUpdate)
-  }, [onPostUpdate, post.id])
-
-  const handleLike = async () => {
-    if (!isConnected) {
-      alert('Real-time connection not available')
-      return
+    const handlePostCommented = (data: any) => {
+      if (data.postId === post.id) {
+        setComments(prev => [data.comment, ...prev])
+      }
     }
 
+    const handlePostShared = (data: any) => {
+      if (data.postId === post.id) {
+        // Handle share updates if needed (e.g., increment share count)
+      }
+    }
+
+    // Listen for specific post events
+    socket?.on('post_liked', handlePostLiked)
+    socket?.on('post_commented', handlePostCommented)
+    socket?.on('post_shared', handlePostShared)
+
+    return () => {
+      socket?.off('post_liked', handlePostLiked)
+      socket?.off('post_commented', handlePostCommented)
+      socket?.off('post_shared', handlePostShared)
+    }
+  }, [socket, post.id])
+
+  const handleLike = async () => {
     try {
-      // Send like/unlike via socket
-      socket?.emit('post_interaction', {
-        postId: post.id,
-        type: 'like',
-        action: isLiked ? 'unlike' : 'like'
+      // Always call the API directly for reliability
+      const response = await fetch(`/api/posts/${post.id}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: isLiked ? 'unlike' : 'like'
+        })
       })
 
-      // Optimistically update UI
-      setIsLiked(!isLiked)
-      setLikesCount(prev => isLiked ? prev - 1 : prev + 1)
+      const data = await response.json()
+
+      if (data.success) {
+        // Update UI based on API response
+        setIsLiked(!isLiked)
+        setLikesCount(prev => isLiked ? prev - 1 : prev + 1)
+
+        // Emit socket event if connected for real-time updates
+        if (isConnected && socket) {
+          socket.emit('post_liked', {
+            postId: post.id,
+            likesCount: isLiked ? likesCount - 1 : likesCount + 1,
+            liked: !isLiked
+          })
+        }
+      } else {
+        alert(data.error || 'Failed to update like')
+      }
     } catch (error) {
       console.error('Error updating like:', error)
       alert('Failed to update like')
     }
   }
 
-  const handleShare = () => {
-    if (isConnected) {
-      // Send share via socket for analytics
-      socket?.emit('post_interaction', {
-        postId: post.id,
-        type: 'share'
+  const handleShare = async () => {
+    try {
+      // Always call the API to record the share
+      const response = await fetch(`/api/posts/${post.id}/share`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
-    }
 
-    if (navigator.share) {
-      navigator.share({
-        title: 'NavIN Post',
-        text: post.content,
-        url: window.location.href,
-      })
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href)
+      if (response.ok) {
+        // Emit socket event if connected for real-time updates
+        if (isConnected && socket) {
+          socket.emit('post_shared', {
+            postId: post.id,
+            share: { userId: 'current_user', timestamp: new Date().toISOString() }
+          })
+        }
+
+        // Share the content
+        if (navigator.share) {
+          navigator.share({
+            title: 'NavIN Post',
+            text: post.content,
+            url: window.location.href,
+          })
+        } else {
+          // Fallback: copy to clipboard
+          navigator.clipboard.writeText(window.location.href)
+          alert('Post link copied to clipboard!')
+        }
+      } else {
+        alert('Failed to share post')
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error)
+      alert('Failed to share post')
     }
   }
 
@@ -102,25 +146,37 @@ export const PostCard = ({ post }: PostCardProps) => {
   }
 
   const handleCommentSubmit = async () => {
-    if (!commentContent.trim() || !isConnected) return
+    if (!commentContent.trim()) return
 
     try {
-      // Send comment via socket
-      socket?.emit('post_interaction', {
-        postId: post.id,
-        type: 'comment',
-        content: commentContent.trim()
+      // Always call the API directly for reliability
+      const response = await fetch(`/api/posts/${post.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: commentContent.trim()
+        })
       })
 
-      // Optimistically add comment to UI
-      const optimisticComment = {
-        id: `temp_${Date.now()}`,
-        content: commentContent.trim(),
-        author: { name: 'You', avatar: null },
-        timestamp: new Date().toISOString()
+      const data = await response.json()
+
+      if (data.success) {
+        // Add comment to UI
+        setComments(prev => [data.data, ...prev])
+        setCommentContent('')
+
+        // Emit socket event if connected for real-time updates
+        if (isConnected && socket) {
+          socket.emit('post_commented', {
+            postId: post.id,
+            comment: data.data
+          })
+        }
+      } else {
+        alert(data.error || 'Failed to add comment')
       }
-      setComments(prev => [optimisticComment, ...prev])
-      setCommentContent('')
     } catch (error) {
       console.error('Error adding comment:', error)
       alert('Failed to add comment')
