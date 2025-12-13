@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
     const userWhere = {
       ...(userWhereConditions.length > 0 ? { OR: userWhereConditions } : {}),
       isActive: true,
+      emailVerified: { not: null }, // Only include users with verified emails
       ...(currentUserId && { id: { not: currentUserId } }) // Exclude current user
     }
 

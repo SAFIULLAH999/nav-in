@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { authenticateRequest } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
@@ -103,60 +104,61 @@ export async function GET(request: NextRequest) {
 
      if (query) {
        userWhereConditions.push(
-         { name: { contains: query, mode: 'insensitive' } },
-         { username: { contains: query, mode: 'insensitive' } },
-         { title: { contains: query, mode: 'insensitive' } },
-         { company: { contains: query, mode: 'insensitive' } },
-         { location: { contains: query, mode: 'insensitive' } },
-         { bio: { contains: query, mode: 'insensitive' } },
-         { skills: { contains: query, mode: 'insensitive' } },
-         { education: { some: { institution: { contains: query, mode: 'insensitive' } } } }
+         { name: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { username: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { company: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { location: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { bio: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { skills: { contains: query, mode: Prisma.QueryMode.insensitive } },
+         { education: { some: { institution: { contains: query, mode: Prisma.QueryMode.insensitive } } } }
        )
      } else {
        userWhereConditions.push({}) // Empty condition for when only filters are used
      }
 
      if (locationFilter) {
-       userWhereConditions.push({ location: { contains: locationFilter, mode: 'insensitive' } })
+       userWhereConditions.push({ location: { contains: locationFilter, mode: Prisma.QueryMode.insensitive } })
      }
 
      if (companyFilter) {
-       userWhereConditions.push({ company: { contains: companyFilter, mode: 'insensitive' } })
+       userWhereConditions.push({ company: { contains: companyFilter, mode: Prisma.QueryMode.insensitive } })
      }
 
      if (skillsFilter) {
-       userWhereConditions.push({ skills: { contains: skillsFilter, mode: 'insensitive' } })
+       userWhereConditions.push({ skills: { contains: skillsFilter, mode: Prisma.QueryMode.insensitive } })
      }
 
      if (institutionFilter) {
-       userWhereConditions.push({ education: { some: { institution: { contains: institutionFilter, mode: 'insensitive' } } } })
+       userWhereConditions.push({ education: { some: { institution: { contains: institutionFilter, mode: Prisma.QueryMode.insensitive } } } })
      }
 
      if (titleFilter) {
-       userWhereConditions.push({ title: { contains: titleFilter, mode: 'insensitive' } })
+       userWhereConditions.push({ title: { contains: titleFilter, mode: Prisma.QueryMode.insensitive } })
      }
 
      if (industryFilter) {
-       userWhereConditions.push({ industry: { contains: industryFilter, mode: 'insensitive' } })
+       userWhereConditions.push({ industry: { contains: industryFilter, mode: Prisma.QueryMode.insensitive } })
      }
 
      if (languageFilter) {
-       userWhereConditions.push({ language: { contains: languageFilter, mode: 'insensitive' } })
+       userWhereConditions.push({ language: { contains: languageFilter, mode: Prisma.QueryMode.insensitive } })
      }
 
      const userWhere = {
        OR: userWhereConditions.length > 0 ? userWhereConditions : [{ id: { not: null } }], // Fallback condition
-       isActive: true
+       isActive: true,
+       emailVerified: { not: null } // Only include users with verified emails
      }
 
     const jobWhere = {
       OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { companyName: { contains: query, mode: 'insensitive' } },
-        { location: { contains: query, mode: 'insensitive' } },
-        { requirements: { contains: query, mode: 'insensitive' } },
-        { benefits: { contains: query, mode: 'insensitive' } }
+        { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { description: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { companyName: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { location: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { requirements: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { benefits: { contains: query, mode: Prisma.QueryMode.insensitive } }
       ],
       isActive: true,
       // Not expired
@@ -172,16 +174,16 @@ export async function GET(request: NextRequest) {
 
     const postWhere = {
       OR: [
-        { content: { contains: query, mode: 'insensitive' } }
+        { content: { contains: query, mode: Prisma.QueryMode.insensitive } }
       ]
     }
 
     const companyWhere = {
       OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { industry: { contains: query, mode: 'insensitive' } },
-        { location: { contains: query, mode: 'insensitive' } }
+        { name: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { description: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { industry: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        { location: { contains: query, mode: Prisma.QueryMode.insensitive } }
       ]
     }
 

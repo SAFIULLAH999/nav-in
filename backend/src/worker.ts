@@ -91,7 +91,7 @@ class WorkerService {
         } catch (error) {
           logger.error('Health check failed:', error);
           if (process.send) {
-            process.send({ status: 'unhealthy', error: error.message });
+            process.send({ status: 'unhealthy', error: error instanceof Error ? error.message : String(error) });
           }
         }
       }

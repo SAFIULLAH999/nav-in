@@ -443,6 +443,254 @@ export const initSocketIO = (httpServer: NetServer) => {
       }
     })
 
+    // Handle connection requests (real-time)
+    socket.on('send_connection_request', async (data: {
+      receiverId: string
+      connectionType?: string
+      message?: string
+    }) => {
+      try {
+        if (!socket.userId) {
+          socket.emit('error', 'Not authenticated')
+          return
+        }
+
+        const { receiverId, connectionType = 'PROFESSIONAL', message } = data
+
+        // Check if users are already connected
+        const existingConnection = await prisma.connection.findFirst({
+          where: {
+            OR: [
+              { senderId: socket.userId, receiverId, status: 'ACCEPTED' },
+              { senderId: receiverId, receiverId: socket.userId, status: 'ACCEPTED' }
+            ]
+          }
+        })
+
+        if (existingConnection) {
+          socket.emit('error', 'Users are already connected')
+          return
+        }
+
+        // Check if request already exists
+        const existingRequest = await prisma.connection.findFirst({
+          where: {
+            OR: [
+              { senderId: socket.userId, receiverId, status: 'PENDING' },
+              { senderId: receiverId, receiverId: socket.userId, status: 'PENDING' }
+            ]
+          }
+        })
+
+        if (existingRequest) {
+          socket.emit('error', 'Connection request already exists')
+          return
+        }
+
+        // Get sender details
+        const sender = await prisma.user.findUnique({
+          where: { id: socket.userId },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+            title: true,
+            location: true
+          }
+        })
+
+        if (!sender) {
+          socket.emit('error', 'Sender not found')
+          return
+        }
+
+        // Create connection request
+        const connection = await prisma.connection.create({
+          data: {
+            senderId: socket.userId,
+            receiverId,
+            status: 'PENDING',
+            connectionType,
+            notes: message,
+            strength: 1
+          }
+        })
+
+        // Create notification for receiver
+        await prisma.notification.create({
+          data: {
+            userId: receiverId,
+            type: 'CONNECTION_REQUEST',
+            title: 'New Connection Request',
+            message: `${sender.name} wants to connect with you`,
+            data: JSON.stringify({
+              connectionId: connection.id,
+              senderId: socket.userId,
+            }),
+          },
+        })
+
+        const connectionRequestData = {
+          id: connection.id,
+          user: sender,
+          requestedAt: connection.createdAt.toISOString(),
+          type: 'received',
+          message: message
+        }
+
+        // Send real-time notification to receiver
+        socket.to(`user_${receiverId}`).emit('connection_request_received', connectionRequestData)
+
+        // Send confirmation to sender
+        socket.emit('connection_request_sent', {
+          connectionId: connection.id,
+          receiverId
+        })
+
+        // Broadcast user presence update (connection request sent)
+        socket.broadcast.emit('user_connection_status_changed', {
+          userId: socket.userId,
+          targetUserId: receiverId,
+          status: 'pending'
+        })
+
+        console.log(`Connection request from ${socket.userId} to ${receiverId} sent`)
+
+      } catch (error) {
+        console.error('Error sending connection request:', error)
+        socket.emit('error', 'Failed to send connection request')
+      }
+    })
+
+    // Handle connection request responses (accept/reject)
+    socket.on('respond_connection_request', async (data: {
+      requestId: string
+      action: 'accept' | 'reject'
+    }) => {
+      try {
+        if (!socket.userId) {
+          socket.emit('error', 'Not authenticated')
+          return
+        }
+
+        const { requestId, action } = data
+
+        // Find the connection request
+        const connection = await prisma.connection.findUnique({
+          where: { id: requestId },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+                location: true
+              }
+            },
+            receiver: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+                location: true
+              }
+            }
+          }
+        })
+
+        if (!connection) {
+          socket.emit('error', 'Connection request not found')
+          return
+        }
+
+        // Verify user is the receiver
+        if (connection.receiverId !== socket.userId) {
+          socket.emit('error', 'Not authorized to respond to this request')
+          return
+        }
+
+        const newStatus = action === 'accept' ? 'ACCEPTED' : 'REJECTED'
+
+        // Update connection status
+        const updatedConnection = await prisma.connection.update({
+          where: { id: requestId },
+          data: { status: newStatus },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+                location: true
+              }
+            },
+            receiver: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+                location: true
+              }
+            }
+          }
+        })
+
+        // Create notification for sender
+        await prisma.notification.create({
+          data: {
+            userId: connection.senderId,
+            type: action === 'accept' ? 'CONNECTION_ACCEPTED' : 'CONNECTION_REJECTED',
+            title: action === 'accept' ? 'Connection Request Accepted' : 'Connection Request Declined',
+            message: action === 'accept'
+              ? `${connection.receiver.name} accepted your connection request`
+              : `${connection.receiver.name} declined your connection request`,
+            data: JSON.stringify({
+              connectionId: updatedConnection.id,
+              responderId: socket.userId,
+            }),
+          },
+        })
+
+        const responseData = {
+          requestId,
+          action,
+          connection: {
+            id: updatedConnection.id,
+            user: action === 'accept' ? updatedConnection.receiver : updatedConnection.sender,
+            connectedAt: updatedConnection.updatedAt.toISOString()
+          }
+        }
+
+        // Send response to sender
+        socket.to(`user_${connection.senderId}`).emit('connection_request_responded', responseData)
+
+        // Send confirmation to responder
+        socket.emit('connection_response_sent', responseData)
+
+        // Broadcast connection status update
+        socket.broadcast.emit('user_connection_status_changed', {
+          userId: connection.senderId,
+          targetUserId: connection.receiverId,
+          status: action === 'accept' ? 'connected' : 'none'
+        })
+
+        console.log(`Connection request ${requestId} ${action}ed by ${socket.userId}`)
+
+      } catch (error) {
+        console.error('Error responding to connection request:', error)
+        socket.emit('error', 'Failed to respond to connection request')
+      }
+    })
+
     // Handle user disconnect
     socket.on('disconnect', () => {
       if (socket.userId) {

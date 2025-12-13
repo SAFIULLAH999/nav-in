@@ -12,11 +12,17 @@ interface SocketContextType {
   sendMessage: (receiverId: string, content: string) => void
   joinConversation: (otherUserId: string) => void
   leaveConversation: (otherUserId: string) => void
+  sendConnectionRequest: (receiverId: string, connectionType?: string, message?: string) => void
+  respondConnectionRequest: (requestId: string, action: 'accept' | 'reject') => void
   onMessage: (callback: (message: any) => void) => void
   onUserOnline: (callback: (data: { userId: string }) => void) => void
   onUserOffline: (callback: (data: { userId: string }) => void) => void
   onNotification: (callback: (notification: any) => void) => void
   onPostUpdate: (callback: (data: any) => void) => void
+  onConnectionRequestReceived: (callback: (data: any) => void) => () => void
+  onConnectionRequestSent: (callback: (data: any) => void) => () => void
+  onConnectionRequestResponded: (callback: (data: any) => void) => () => void
+  onConnectionStatusChanged: (callback: (data: any) => void) => () => void
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined)
@@ -45,6 +51,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const userOfflineCallbacks = useRef<((data: { userId: string }) => void)[]>([])
   const notificationCallbacks = useRef<((notification: any) => void)[]>([])
   const postUpdateCallbacks = useRef<((data: any) => void)[]>([])
+  const connectionRequestReceivedCallbacks = useRef<((data: any) => void)[]>([])
+  const connectionRequestSentCallbacks = useRef<((data: any) => void)[]>([])
+  const connectionRequestRespondedCallbacks = useRef<((data: any) => void)[]>([])
+  const connectionStatusChangedCallbacks = useRef<((data: any) => void)[]>([])
 
   // Function to update user activity in serverless environment
   const updateUserActivity = async () => {
@@ -91,16 +101,15 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeSocket = async () => {
       if (user && !socket) {
-        // Check if we're in a serverless environment (Vercel)
-        const isServerless = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ||
-                            process.env.NODE_ENV === 'production'
+        // For now, always use serverless mode (API polling) since socket.io server is not set up
+        const useServerless = true
 
-        if (isServerless) {
-          console.log('Serverless environment detected - using API-based real-time features')
+        if (useServerless) {
+          console.log('Using API-based real-time features (socket.io server not configured)')
           setIsConnected(true)
           setIsServerless(true)
 
-          // Set up periodic activity updates for serverless environment
+          // Set up periodic activity updates
           const activityInterval = setInterval(() => {
             updateUserActivity()
           }, 30000) // Update every 30 seconds
@@ -113,11 +122,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           }
         }
 
+        // Legacy socket.io code (currently disabled)
+        /*
         // Get token for authentication
         const token = await getToken()
 
         // Initialize socket connection for development
-        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
+        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
           path: '/api/socket',
           auth: {
             token: token
@@ -183,6 +194,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         })
 
         setSocket(newSocket)
+        */
       }
     }
 
@@ -227,6 +239,26 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
   }
 
+  const sendConnectionRequest = (receiverId: string, connectionType?: string, message?: string) => {
+    if (isServerless) {
+      console.log('Serverless environment - real-time connection requests not available')
+      return
+    }
+    if (socket && isConnected) {
+      socket.emit('send_connection_request', { receiverId, connectionType, message })
+    }
+  }
+
+  const respondConnectionRequest = (requestId: string, action: 'accept' | 'reject') => {
+    if (isServerless) {
+      console.log('Serverless environment - real-time connection responses not available')
+      return
+    }
+    if (socket && isConnected) {
+      socket.emit('respond_connection_request', { requestId, action })
+    }
+  }
+
   const onMessage = (callback: (message: any) => void) => {
     messageCallbacks.current.push(callback)
     return () => {
@@ -262,6 +294,34 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
   }
 
+  const onConnectionRequestReceived = (callback: (data: any) => void) => {
+    connectionRequestReceivedCallbacks.current.push(callback)
+    return () => {
+      connectionRequestReceivedCallbacks.current = connectionRequestReceivedCallbacks.current.filter(cb => cb !== callback)
+    }
+  }
+
+  const onConnectionRequestSent = (callback: (data: any) => void) => {
+    connectionRequestSentCallbacks.current.push(callback)
+    return () => {
+      connectionRequestSentCallbacks.current = connectionRequestSentCallbacks.current.filter(cb => cb !== callback)
+    }
+  }
+
+  const onConnectionRequestResponded = (callback: (data: any) => void) => {
+    connectionRequestRespondedCallbacks.current.push(callback)
+    return () => {
+      connectionRequestRespondedCallbacks.current = connectionRequestRespondedCallbacks.current.filter(cb => cb !== callback)
+    }
+  }
+
+  const onConnectionStatusChanged = (callback: (data: any) => void) => {
+    connectionStatusChangedCallbacks.current.push(callback)
+    return () => {
+      connectionStatusChangedCallbacks.current = connectionStatusChangedCallbacks.current.filter(cb => cb !== callback)
+    }
+  }
+
   const value: SocketContextType = {
     socket,
     isConnected,
@@ -270,11 +330,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     sendMessage,
     joinConversation,
     leaveConversation,
+    sendConnectionRequest,
+    respondConnectionRequest,
     onMessage,
     onUserOnline,
     onUserOffline,
     onNotification,
-    onPostUpdate
+    onPostUpdate,
+    onConnectionRequestReceived,
+    onConnectionRequestSent,
+    onConnectionRequestResponded,
+    onConnectionStatusChanged
   }
 
   return (

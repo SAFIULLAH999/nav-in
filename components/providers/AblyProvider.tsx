@@ -37,8 +37,8 @@ export const AblyProvider: React.FC<AblyProviderProps> = ({
   const [channel, setChannel] = useState<any>(null)
 
   useEffect(() => {
-    if (!apiKey) {
-      console.warn('Ably API key not provided')
+    if (!apiKey || apiKey === 'placeholder-ably-api-key') {
+      console.warn('Ably API key not provided - real-time features disabled')
       return
     }
 

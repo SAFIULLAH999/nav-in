@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server'
 
 export async function GET(req: NextRequest) {
-  // For Vercel deployment, we'll use a different approach
-  // Socket.io doesn't work well with serverless functions
+  // Socket.io server is not initialized in API routes
+  // This endpoint serves as a health check for socket connections
   return new Response(JSON.stringify({
-    error: 'Socket.io not available in serverless environment',
-    fallback: 'Real-time features disabled for serverless deployment'
+    status: 'Socket.io server not available via API routes',
+    message: 'Real-time features use polling fallback in development',
+    timestamp: new Date().toISOString()
   }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' }

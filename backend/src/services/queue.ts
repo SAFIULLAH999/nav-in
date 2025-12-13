@@ -19,6 +19,9 @@ try {
   console.warn('Redis not available during build, queue operations will be disabled');
 }
 
+// Export queue and worker instances
+export { jobQueue, jobWorker };
+
 // Queue job types
 export interface JobData {
   type: 'email' | 'notification' | 'data-processing' | 'cleanup' | 'backup' | 'job-fetching';

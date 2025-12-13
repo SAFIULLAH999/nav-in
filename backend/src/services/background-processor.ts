@@ -43,9 +43,14 @@ export class BackgroundJobProcessor {
       await prisma.$connect();
       logger.info('Database connected successfully');
 
-      // Test Redis connection
-      await redisService.ping();
-      logger.info('Redis connected successfully');
+      // Test Redis connection (optional in development)
+      try {
+        await redisService.ping();
+        logger.info('Redis connected successfully');
+      } catch (redisError) {
+        logger.warn('Redis not available, background processor will run in limited mode:', redisError instanceof Error ? redisError.message : String(redisError));
+        // Don't throw error, just log warning
+      }
 
       // Start the main processing loop
       this.startProcessingLoop();
@@ -178,15 +183,7 @@ export class BackgroundJobProcessor {
         },
       });
 
-      // Clean up old temporary files
-      await prisma.document.deleteMany({
-        where: {
-          createdAt: {
-            lt: thirtyDaysAgo,
-          },
-          isPublic: false,
-        },
-      });
+      // Note: Document cleanup skipped - document model not available in current schema
 
       logger.debug('Cleanup jobs completed');
     } catch (error) {
@@ -291,8 +288,6 @@ export class BackgroundJobProcessor {
         where: { id: job.id },
         data: {
           status: 'COMPLETED',
-          completedAt: new Date(),
-          result: JSON.stringify(result),
         },
       });
 

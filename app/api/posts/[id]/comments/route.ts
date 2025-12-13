@@ -46,7 +46,7 @@ export async function GET(
       skip: offset,
       orderBy: { createdAt: 'desc' },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             name: true,
@@ -74,14 +74,14 @@ export async function GET(
       content: comment.content,
       timestamp: comment.createdAt.toISOString(),
       author: {
-        name: comment.author.name || 'Unknown User',
-        username: comment.author.username || 'user',
-        avatar: comment.author.avatar || '',
-        title: comment.author.title || 'NavIN User'
+        name: (comment as any).user.name || 'Unknown User',
+        username: (comment as any).user.username || 'user',
+        avatar: (comment as any).user.avatar || '',
+        title: (comment as any).user.title || 'NavIN User'
       },
-      likes: comment._count.likes,
-      repliesCount: comment._count.replies,
-      liked: comment.likes.length > 0,
+      likes: (comment as any)._count.likes,
+      repliesCount: (comment as any)._count.replies,
+      liked: (comment as any).likes ? (comment as any).likes.length > 0 : false,
       parentId: comment.parentId
     }))
 
@@ -160,7 +160,7 @@ export async function POST(
         parentId: parentId || null,
       },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             name: true,
@@ -184,13 +184,13 @@ export async function POST(
       content: newComment.content,
       timestamp: newComment.createdAt.toISOString(),
       author: {
-        name: newComment.author.name || 'Unknown User',
-        username: newComment.author.username || 'user',
-        avatar: newComment.author.avatar || '',
-        title: newComment.author.title || 'NavIN User'
+        name: (newComment as any).user.name || 'Unknown User',
+        username: (newComment as any).user.username || 'user',
+        avatar: (newComment as any).user.avatar || '',
+        title: (newComment as any).user.title || 'NavIN User'
       },
-      likes: newComment._count.likes,
-      repliesCount: newComment._count.replies,
+      likes: (newComment as any)._count.likes,
+      repliesCount: (newComment as any)._count.replies,
       liked: false,
       parentId: newComment.parentId
     }

@@ -88,7 +88,7 @@ export default function PublicProfileClient({ initialUser }: PublicProfileClient
   }
 
   const handleShare = async () => {
-    const profileUrl = `https://nav-in.com/in/${profileUser.username}`
+    const profileUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://nav-in.com'}/in/${profileUser.username}`
 
     if (navigator.share) {
       try {
@@ -124,7 +124,7 @@ export default function PublicProfileClient({ initialUser }: PublicProfileClient
       "alternateName": profileUser.username,
       "description": profileUser.bio || `Professional profile of ${profileUser.name || profileUser.username}`,
       "image": profileUser.avatar,
-      "url": `https://nav-in.com/in/${profileUser.username}`,
+      "url": `${typeof window !== 'undefined' ? window.location.origin : 'https://nav-in.com'}/in/${profileUser.username}`,
       "sameAs": profileUser.website ? [profileUser.website] : [],
       "jobTitle": profileUser.title,
       "worksFor": profileUser.company ? {
@@ -206,10 +206,19 @@ export default function PublicProfileClient({ initialUser }: PublicProfileClient
                         <span>{profileUser.location}</span>
                       </div>
                     )}
-                    <div className="flex items-center space-x-1">
-                      <LinkIcon className="w-4 h-4" />
-                      <span>nav-in.com/in/{profileUser.username}</span>
-                    </div>
+                    {profileUser.username && (
+                      <div className="flex items-center space-x-1">
+                        <LinkIcon className="w-4 h-4" />
+                        <a
+                          href={`${typeof window !== 'undefined' ? window.location.origin : 'nav-in.com'}/in/${profileUser.username}`}
+                          className="text-primary hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {typeof window !== 'undefined' ? window.location.origin : 'nav-in.com'}/in/{profileUser.username}
+                        </a>
+                      </div>
+                    )}
                     <div className="flex items-center space-x-1">
                       <Calendar className="w-4 h-4" />
                       <span>Joined {new Date(profileUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
@@ -385,10 +394,19 @@ function AboutTab({ user }: { user: UserProfile }) {
       <div className="bg-card rounded-lg p-6 border border-border">
         <h3 className="font-semibold text-text mb-4">Contact Info</h3>
         <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <LinkIcon className="w-4 h-4 text-text-muted" />
-            <span className="text-primary">nav-in.com/in/{user.username}</span>
-          </div>
+          {user.username && (
+            <div className="flex items-center space-x-3">
+              <LinkIcon className="w-4 h-4 text-text-muted" />
+              <a
+                href={`${typeof window !== 'undefined' ? window.location.origin : 'nav-in.com'}/in/${user.username}`}
+                className="text-primary hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {typeof window !== 'undefined' ? window.location.origin : 'nav-in.com'}/in/{user.username}
+              </a>
+            </div>
+          )}
           {user.website && (
             <div className="flex items-center space-x-3">
               <LinkIcon className="w-4 h-4 text-text-muted" />

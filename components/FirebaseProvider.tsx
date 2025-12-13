@@ -40,7 +40,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
     if (clerkUser) {
       const mockFirebaseUser: AuthUser = {
         uid: clerkUser.id,
-        email: clerkUser.primaryEmailAddress?.emailAddress!,
+        email: clerkUser.primaryEmailAddress?.emailAddress || '',
         displayName: clerkUser.fullName || clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] || null,
         emailVerified: true,
         isAnonymous: false,

@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Navbar } from '@/components/Navbar'
 import { Search, UserPlus, Check, X, Clock, Users, UserCheck, UserX, Filter, MapPin, Building, Award, User, ChevronLeft, ChevronRight, Loader, GraduationCap, Briefcase, Building2, Languages } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { useAbly } from '@/components/providers/AblyProvider'
+import { useSocket } from '@/components/SocketProvider'
 
 interface Connection {
   id: string
@@ -289,6 +290,7 @@ function ConnectionsTab({ connections }: { connections: Connection[] }) {
 }
 
 function RequestsTab({ requests, onAction }: { requests: ConnectionRequest[], onAction: (id: string, action: 'accept' | 'reject') => void }) {
+  const { respondConnectionRequest, isServerless } = useSocket()
   if (requests.length === 0) {
     return (
       <div className="bg-card rounded-xl shadow-soft border border-border p-12 text-center">
@@ -430,25 +432,53 @@ function BrowseUsersTab() {
     language: ''
   })
 
-  const { subscribe } = useAbly()
+  const { activeUsers, sendConnectionRequest, onConnectionRequestSent, onConnectionRequestReceived, onConnectionStatusChanged, isServerless } = useSocket()
 
   useEffect(() => {
     loadUsers()
     loadSuggestedUsers()
 
-    // Subscribe to new user events
-    const unsubscribe = subscribe('new_user', (data: any) => {
-      // Add the new user to the beginning of the list if not already present
-      setUsers(prev => {
-        if (prev.some(user => user.id === data.userId)) {
-          return prev
-        }
-        return [data, ...prev]
-      })
+    // Set up real-time listeners for connection events
+    const unsubscribeSent = onConnectionRequestSent((data: any) => {
+      console.log('Connection request sent:', data)
+      // Update UI to show pending status
+      setUsers(prev => prev.map((user: any) =>
+        user.id === data.receiverId
+          ? { ...user, connectionStatus: 'pending' }
+          : user
+      ))
+      setSearchResults(prev => prev.map((user: any) =>
+        user.id === data.receiverId
+          ? { ...user, connectionStatus: 'pending' }
+          : user
+      ))
+    })
+
+    const unsubscribeReceived = onConnectionRequestReceived((data: any) => {
+      console.log('Connection request received:', data)
+      // This would typically show a notification, but for now just log
+      toast.success(`New connection request from ${data.user.name}`)
+    })
+
+    const unsubscribeStatusChanged = onConnectionStatusChanged((data: any) => {
+      console.log('Connection status changed:', data)
+      // Update connection status in real-time
+      setUsers(prev => prev.map((user: any) =>
+        user.id === data.targetUserId
+          ? { ...user, connectionStatus: data.status }
+          : user
+      ))
+      setSearchResults(prev => prev.map((user: any) =>
+        user.id === data.targetUserId
+          ? { ...user, connectionStatus: data.status }
+          : user
+      ))
     })
 
     return () => {
-      unsubscribe()
+      if (unsubscribeSent) unsubscribeSent()
+      if (unsubscribeReceived) unsubscribeReceived()
+      if (unsubscribeStatusChanged) unsubscribeStatusChanged()
     }
   }, [])
 
@@ -572,6 +602,19 @@ function BrowseUsersTab() {
     try {
       setConnectingUsers(prev => new Set(prev).add(targetUserId))
 
+      // Try real-time connection request first
+      if (!isServerless) {
+        sendConnectionRequest(targetUserId, connectionType, `I'd like to connect with you on NavIN`)
+        toast.success('Connection request sent!')
+        setConnectingUsers(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(targetUserId)
+          return newSet
+        })
+        return
+      }
+
+      // Fallback to API call if serverless
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
 
       if (!token) {
@@ -825,20 +868,27 @@ function BrowseUsersTab() {
               <div className="absolute bottom-3 left-3 w-1.5 h-1.5 bg-accent/25 rounded-full animate-pulse delay-700" />
               <div className="absolute top-1/2 right-2 w-1 h-1 bg-primary/15 rounded-full animate-pulse delay-1000" />
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
-                    {user.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      user.name.charAt(0).toUpperCase()
-                    )}
-                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          user.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      {activeUsers.includes(user.id) && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card animate-pulse"></div>
+                      )}
+                    </div>
                   <div>
-                    <h3 className="font-semibold text-text">{user.name}</h3>
+                    <Link href={`/in/${user.username}`} className="block">
+                      <h3 className="font-semibold text-text hover:text-primary transition-colors cursor-pointer">{user.name}</h3>
+                    </Link>
                     <p className="text-sm text-text-muted">{user.title}</p>
                     {user.location && (
                       <p className="text-xs text-text-muted">{user.location}</p>

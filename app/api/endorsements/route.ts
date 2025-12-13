@@ -88,6 +88,12 @@ export async function POST(request: NextRequest) {
 
     const currentUserId = authResult.user.userId
 
+    // Get current user data for notification
+    const currentUser = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { name: true }
+    })
+
     // Prevent self-endorsement
     if (currentUserId === receiverId) {
       return NextResponse.json(
@@ -192,7 +198,7 @@ export async function POST(request: NextRequest) {
         userId: receiverId,
         type: 'ENDORSEMENT',
         title: 'New Skill Endorsement',
-        message: `${authResult.user.name || 'Someone'} endorsed your ${endorsement.receiver.skill.name} skill`,
+        message: `${currentUser?.name || 'Someone'} endorsed your ${endorsement.receiver.skill.name} skill`,
         data: JSON.stringify({
           endorsementId: endorsement.id,
           skillId,

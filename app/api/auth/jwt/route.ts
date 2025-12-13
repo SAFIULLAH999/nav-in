@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { JWTManager, hashPassword, verifyPassword } from '@/lib/jwt'
+import { JWTManager } from '@/lib/jwt'
 import { validateData, profileUpdateSchema } from '@/lib/validations'
 import { validateEmail, validatePassword as validatePasswordUtil } from '@/lib/security'
 
@@ -52,13 +52,11 @@ export async function POST(request: NextRequest) {
     // Generate tokens
     const accessToken = JWTManager.generateAccessToken({
       userId: user.id,
-      email: user.email
+      email: user.email,
+      role: user.role
     })
 
-    const refreshToken = JWTManager.generateRefreshToken({
-      userId: user.id,
-      email: user.email
-    })
+    const refreshToken = JWTManager.generateRefreshToken(user.id)
 
     // Store refresh token
     await JWTManager.storeRefreshToken(user.id, refreshToken)
@@ -149,7 +147,8 @@ export async function PUT(request: NextRequest) {
     // Generate new access token
     const newAccessToken = JWTManager.generateAccessToken({
       userId: user.id,
-      email: user.email
+      email: user.email,
+      role: user.role
     })
 
     return NextResponse.json({
