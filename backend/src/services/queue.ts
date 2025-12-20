@@ -6,17 +6,74 @@ import { prisma } from '../utils/prisma';
 
 // Create queue instance with error handling for build time
 let jobQueue: Queue | null = null;
-try {
-  jobQueue = new Queue('job-processing', {
-    connection: {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      db: parseInt(process.env.REDIS_DB || '0'),
-    },
-  });
-} catch (error) {
-  console.warn('Redis not available during build, queue operations will be disabled');
+let jobWorker: Worker<JobData> | null = null;
+
+// Only initialize queue and worker if Redis is available and not in build mode
+const isBuildMode = process.env.NODE_ENV === 'production' && !process.env.REDIS_URL && !process.env.REDIS_HOST;
+
+if (!isBuildMode) {
+  try {
+    jobQueue = new Queue('job-processing', {
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD || undefined,
+        db: parseInt(process.env.REDIS_DB || '0'),
+      },
+    });
+
+    jobWorker = new Worker<JobData>(
+      'job-processing',
+      async (job: Job<JobData>) => {
+        logger.info(`Processing job ${job.id} of type ${job.data.type}`);
+
+        switch (job.data.type) {
+          case 'email':
+            return await processEmailJob(job);
+          case 'notification':
+            return await processNotificationJob(job);
+          case 'data-processing':
+            return await processDataJob(job);
+          case 'cleanup':
+            return await processCleanupJob(job);
+          case 'backup':
+            return await processBackupJob(job);
+          case 'job-fetching':
+            return await processJobFetchingJob(job);
+          default:
+            throw new Error(`Unknown job type: ${job.data.type}`);
+        }
+      },
+      {
+        connection: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          password: process.env.REDIS_PASSWORD || undefined,
+          db: parseInt(process.env.REDIS_DB || '0'),
+        },
+        concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '5'),
+      }
+    );
+
+    // Worker event handlers
+    jobWorker.on('completed', (job: Job<JobData>) => {
+      logger.info(`Job ${job.id} completed successfully`);
+    });
+
+    jobWorker.on('failed', (job: Job<JobData> | undefined, error: Error) => {
+      logger.error(`Job ${job?.id} failed:`, error);
+    });
+
+    jobWorker.on('error', (error: Error) => {
+      logger.error('Worker error:', error);
+    });
+
+    console.log('✅ Job queue service initialized successfully');
+  } catch (error) {
+    console.warn('⚠️ Redis not available, queue operations will be disabled:', error);
+  }
+} else {
+  console.warn('⚠️ Build mode detected, queue service will be disabled');
 }
 
 // Export queue and worker instances
@@ -162,60 +219,6 @@ const processJobFetchingJob = async (job: Job<JobData>) => {
     throw error;
   }
 };
-
-// Create worker instance with error handling for build time
-let jobWorker: Worker<JobData> | null = null;
-try {
-  jobWorker = new Worker<JobData>(
-    'job-processing',
-    async (job: Job<JobData>) => {
-      logger.info(`Processing job ${job.id} of type ${job.data.type}`);
-
-      switch (job.data.type) {
-        case 'email':
-          return await processEmailJob(job);
-        case 'notification':
-          return await processNotificationJob(job);
-        case 'data-processing':
-          return await processDataJob(job);
-        case 'cleanup':
-          return await processCleanupJob(job);
-        case 'backup':
-          return await processBackupJob(job);
-        case 'job-fetching':
-          return await processJobFetchingJob(job);
-        default:
-          throw new Error(`Unknown job type: ${job.data.type}`);
-      }
-    },
-    {
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD || undefined,
-        db: parseInt(process.env.REDIS_DB || '0'),
-      },
-      concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '5'),
-    }
-  );
-} catch (error) {
-  console.warn('Redis not available during build, worker will be disabled');
-}
-
-// Worker event handlers
-if (jobWorker) {
-  jobWorker.on('completed', (job: Job<JobData>) => {
-    logger.info(`Job ${job.id} completed successfully`);
-  });
-
-  jobWorker.on('failed', (job: Job<JobData> | undefined, error: Error) => {
-    logger.error(`Job ${job?.id} failed:`, error);
-  });
-
-  jobWorker.on('error', (error: Error) => {
-    logger.error('Worker error:', error);
-  });
-}
 
 // Queue management functions
 export const addJob = async (jobData: JobData): Promise<Job<JobData> | null> => {

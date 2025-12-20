@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useClerkSession } from '@/hooks/useClerkSession';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +44,7 @@ interface GroupMembership {
 }
 
 export function GroupsBrowser() {
-  const { data: session, status } = useSession();
+  const { data: session, status, isLoaded } = useClerkSession();
   const [groups, setGroups] = useState<Group[]>([]);
   const [userMemberships, setUserMemberships] = useState<Record<string, GroupMembership>>({});
   const [loading, setLoading] = useState(true);
@@ -57,8 +57,8 @@ export function GroupsBrowser() {
     isPrivate: false,
   });
 
-  // Handle session loading state
-  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+  // Handle session loading state - only consider authenticated if session is loaded and user exists
+  const isAuthenticated = isLoaded && status === 'authenticated' && session?.user?.id;
 
   useEffect(() => {
     fetchGroups(); // Always fetch groups, even without authentication

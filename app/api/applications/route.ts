@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
 
-    let userId = 'demo-user-id' // Default for demo purposes
+    let userId = 'demo-user-1' // Default for demo purposes
 
     // Try to authenticate if token is provided
     if (token) {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
 
-    let userId = 'demo-user-id' // Default for demo purposes
+    let userId = 'demo-user-1' // Default for demo purposes
     let userEmail = 'demo@example.com'
     let userName = 'Demo User'
 

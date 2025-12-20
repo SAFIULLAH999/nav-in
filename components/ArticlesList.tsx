@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useClerkSession } from '@/hooks/useClerkSession';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,14 +55,14 @@ const CATEGORIES = [
 ];
 
 export function ArticlesList() {
-  const { data: session, status } = useSession();
+  const { data: session, status, isLoaded } = useClerkSession();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showWriteForm, setShowWriteForm] = useState(false);
 
-  // Handle session loading state
-  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+  // Handle session loading state - only consider authenticated if session is loaded and user exists
+  const isAuthenticated = isLoaded && status === 'authenticated' && session?.user?.id;
 
   useEffect(() => {
     fetchArticles();
@@ -90,7 +90,7 @@ export function ArticlesList() {
   };
 
   const handleLike = async (articleId: string) => {
-    if (status !== 'authenticated' || !session?.user?.id) {
+    if (!isAuthenticated) {
       toast.error('Please sign in to like articles');
       return;
     }
@@ -113,7 +113,7 @@ export function ArticlesList() {
   };
 
   const handleBookmark = async (articleId: string) => {
-    if (status !== 'authenticated' || !session?.user?.id) {
+    if (!isAuthenticated) {
       toast.error('Please sign in to bookmark articles');
       return;
     }
@@ -151,7 +151,7 @@ export function ArticlesList() {
           <h2 className="text-2xl font-bold text-text">Articles</h2>
           <p className="text-text-muted">Discover insights and stories from professionals</p>
         </div>
-        {status === 'authenticated' && session?.user?.id && (
+        {isAuthenticated && (
           <Link href="/articles/write">
             <Button>
               <Plus className="w-4 h-4 mr-2" />

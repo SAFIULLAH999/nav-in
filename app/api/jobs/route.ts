@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     const jobData = createJobSchema.parse(body)
 
     // For demo purposes, create job without authentication
-    const authorId = 'demo-user-id' // This should be replaced with proper auth
+    const authorId = 'demo-user-1' // This should be replaced with proper auth
 
     // Skip role checking for demo
 

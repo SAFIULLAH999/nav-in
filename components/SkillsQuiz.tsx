@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useClerkSession } from '@/hooks/useClerkSession';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,15 +53,15 @@ const DIFFICULTY_COLORS = {
 };
 
 export function SkillsQuiz() {
-  const { data: session, status } = useSession();
+  const { data: session, status, isLoaded } = useClerkSession();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [attempts, setAttempts] = useState<Record<string, QuizAttempt>>({});
   const [loading, setLoading] = useState(true);
   const [takingQuiz, setTakingQuiz] = useState(false);
 
-  // Handle session loading state
-  const isAuthenticated = status === 'authenticated' && session?.user?.id;
+  // Handle session loading state - only consider authenticated if session is loaded and user exists
+  const isAuthenticated = isLoaded && status === 'authenticated' && session?.user?.id;
 
   useEffect(() => {
     fetchQuizzes(); // Always fetch quizzes, even without authentication
@@ -256,7 +256,7 @@ function QuizTaker({
   onComplete: () => void;
   existingAttempt?: QuizAttempt;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session, status, isLoaded } = useClerkSession();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState<number | null>(quiz.timeLimit ? quiz.timeLimit * 60 : null);
@@ -280,7 +280,7 @@ function QuizTaker({
   };
 
   const handleSubmit = async () => {
-    if (status !== 'authenticated' || !session?.user?.id) {
+    if (!isLoaded || status !== 'authenticated' || !session?.user?.id) {
       toast.error('Please sign in to submit quiz');
       return;
     }
