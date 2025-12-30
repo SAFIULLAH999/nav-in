@@ -5,8 +5,8 @@
     }
   },
   "regions": ["iad1"],
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "npm run build -- --webpack",
+  "installCommand": "npm install --legacy-peer-deps",
   "headers": [
     {
       "source": "/api/(.*)",
