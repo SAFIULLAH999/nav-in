@@ -57,12 +57,12 @@ export class IndeedScraper {
               postedDate,
               applyUrl,
               source: 'indeed',
-            externalId
-          })
+              externalId
+            })
+          }
+        } catch (error) {
+          console.error('Error parsing Indeed job card:', error)
         }
-      } catch (error) {
-        console.error('Error parsing Indeed job card:', error)
-      }
       })
 
       console.log(`Successfully scraped ${jobs.length} jobs from Indeed`)

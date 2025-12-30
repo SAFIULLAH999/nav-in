@@ -3,7 +3,6 @@ const nextConfig = {
   images: {
     domains: ['images.unsplash.com', 'res.cloudinary.com', 'avatars.githubusercontent.com'],
   },
-  output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'prisma', 'cheerio', 'undici'],
   },

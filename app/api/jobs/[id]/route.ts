@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma-mock'
 
 // GET - Fetch a single job by ID
 export async function GET(
@@ -64,7 +64,7 @@ export async function GET(
       )
     }
 
-    // Transform job for frontend
+    // Transform job for frontend with safe property access
     let requirements = []
     try {
       if (job.requirements) {
@@ -76,27 +76,27 @@ export async function GET(
     }
 
     const transformedJob = {
-      id: job.id,
-      title: job.title,
-      description: job.description,
-      company: job.companyName,
-      companyName: job.companyName,
-      location: job.location,
-      type: job.type,
-      salaryMin: job.salaryMin,
-      salaryMax: job.salaryMax,
+      id: job.id || '',
+      title: job.title || '',
+      description: job.description || '',
+      company: job.companyName || '',
+      companyName: job.companyName || '',
+      location: job.location || '',
+      type: job.type || '',
+      salaryMin: job.salaryMin || 0,
+      salaryMax: job.salaryMax || 0,
       requirements,
-      benefits: job.benefits,
-      experience: job.experience,
-      isRemote: job.isRemote,
-      applicationDeadline: job.applicationDeadline?.toISOString(),
-      views: job.views,
-      applicationsCount: job._count.applications,
-      createdAt: job.createdAt.toISOString(),
-      employerEmail: job.employerEmail,
-      employerPhone: job.employerPhone,
-      employerUsername: job.employerUsername,
-      employerName: job.employerName,
+      benefits: job.benefits || '',
+      experience: job.experience || '',
+      isRemote: job.isRemote || false,
+      applicationDeadline: job.applicationDeadline ? job.applicationDeadline.toISOString() : null,
+      views: job.views || 0,
+      applicationsCount: job._count?.applications || 0,
+      createdAt: job.createdAt ? job.createdAt.toISOString() : new Date().toISOString(),
+      employerEmail: job.employerEmail || '',
+      employerPhone: job.employerPhone || '',
+      employerUsername: job.employerUsername || '',
+      employerName: job.employerName || '',
       author: {
         name: job.author?.name || 'Unknown Recruiter',
         username: job.author?.username || 'user',

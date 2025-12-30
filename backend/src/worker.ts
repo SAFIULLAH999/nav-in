@@ -25,14 +25,26 @@ class WorkerService {
   async start(): Promise<void> {
     logger.info('🚀 Starting NavIN Worker Service...');
 
+    const startedServices: string[] = [];
+
     try {
       // Start background job processor
-      await backgroundProcessor.start();
-      logger.info('✅ BackgroundJobProcessor started');
+      try {
+        await backgroundProcessor.start();
+        logger.info('✅ BackgroundJobProcessor started');
+        startedServices.push('BackgroundJobProcessor');
+      } catch (error) {
+        logger.warn('⚠️ BackgroundJobProcessor failed to start, continuing without it:', error instanceof Error ? error.message : String(error));
+      }
 
       // Start enhanced scraper manager
-      await enhancedScraperManager.start();
-      logger.info('✅ EnhancedJobScraperManager started');
+      try {
+        await enhancedScraperManager.start();
+        logger.info('✅ EnhancedJobScraperManager started');
+        startedServices.push('EnhancedJobScraperManager');
+      } catch (error) {
+        logger.warn('⚠️ EnhancedJobScraperManager failed to start, continuing without it:', error instanceof Error ? error.message : String(error));
+      }
 
       // Setup health check endpoint
       this.setupHealthCheckEndpoint();
@@ -40,11 +52,20 @@ class WorkerService {
       // Setup graceful shutdown
       this.setupGracefulShutdown();
 
+      if (startedServices.length === 0) {
+        logger.error('❌ No services could be started. Worker cannot function without any services.');
+        process.exit(1);
+      }
+
       logger.info('🎉 Worker Service started successfully!');
       logger.info('📊 Services running:');
-      logger.info('   • Background Job Processor (30s intervals)');
-      logger.info('   • Enhanced Job Scraper Manager');
-      logger.info('   • Queue Management System');
+      if (startedServices.includes('BackgroundJobProcessor')) {
+        logger.info('   • Background Job Processor (30s intervals)');
+      }
+      if (startedServices.includes('EnhancedJobScraperManager')) {
+        logger.info('   • Enhanced Job Scraper Manager');
+      }
+      logger.info('   • Queue Management System (degraded mode if Redis unavailable)');
       logger.info('🔄 Press Ctrl+C to stop the worker');
 
     } catch (error) {

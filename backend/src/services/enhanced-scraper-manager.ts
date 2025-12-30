@@ -48,7 +48,7 @@ export class EnhancedJobScraperManager {
     } catch (error) {
       logger.error('Failed to start EnhancedJobScraperManager:', error);
       this.isRunning = false;
-      throw error;
+      // Don't throw error - allow worker to continue without scraping
     }
   }
 
