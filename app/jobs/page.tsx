@@ -37,8 +37,11 @@ export default function JobsPage() {
   const [fetchCount, setFetchCount] = useState(0)
 
   useEffect(() => {
-    fetchJobs()
-    fetchAppliedJobs()
+    const loadData = async () => {
+      await fetchJobs()
+      await fetchAppliedJobs()
+    }
+    loadData()
   }, [])
 
   // Auto-fetch jobs every 5 seconds
@@ -188,16 +191,31 @@ export default function JobsPage() {
 
   const fetchAppliedJobs = async () => {
     try {
-      const response = await fetch('/api/applications')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (!token) {
+        // Guest user - no applied jobs to show
+        setAppliedJobIds(new Set())
+        return
+      }
+
+      const response = await fetch('/api/applications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
           const appliedIds = new Set<string>(data.data.map((app: any) => app.jobId))
           setAppliedJobIds(appliedIds)
+          console.log('Applied job IDs:', Array.from(appliedIds))
         }
+      } else if (response.status === 401) {
+        // Invalid token - clear and treat as guest
+        setAppliedJobIds(new Set())
       }
     } catch (error) {
       console.error('Error fetching applied jobs:', error)
+      // Don't fail completely - treat as guest user
+      setAppliedJobIds(new Set())
     }
   }
 

@@ -7,17 +7,40 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
 
-    let userId = 'demo-user-1' // Default for demo purposes
+    // Check if user is authenticated
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    // Try to authenticate if token is provided
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
-        userId = decoded.userId
-      } catch (authError) {
-        console.warn('Authentication failed, using demo user:', authError)
-        // Continue with demo user
+    let userId: string
+    let userEmail: string
+    let userName: string
+
+    // Verify authentication token
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
+      userId = decoded.userId
+      
+      // Get user details
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true
+        }
+      })
+
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 401 })
       }
+
+      userEmail = user.email || ''
+      userName = user.name || user.username || 'User'
+    } catch (authError) {
+      console.warn('Authentication failed:', authError)
+      return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 })
     }
 
     const applications = await prisma.application.findMany({
@@ -58,35 +81,40 @@ export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
 
-    let userId = 'demo-user-1' // Default for demo purposes
-    let userEmail = 'demo@example.com'
-    let userName = 'Demo User'
+    // Check if user is authenticated
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    // Try to authenticate if token is provided
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
-        userId = decoded.userId
+    let userId: string
+    let userEmail: string
+    let userName: string
 
-        // Get user details
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            username: true
-          }
-        })
+    // Verify authentication token
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
+      userId = decoded.userId
 
-        if (user) {
-          userEmail = user.email || userEmail
-          userName = user.name || user.username || userName
+      // Get user details
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true
         }
-      } catch (authError) {
-        console.warn('Authentication failed, using demo user:', authError)
-        // Continue with demo user
+      })
+
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 401 })
       }
+
+      userEmail = user.email || 'demo@example.com'
+      userName = user.name || user.username || 'User'
+    } catch (authError) {
+      console.warn('Authentication failed:', authError)
+      return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 })
     }
 
     // Check if request is FormData (for file uploads)
@@ -180,7 +208,7 @@ export async function POST(req: NextRequest) {
     // Send emails
     try {
       // Send notification to employer
-      if (application.job.author.email) {
+      if (application.job && application.job.author && application.job.author.email) {
         await EmailService.sendJobApplicationEmail(
           application.job.author.email,
           userName,
@@ -191,12 +219,14 @@ export async function POST(req: NextRequest) {
 
       // Send confirmation to applicant
       if (userEmail) {
-        await EmailService.sendNotificationEmail(
+        await EmailService.sendJobApplicationConfirmationEmail(
           userEmail,
-          'Application Submitted Successfully',
-          `Your application for "${application.job.title}" at ${application.job.companyName} has been submitted successfully. We'll notify you of any updates.`,
-          `${process.env.NEXTAUTH_URL}/applications`,
-          'View Applications'
+          userName,
+          application.job?.title || 'Job Title',
+          application.job?.companyName || 'Company',
+          application.job?.author?.email || 'employer@example.com',
+          undefined, // employerPhone - could be added later
+          application.job?.author?.name || 'Employer'
         )
       }
     } catch (emailError) {

@@ -2,10 +2,10 @@ import nodemailer from 'nodemailer'
 import { prisma } from '@/lib/prisma'
 
 // Email configuration
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com'
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
-const SMTP_USER = process.env.SMTP_USER || ''
-const SMTP_PASS = process.env.SMTP_PASS || ''
+const SMTP_HOST = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST || 'smtp.gmail.com'
+const SMTP_PORT = parseInt(process.env.EMAIL_SERVER_PORT || process.env.SMTP_PORT || '587')
+const SMTP_USER = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || ''
+const SMTP_PASS = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || ''
 
 // Create transporter
 const transporter = nodemailer.createTransport({
@@ -130,12 +130,12 @@ export const emailTemplates = {
   }),
 
   jobApplicationConfirmation: (applicantName: string, jobTitle: string, company: string, employerEmail: string, employerPhone?: string, employerName?: string) => ({
-    subject: `Application Submitted for ${jobTitle}`,
+    subject: `Thank You for Applying to ${jobTitle} at ${company}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #059669;">Application Submitted Successfully!</h1>
-        <p>Hi <strong>${applicantName}</strong>,</p>
-        <p>Thank you for applying to the position:</p>
+        <h1 style="color: #059669;">Thank You for Applying!</h1>
+        <p>Dear <strong>${applicantName}</strong>,</p>
+        <p>Thank you for your interest in joining our team! We've received your application for the position:</p>
         <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3>${jobTitle}</h3>
           <p><strong>Company:</strong> ${company}</p>
@@ -144,7 +144,8 @@ export const emailTemplates = {
           ${employerPhone ? `<p><strong>Contact Phone:</strong> ${employerPhone}</p>` : ''}
           <p><strong>Applied on:</strong> ${new Date().toLocaleDateString()}</p>
         </div>
-        <p>Your application has been received and is under review. You will be notified of any updates.</p>
+        <p>Your application is now under review. We'll carefully review your qualifications and get back to you soon. In the meantime, feel free to explore more opportunities on our platform.</p>
+        <p>Best regards,<br>The ${company} Team</p>
         <div style="text-align: center; margin-top: 30px;">
           <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/applications" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">View My Applications</a>
           <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse More Jobs</a>

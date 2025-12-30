@@ -31,10 +31,24 @@ export default function ApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (!token) {
+        // Guest user - redirect to login
+        window.location.href = '/sign-up'
+        return
+      }
+
       setLoading(true)
-      const response = await fetch('/api/applications')
+      const response = await fetch('/api/applications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Invalid token - redirect to login
+          window.location.href = '/sign-up'
+          return
+        }
         throw new Error('Failed to fetch applications')
       }
 

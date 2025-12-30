@@ -43,6 +43,9 @@ export default function ApplyPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [resumeUrl, setResumeUrl] = useState('')
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
 
   // Suggested skills for job applications
   const suggestedSkills = [
@@ -128,6 +131,20 @@ export default function ApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Check if user is logged in
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+    if (!token) {
+      setError('Please log in to submit your application')
+      // Redirect to login page
+      window.location.href = '/sign-up'
+      return
+    }
+
+    if (!fullName.trim() || !email.trim()) {
+      setError('Please fill in all required fields (Full Name and Email)')
+      return
+    }
+
     if (!coverLetter.trim() && !resumeFile) {
       setError('Please provide either a cover letter or resume')
       return
@@ -148,11 +165,19 @@ export default function ApplyPage() {
 
       const response = await fetch('/api/applications', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       })
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (response.status === 401) {
+          setError('Please log in to submit your application')
+          window.location.href = '/sign-up'
+          return
+        }
         throw new Error(errorData.error || 'Failed to submit application')
       }
 
@@ -283,11 +308,41 @@ export default function ApplyPage() {
               </div>
             )}
 
+            {/* Personal Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="Full Name *"
+                  required
+                />
+              </div>
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="Email Address *"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="Phone Number"
+                />
+              </div>
+            </div>
+
             {/* Suggested Skills */}
             <div>
-              <label className="block text-sm font-medium text-text mb-3">
-                Suggested Skills (click to add to your cover letter)
-              </label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {suggestedSkills.map((skill) => (
                   <button
@@ -333,15 +388,12 @@ export default function ApplyPage() {
 
             {/* Cover Letter */}
             <div>
-              <label className="block text-sm font-medium text-text mb-2">
-                Cover Letter
-              </label>
               <textarea
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
                 rows={6}
                 className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-vertical"
-                placeholder="Tell us why you're interested in this position and how your skills match the requirements..."
+                placeholder="Cover Letter (Optional but recommended)..."
               />
               <p className="text-xs text-text-muted mt-1">
                 Optional but recommended. This helps employers understand your interest and qualifications.
@@ -350,9 +402,6 @@ export default function ApplyPage() {
 
             {/* Resume Upload */}
             <div>
-              <label className="block text-sm font-medium text-text mb-2">
-                Resume/CV
-              </label>
               <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
                 <input
                   type="file"
