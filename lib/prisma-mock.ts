@@ -15,6 +15,12 @@ export class MockPrismaClient {
           requirements: JSON.stringify(['JavaScript', 'React', 'Node.js']),
           createdAt: new Date(),
           applicationsCount: 5,
+          isActive: true,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          validityStatus: 'VALID',
+          lastValidated: new Date(),
+          isScraped: false,
+          lastScraped: null,
           _count: {
             applications: 5
           },
@@ -37,6 +43,12 @@ export class MockPrismaClient {
           requirements: JSON.stringify(['React', 'TypeScript', 'CSS']),
           createdAt: new Date(),
           applicationsCount: 3,
+          isActive: true,
+          expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+          validityStatus: 'VALID',
+          lastValidated: new Date(),
+          isScraped: false,
+          lastScraped: null,
           _count: {
             applications: 3
           },
@@ -46,7 +58,8 @@ export class MockPrismaClient {
             avatar: '',
             title: 'Tech Lead'
           }
-        }
+        },
+
       ],
       findUnique: async (args: any) => {
         if (args.where.id === '1') {
@@ -97,7 +110,11 @@ export class MockPrismaClient {
         ...args.data,
         updatedAt: new Date()
       }),
-      count: async () => 10
+      count: async () => 10,
+      deleteMany: async (args: any) => {
+        console.log('Mock: Deleting many jobs with args:', args)
+        return { count: args.where.id.in.length || 1 }
+      }
     },
     application: {
       findMany: async () => [],
@@ -204,6 +221,25 @@ export class MockPrismaClient {
     },
     like: {
       findMany: async () => []
+    },
+    jobSource: {
+      findUnique: async (args: any) => {
+        if (args.where.id === 'source1') {
+          return {
+            id: 'source1',
+            name: 'LinkedIn',
+            baseUrl: 'https://linkedin.com',
+            isActive: true,
+            rateLimit: 1000,
+            lastScraped: new Date(),
+            totalJobs: 150,
+            config: JSON.stringify({ selectors: '.job-card' }),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+        return null
+      }
     }
   }
 
@@ -228,6 +264,10 @@ export class MockPrismaClient {
       count: async (args?: any) => {
         console.log('Mock: Counting jobs with args:', args)
         return this.mockData.job.count()
+      },
+      deleteMany: async (args: any) => {
+        console.log('Mock: Deleting many jobs with args:', args)
+        return this.mockData.job.deleteMany(args)
       }
     }
   }
@@ -298,6 +338,15 @@ export class MockPrismaClient {
       findMany: async (args?: any) => {
         console.log('Mock: Finding likes with args:', args)
         return this.mockData.like.findMany()
+      }
+    }
+  }
+
+  get jobSource() {
+    return {
+      findUnique: async (args: any) => {
+        console.log('Mock: Finding job source with args:', args)
+        return this.mockData.jobSource.findUnique(args)
       }
     }
   }

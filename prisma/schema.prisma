@@ -599,6 +599,8 @@ model Job {
   isScraped    Boolean  @default(false)
   lastScraped  DateTime?
   expiresAt    DateTime? // When the job posting expires
+  validityStatus String @default("VALID") // VALID, EXPIRED, NOT_FOUND, INVALID_URL
+  lastValidated DateTime? // Last time job URL was checked
 
   // Employer contact information
   employerEmail    String?  // Email for job applications

@@ -3,8 +3,26 @@
 import { motion } from 'framer-motion';
 import { Crown, Search, FileText, Users, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function PremiumHiringSection() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    setIsLoading(true);
+    try {
+      // Simulate upgrade process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success('Premium upgrade initiated! You will be redirected to complete the purchase.');
+      // In a real app, this would redirect to a payment processor
+      // window.location.href = '/pricing';
+    } catch (error) {
+      toast.error('Failed to process upgrade. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -84,9 +102,19 @@ export default function PremiumHiringSection() {
 
       {/* CTA Button */}
       <div className="relative z-10">
-        <Button className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-gray-900 font-semibold px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
-          Upgrade to Premium
-          <ArrowRight className="w-5 h-5" />
+        <Button 
+          onClick={handleUpgrade}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-gray-900 font-semibold px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <div className="animate-spin w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full" />
+          ) : (
+            <>
+              Upgrade to Premium
+              <ArrowRight className="w-5 h-5" />
+            </>
+          )}
         </Button>
         <p className="text-gray-400 text-sm mt-2">
           Start your free trial today

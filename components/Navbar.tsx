@@ -249,7 +249,12 @@ function ProfileMenu() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute right-0 mt-2 w-56 ios-card z-50"
+            className="absolute right-0 mt-2 w-56 ios-card z-50 shadow-xl"
+            style={{
+              minWidth: '220px',
+              maxWidth: '280px',
+              wordWrap: 'break-word'
+            }}
           >
             <div className="p-3 border-b border-border dark:border-dark-border">
               <p className="font-medium text-text dark:text-dark-text">{user?.fullName || 'User'}</p>

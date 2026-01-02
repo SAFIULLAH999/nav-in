@@ -15,9 +15,11 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isNewUser, setIsNewUser] = useState(false)
 
   useEffect(() => {
     fetchPosts()
+    checkIfNewUser()
   }, [])
 
   // Socket listeners for real-time feed updates
@@ -52,6 +54,32 @@ export default function FeedPage() {
       socket?.off('new_post_created', handleNewPost)
     }
   }, [onPostUpdate])
+
+  const checkIfNewUser = async () => {
+    try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (!token) {
+        setIsNewUser(true)
+        return
+      }
+
+      // Check if user has any posts or connections
+      const response = await fetch('/api/user/activity', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // If user has no activity, consider them new
+        setIsNewUser(!data.data?.hasPosts && !data.data?.hasConnections)
+      } else {
+        setIsNewUser(true)
+      }
+    } catch (error) {
+      console.log('Could not check user status, assuming new user')
+      setIsNewUser(true)
+    }
+  }
 
   const fetchPosts = async () => {
     try {
@@ -93,11 +121,13 @@ export default function FeedPage() {
 
         <main className="flex-1 max-w-2xl mx-4 lg:mx-8">
           <div className="space-y-6">
-            {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
-              <h1 className="text-2xl font-bold text-text mb-2">Welcome back!</h1>
-              <p className="text-text-muted">Discover what's happening in your network and share your thoughts with others.</p>
-            </div>
+            {/* Welcome Section - Only for new users */}
+            {isNewUser && (
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
+                <h1 className="text-2xl font-bold text-text mb-2">Welcome to NavIN!</h1>
+                <p className="text-text-muted">Discover what's happening in your network and share your thoughts with others.</p>
+              </div>
+            )}
 
             <CreatePostCard onPostCreated={handlePostCreated} />
 

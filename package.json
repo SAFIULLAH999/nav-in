@@ -19,7 +19,9 @@
     "worker:bull": "tsx backend/src/worker-bullmq.ts",
     "worker:bull:prod": "node --loader tsx/esm backend/src/worker-bullmq.ts",
     "worker:dev": "concurrently \"npm run dev\" \"npm run worker\"",
-    "worker:background": "npm run worker"
+    "worker:background": "npm run worker",
+    "cleanup-jobs": "node scripts/cleanup-jobs.js",
+    "cleanup-jobs:dry-run": "node scripts/cleanup-jobs.js --dry-run"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -65,6 +67,7 @@
     "express-validator": "^7.2.1",
     "firebase": "^12.4.0",
     "firebase-admin": "^13.5.0",
+    "form-data": "^4.0.5",
     "framer-motion": "^10.16.0",
     "helmet": "^8.1.0",
     "ioredis": "^5.3.2",
@@ -75,6 +78,7 @@
     "next": "^16.1.1",
     "next-auth": "^4.24.11",
     "next-seo": "^6.8.0",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
     "prisma": "^5.0.0",
     "pusher": "^5.2.0",

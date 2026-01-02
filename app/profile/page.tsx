@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/Navbar'
-import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Plus, MessageCircle, UserPlus, MoreHorizontal } from 'lucide-react'
+import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Plus, MessageCircle, UserPlus, MoreHorizontal, Briefcase, GraduationCap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from '@/components/FirebaseProvider'
 import { OpenToBadge } from '@/components/OpenToBadge'
@@ -193,36 +193,35 @@ function AboutTab() {
       <div className="bg-card rounded-lg p-6 border border-border">
         <h3 className="font-semibold text-text mb-4">About</h3>
         <p className="text-text-muted">
-          Passionate software engineer with 5+ years of experience in full-stack development.
-          Love building scalable web applications and mentoring junior developers.
+          Add your professional summary and what makes you unique.
         </p>
+        <button className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
+          Add Summary
+        </button>
       </div>
 
       <div className="bg-card rounded-lg p-6 border border-border">
         <h3 className="font-semibold text-text mb-4">Skills</h3>
         <div className="flex flex-wrap gap-2">
-          {['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker'].map((skill) => (
-            <span key={skill} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-              {skill}
-            </span>
-          ))}
+          <span className="px-3 py-1 bg-secondary text-text-muted rounded-full text-sm">
+            Add your skills
+          </span>
         </div>
+        <button className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
+          Add Skills
+        </button>
       </div>
 
       <div className="bg-card rounded-lg p-6 border border-border">
         <h3 className="font-semibold text-text mb-4">Contact Info</h3>
         <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <LinkIcon className="w-4 h-4 text-text-muted" />
-            <a href="https://example.com" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-              https://example.com
-            </a>
-          </div>
-          <div className="flex items-center space-x-3">
-            <MapPin className="w-4 h-4 text-text-muted" />
-            <span className="text-text-muted">San Francisco, CA</span>
+          <div className="text-text-muted">
+            Add your website, LinkedIn, or other professional links
           </div>
         </div>
+        <button className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
+          Add Contact Info
+        </button>
       </div>
     </div>
   )
@@ -239,49 +238,18 @@ function ExperienceTab() {
         </button>
       </div>
 
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white font-semibold">
-            T
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-text">Software Engineer</h4>
-            <p className="text-primary mb-1">TechCorp</p>
-            <p className="text-text-muted text-sm mb-2">Jan 2022 - Present • 2 years</p>
-            <p className="text-text-muted text-sm mb-3">
-              Developing and maintaining web applications using React, Node.js, and AWS.
-              Led a team of 3 developers on a major product redesign.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">React</span>
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Node.js</span>
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">AWS</span>
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Team Leadership</span>
-            </div>
-          </div>
+      <div className="bg-card rounded-lg p-6 border border-border text-center">
+        <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Briefcase className="w-8 h-8 text-text-muted" />
         </div>
-      </div>
-
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white font-semibold">
-            G
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-text">Frontend Developer</h4>
-            <p className="text-primary mb-1">GlobalTech Solutions</p>
-            <p className="text-text-muted text-sm mb-2">Jun 2020 - Dec 2021 • 1 year 7 months</p>
-            <p className="text-text-muted text-sm mb-3">
-              Built responsive user interfaces for enterprise applications using modern JavaScript frameworks.
-              Collaborated with design team to implement pixel-perfect designs.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">JavaScript</span>
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">CSS</span>
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">UI/UX</span>
-            </div>
-          </div>
-        </div>
+        <h3 className="text-lg font-semibold text-text mb-2">No experience added yet</h3>
+        <p className="text-text-muted mb-4">
+          Showcase your professional experience to help others understand your background.
+        </p>
+        <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors mx-auto">
+          <Plus className="w-4 h-4" />
+          <span>Add Your First Experience</span>
+        </button>
       </div>
     </div>
   )
@@ -298,41 +266,18 @@ function EducationTab() {
         </button>
       </div>
 
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white font-semibold">
-            U
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-text">Bachelor of Science in Computer Science</h4>
-            <p className="text-primary mb-1">University of Technology</p>
-            <p className="text-text-muted text-sm mb-2">2018 - 2022</p>
-            <p className="text-text-muted text-sm mb-3">
-              Graduated Magna Cum Laude. Relevant coursework: Data Structures, Algorithms,
-              Software Engineering, Database Systems, Computer Networks.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Magna Cum Laude</span>
-              <span className="px-2 py-1 bg-secondary text-text-muted rounded text-xs">Dean's List</span>
-            </div>
-          </div>
+      <div className="bg-card rounded-lg p-6 border border-border text-center">
+        <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <GraduationCap className="w-8 h-8 text-text-muted" />
         </div>
-      </div>
-
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white font-semibold">
-            C
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-text">AWS Certified Solutions Architect</h4>
-            <p className="text-primary mb-1">Amazon Web Services</p>
-            <p className="text-text-muted text-sm mb-2">2023 - Present</p>
-            <p className="text-text-muted text-sm">
-              Professional certification demonstrating expertise in designing distributed systems on AWS platform.
-            </p>
-          </div>
-        </div>
+        <h3 className="text-lg font-semibold text-text mb-2">No education added yet</h3>
+        <p className="text-text-muted mb-4">
+          Add your educational background, degrees, and certifications.
+        </p>
+        <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors mx-auto">
+          <Plus className="w-4 h-4" />
+          <span>Add Education</span>
+        </button>
       </div>
     </div>
   )

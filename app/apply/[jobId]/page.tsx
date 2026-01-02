@@ -131,15 +131,6 @@ export default function ApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Check if user is logged in
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-    if (!token) {
-      setError('Please log in to submit your application')
-      // Redirect to login page
-      window.location.href = '/sign-up'
-      return
-    }
-
     if (!fullName.trim() || !email.trim()) {
       setError('Please fill in all required fields (Full Name and Email)')
       return
@@ -154,7 +145,9 @@ export default function ApplyPage() {
     setError(null)
 
     try {
-      // For demo purposes, no auth token required
+      // Try to get auth token for authenticated users
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+
       const formData = new FormData()
       formData.append('jobId', jobId)
       formData.append('coverLetter', coverLetter)
@@ -163,21 +156,19 @@ export default function ApplyPage() {
         formData.append('resume', resumeFile)
       }
 
+      const headers: Record<string, string> = {}
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
       const response = await fetch('/api/applications', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: formData,
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        if (response.status === 401) {
-          setError('Please log in to submit your application')
-          window.location.href = '/sign-up'
-          return
-        }
         throw new Error(errorData.error || 'Failed to submit application')
       }
 

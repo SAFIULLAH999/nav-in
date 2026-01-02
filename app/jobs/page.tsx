@@ -38,6 +38,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     const loadData = async () => {
+      await runCleanup() // Clean up expired jobs first
       await fetchJobs()
       await fetchAppliedJobs()
     }
@@ -186,6 +187,31 @@ export default function JobsPage() {
       setError('Failed to load more jobs. Please try again.')
     } finally {
       setLoadingMore(false)
+    }
+  }
+
+  const runCleanup = async () => {
+    try {
+      console.log('🧹 Running automatic job cleanup...')
+      const response = await fetch('/api/jobs/cleanup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ dryRun: false })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          const removed = data.data.jobsRemoved
+          if (removed > 0) {
+            console.log(`✅ Cleaned up ${removed} expired jobs automatically`)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error during automatic cleanup:', error)
     }
   }
 
@@ -659,9 +685,12 @@ function JobCard({ job }: { job: any }) {
               </div>
 
               <div className="flex items-center space-x-3">
-                <button className="px-4 py-2 text-text-muted hover:text-text transition-colors">
+                <Link
+                  href={`/jobs/${job.id}`}
+                  className="px-4 py-2 text-text-muted hover:text-text transition-colors"
+                >
                   View Details
-                </button>
+                </Link>
                 <button
                   onClick={handleApplyClick}
                   className={`px-6 py-2 rounded-lg transition-colors ${
