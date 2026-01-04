@@ -2,31 +2,32 @@
 
 import { motion } from 'framer-motion'
 import { Facebook, Twitter, Linkedin, Instagram, Mail, MapPin, Phone } from 'lucide-react'
+import Link from 'next/link'
 
 const footerLinks = {
   product: [
-    { name: 'Features', href: '#' },
-    { name: 'Pricing', href: '#' },
-    { name: 'Integrations', href: '#' },
-    { name: 'API', href: '#' },
+    { name: 'Features', href: '/#features' },
+    { name: 'Pricing', href: '/pricing' },
+    { name: 'Integrations', href: '/integrations' },
+    { name: 'API', href: '/docs/api' },
   ],
   company: [
-    { name: 'About', href: '#' },
-    { name: 'Blog', href: '#' },
-    { name: 'Careers', href: '#' },
-    { name: 'Contact', href: '#' },
+    { name: 'About', href: '/about' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'Careers', href: '/careers' },
+    { name: 'Contact', href: '/contact' },
   ],
   support: [
-    { name: 'Help Center', href: '#' },
-    { name: 'Privacy Policy', href: '#' },
-    { name: 'Terms of Service', href: '#' },
-    { name: 'Status', href: '#' },
+    { name: 'Help Center', href: '/help' },
+    { name: 'Privacy Policy', href: '/privacy' },
+    { name: 'Terms of Service', href: '/terms' },
+    { name: 'Status', href: '/status' },
   ],
   social: [
-    { name: 'Facebook', icon: Facebook, href: '#' },
-    { name: 'Twitter', icon: Twitter, href: '#' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#' },
-    { name: 'Instagram', icon: Instagram, href: '#' },
+    { name: 'Facebook', icon: Facebook, href: 'https://facebook.com/navin' },
+    { name: 'Twitter', icon: Twitter, href: 'https://twitter.com/navin' },
+    { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com/company/navin' },
+    { name: 'Instagram', icon: Instagram, href: 'https://instagram.com/navin' },
   ]
 }
 
@@ -86,12 +87,12 @@ export function Footer() {
                   <ul className="space-y-3">
                     {footerLinks.product.map((link) => (
                       <li key={link.name}>
-                        <a
+                        <Link
                           href={link.href}
                           className="text-text-muted hover:text-primary transition-colors text-sm"
                         >
                           {link.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -108,12 +109,12 @@ export function Footer() {
                   <ul className="space-y-3">
                     {footerLinks.company.map((link) => (
                       <li key={link.name}>
-                        <a
+                        <Link
                           href={link.href}
                           className="text-text-muted hover:text-primary transition-colors text-sm"
                         >
                           {link.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -130,12 +131,12 @@ export function Footer() {
                   <ul className="space-y-3">
                     {footerLinks.support.map((link) => (
                       <li key={link.name}>
-                        <a
+                        <Link
                           href={link.href}
                           className="text-text-muted hover:text-primary transition-colors text-sm"
                         >
                           {link.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -156,6 +157,8 @@ export function Footer() {
                         <a
                           key={social.name}
                           href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-all duration-300"
                         >
                           <Icon className="w-5 h-5" />
@@ -181,9 +184,9 @@ export function Footer() {
               © 2024 NavIN. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 text-sm text-text-muted">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Cookie Policy</a>
+              <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+              <Link href="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link>
             </div>
           </div>
         </motion.div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { MessageCircle } from 'lucide-react'
-import { Navbar } from '@/components/Navbar'
+import Navbar from '@/components/Navbar'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { RightSidebar } from '@/components/RightSidebar'
 import { CreatePostCard } from '@/components/CreatePostCard'
@@ -115,7 +115,6 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <div className="max-w-7xl mx-auto flex pt-16">
         <LeftSidebar />
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Navbar } from '@/components/Navbar'
+
 import { ArrowLeft, Clock, Building, MapPin, ExternalLink, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -110,9 +110,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="max-w-6xl mx-auto pt-20 px-4 pb-8">
+      <div className="max-w-6xl mx-auto pt-6 px-4 pb-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

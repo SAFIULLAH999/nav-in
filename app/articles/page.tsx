@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar } from '@/components/Navbar';
+import Navbar from '@/components/Navbar';
 import { ArticlesList } from '@/components/ArticlesList';
 
 export const dynamic = 'force-dynamic';

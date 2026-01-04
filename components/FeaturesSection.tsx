@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Users, Briefcase, MessageCircle, TrendingUp, Shield, Zap } from 'lucide-react'
+import Link from 'next/link'
 
 const features = [
   {
@@ -104,12 +105,18 @@ export function FeaturesSection() {
               Join thousands of professionals who are already building their future with NavIN.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 transition-colors shadow-soft hover:shadow-medium">
+              <Link
+                href="/register"
+                className="bg-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 transition-colors shadow-soft hover:shadow-medium inline-block"
+              >
                 Join NavIN Today
-              </button>
-              <button className="border-2 border-primary/20 text-primary px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/5 transition-colors">
+              </Link>
+              <Link
+                href="/about"
+                className="border-2 border-primary/20 text-primary px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/5 transition-colors inline-block"
+              >
                 Learn More
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>

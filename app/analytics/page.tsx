@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Navbar } from '@/components/Navbar'
+
 import { Eye, TrendingUp, Users, BarChart3, Calendar, Download } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -92,9 +92,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="max-w-6xl mx-auto pt-20 px-4">
+      <div className="max-w-6xl mx-auto pt-6 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

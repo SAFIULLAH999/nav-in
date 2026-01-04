@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/Navbar'
+
 import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Plus, MessageCircle, UserPlus, MoreHorizontal, Briefcase, GraduationCap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from '@/components/FirebaseProvider'
@@ -64,9 +64,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="max-w-4xl mx-auto pt-20 px-4">
+      <div className="max-w-4xl mx-auto pt-6 px-4">
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

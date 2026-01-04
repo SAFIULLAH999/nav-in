@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Navbar } from '@/components/Navbar'
+import Navbar from '@/components/Navbar'
 import { ArrowLeft, MapPin, Building, Clock, DollarSign, Users, ExternalLink, Calendar, Send, User, Briefcase } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'

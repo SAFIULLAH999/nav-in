@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar } from '@/components/Navbar';
+import Navbar from '@/components/Navbar';
 import { AtsIntegrations } from '@/components/AtsIntegrations';
 
 export const dynamic = 'force-dynamic';

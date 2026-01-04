@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar } from '@/components/Navbar';
+import Navbar from '@/components/Navbar';
 import PremiumHiringSection from '@/components/PremiumHiringSection';
 import RecruiterDashboard from '@/components/RecruiterDashboard';
 

@@ -3,8 +3,12 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Play, Users, Briefcase, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
+import { DemoModal } from '@/components/DemoModal'
 
 export function HeroSection() {
+  const [showDemo, setShowDemo] = useState(false)
+
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Background Pattern */}
@@ -74,7 +78,10 @@ export function HeroSection() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
 
-            <button className="group border-2 border-primary/20 text-primary px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/5 transition-all duration-300 flex items-center space-x-2">
+            <button 
+              onClick={() => setShowDemo(true)}
+              className="group border-2 border-primary/20 text-primary px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/5 transition-all duration-300 flex items-center space-x-2"
+            >
               <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>Watch Demo</span>
             </button>
@@ -102,6 +109,9 @@ export function HeroSection() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Demo Modal */}
+      <DemoModal isOpen={showDemo} onClose={() => setShowDemo(false)} />
 
       {/* Floating Elements */}
       <motion.div

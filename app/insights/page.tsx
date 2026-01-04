@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Navbar } from '@/components/Navbar'
+import Navbar from '@/components/Navbar'
 import { Target, TrendingUp, BookOpen, Award, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'

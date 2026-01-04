@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Navbar } from '@/components/Navbar'
+
 import { Search, Send, Phone, Video, MoreVertical, Smile, Paperclip, Circle, MessageCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useSocket } from '@/components/SocketProvider'
@@ -260,8 +260,6 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       {/* Serverless Environment Warning */}
       {isServerless && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-4">
