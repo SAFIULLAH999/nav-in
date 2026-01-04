@@ -33,7 +33,7 @@ const endpoints = [
 export default function ApiPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 pt-20 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

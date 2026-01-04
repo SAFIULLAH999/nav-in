@@ -121,9 +121,8 @@ export class MockPrismaClient {
           return { id: args.where.id }
         }
       },
-    },
-    jobQueue: {
-      findMany: async (args?: any) => {
+      jobQueue: {
+        findMany: async (args?: any) => {
         console.log('Mock: Finding job queue items with args:', args)
         return []
       },

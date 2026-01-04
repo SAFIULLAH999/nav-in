@@ -274,7 +274,7 @@ export default function MessagesPage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto pt-20 h-screen flex">
+      <div className="max-w-7xl mx-auto pt-6 h-screen flex">
         {/* Conversations List */}
         <div className="w-1/3 border-r border-border bg-card">
           {/* Search */}

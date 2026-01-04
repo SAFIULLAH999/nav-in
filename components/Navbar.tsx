@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { 
-  Search, 
-  Home, 
-  Users, 
-  Briefcase, 
-  Bell, 
-  MessageCircle, 
-  Menu, 
+import {
+  Search,
+  Home,
+  Users,
+  Briefcase,
+  Bell,
+  MessageCircle,
+  Menu,
   X,
   Settings,
   LogOut,
@@ -32,6 +32,10 @@ import SearchBar from "./SearchBar"
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [notificationCount, setNotificationCount] = useState(3) // Mock notification count
+  const [isPremium, setIsPremium] = useState(false)
+  const [isTrial, setIsTrial] = useState(false)
+  const [trialEndsAt, setTrialEndsAt] = useState<Date | null>(null)
+  const [loadingPremiumStatus, setLoadingPremiumStatus] = useState(true)
   const pathname = usePathname()
   const { user, isLoaded, isSignedIn } = useUser()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
@@ -50,6 +54,38 @@ export default function Navbar() {
     { name: "Help", href: "/help", icon: Shield },
     { name: "Sign out", href: "#", icon: LogOut },
   ]
+
+  // Check premium status when user is loaded
+  useEffect(() => {
+    if (isLoaded && user && isSignedIn) {
+      const checkPremiumStatus = async () => {
+        try {
+          setLoadingPremiumStatus(true)
+          const response = await fetch('/api/user/premium-status')
+          const data = await response.json()
+
+          if (data.success) {
+            setIsPremium(data.isPremium)
+            setIsTrial(data.isTrial)
+            if (data.trialEndsAt) {
+              setTrialEndsAt(new Date(data.trialEndsAt))
+            }
+          }
+        } catch (error) {
+          console.error('Error checking premium status:', error)
+        } finally {
+          setLoadingPremiumStatus(false)
+        }
+      }
+
+      checkPremiumStatus()
+    } else {
+      setIsPremium(false)
+      setIsTrial(false)
+      setTrialEndsAt(null)
+      setLoadingPremiumStatus(false)
+    }
+  }, [isLoaded, user, isSignedIn])
 
   return (
     <nav className="sticky top-0 z-50 nav-premium shadow-lg shadow-black/5">
@@ -70,7 +106,19 @@ export default function Navbar() {
                 <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                   NavIn
                 </span>
-                <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Premium</div>
+                {!loadingPremiumStatus && (
+                  <div className="text-xs -mt-1">
+                    {isPremium ? (
+                      isTrial ? (
+                        <span className="text-yellow-500 dark:text-yellow-400 font-medium">Trial</span>
+                      ) : (
+                        <span className="text-gray-500 dark:text-gray-400">Premium</span>
+                      )
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500">Basic</span>
+                    )}
+                  </div>
+                )}
               </div>
             </Link>
           </div>

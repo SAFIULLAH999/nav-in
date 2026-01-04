@@ -30,7 +30,7 @@ export default function LayoutContent({ children }: LayoutContentProps) {
                 <ActivityTracker>
                   <div className="min-h-screen flex flex-col">
                     {!isAuthPage && <Navbar />}
-                    <div className={`flex flex-1 max-w-7xl mx-auto w-full ${!isAuthPage ? 'pt-14' : ''}`}>
+                    <div className={`flex flex-1 max-w-7xl mx-auto w-full ${!isAuthPage ? 'pt-16' : ''}`}>
                       {isFeedPage ? (
                         <>
                           {children}

@@ -54,11 +54,18 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   const handleLike = async () => {
     try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (!token) {
+        alert('Authentication required. Please sign in to like posts.')
+        return
+      }
+
       // Always call the API directly for reliability
       const response = await fetch(`/api/posts/${post.id}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           action: isLiked ? 'unlike' : 'like'
@@ -91,11 +98,18 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   const handleShare = async () => {
     try {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (!token) {
+        alert('Authentication required. Please sign in to share posts.')
+        return
+      }
+
       // Always call the API to record the share
       const response = await fetch(`/api/posts/${post.id}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         }
       })
 
@@ -148,12 +162,19 @@ export const PostCard = ({ post }: PostCardProps) => {
   const handleCommentSubmit = async () => {
     if (!commentContent.trim()) return
 
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+    if (!token) {
+      alert('Authentication required. Please sign in to comment.')
+      return
+    }
+
     try {
       // Always call the API directly for reliability
       const response = await fetch(`/api/posts/${post.id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           content: commentContent.trim()

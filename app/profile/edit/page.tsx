@@ -292,7 +292,7 @@ export default function EditProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto pt-20 px-4 py-8">
+        <div className="max-w-4xl mx-auto pt-6 px-4 py-8">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
         </div>
       </div>
@@ -303,7 +303,7 @@ export default function EditProfilePage() {
     <div className="min-h-screen bg-background">
       <Toaster position="top-right" />
 
-      <div className="max-w-4xl mx-auto pt-20 px-4 py-8">
+      <div className="max-w-4xl mx-auto pt-6 px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text mb-2">Edit Profile</h1>

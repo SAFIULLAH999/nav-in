@@ -97,8 +97,7 @@ export default function ApplicationsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-6xl mx-auto pt-20 px-4">
+        <div className="max-w-6xl mx-auto pt-6 px-4">
           <div className="bg-card rounded-xl shadow-soft border border-border p-8 text-center">
             <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-text-muted">Loading your applications...</p>

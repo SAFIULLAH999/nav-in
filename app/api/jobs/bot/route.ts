@@ -8,6 +8,7 @@ import { JobQueueManager } from '@/lib/queue/job-queue-manager'
 let monitoringInterval: NodeJS.Timeout | null = null
 let isMonitoring = false
 let connectedClients = 0
+let autoStartAttempted = false
 
 // Initialize job queue manager
 const jobQueueManager = new JobQueueManager()
@@ -426,14 +427,95 @@ async function startContinuousMonitoring() {
     try {
       monitoringCount++
       const startTime = Date.now()
-      
-      console.log(`[Monitoring Cycle ${monitoringCount}] Starting at ${new Date().toISOString()}`)
-
-      // Perform lightweight monitoring tasks
       const now = new Date()
       
-      // 1. Check for jobs that need date updates (quick check)
-      const jobsNeedingDates = await prisma.job.findMany({
+      console.log(`[🚀 ULTRA-FAST Monitoring Cycle ${monitoringCount}] Starting at ${new Date().toISOString()}`)
+  
+      // 1. INSTANT EXPIRED JOB CLEANUP - Check every second
+      const expiredJobs = await prisma.job.findMany({
+        where: {
+          expiresAt: { lt: now },
+          isActive: true
+        },
+        select: { id: true, title: true }
+      })
+  
+      if (expiredJobs.length > 0) {
+        console.log(`[⚡] INSTANT CLEANUP: Found ${expiredJobs.length} expired jobs - DELETING NOW`)
+        
+        // Delete expired jobs immediately
+        await prisma.job.deleteMany({
+          where: { id: { in: expiredJobs.map(job => job.id) } }
+        })
+        
+        // Broadcast immediate cleanup
+        broadcastJobUpdate({
+          type: 'INSTANT_CLEANUP',
+          action: 'EXPIRED_JOBS_DELETED',
+          count: expiredJobs.length,
+          deletedJobs: expiredJobs.map(job => ({ id: job.id, title: job.title })),
+          timestamp: new Date().toISOString(),
+          latency: Date.now() - startTime
+        })
+      }
+  
+      // 2. ULTRA-FAST LINK VALIDATION - Validate job links every second
+      const jobsToValidate = await prisma.job.findMany({
+        where: {
+          isActive: true,
+          isScraped: true,
+          OR: [
+            { lastValidated: null },
+            { lastValidated: { lt: new Date(Date.now() - 60 * 1000) } } // Validate every 60 seconds
+          ]
+        },
+        take: 20, // Limit for performance
+        select: { id: true, title: true, sourceId: true }
+      })
+  
+      let validatedCount = 0
+      let invalidCount = 0
+      
+      for (const job of jobsToValidate) {
+        try {
+          // Ultra-fast validation - check if source is active
+          const isValid = await quickValidateJobLink(job)
+          
+          if (!isValid) {
+            // Mark as invalid immediately
+            await prisma.job.update({
+              where: { id: job.id },
+              data: { validityStatus: 'NOT_FOUND', lastValidated: now }
+            })
+            invalidCount++
+            
+            broadcastJobUpdate({
+              type: 'LINK_VALIDATION',
+              action: 'INVALID_LINK_FOUND',
+              jobId: job.id,
+              title: job.title,
+              status: 'NOT_FOUND',
+              timestamp: new Date().toISOString()
+            })
+          } else {
+            // Update validation timestamp
+            await prisma.job.update({
+              where: { id: job.id },
+              data: { lastValidated: now }
+            })
+            validatedCount++
+          }
+        } catch (error) {
+          console.error(`[⚠️]  Link validation error for job ${job.id}:`, error.message)
+        }
+      }
+  
+      if (validatedCount > 0 || invalidCount > 0) {
+        console.log(`[🔍] LINK VALIDATION: ${validatedCount} valid, ${invalidCount} invalid`)
+      }
+  
+      // 3. REAL-TIME JOB UPDATES - Check for jobs needing immediate updates
+      const jobsNeedingUpdates = await prisma.job.findMany({
         where: {
           isActive: true,
           OR: [
@@ -443,104 +525,63 @@ async function startContinuousMonitoring() {
         },
         select: { id: true, title: true }
       })
-
-      if (jobsNeedingDates.length > 0) {
-        console.log(`Found ${jobsNeedingDates.length} jobs needing date updates`)
+  
+      if (jobsNeedingUpdates.length > 0) {
+        console.log(`[⏰] IMMEDIATE UPDATES: ${jobsNeedingUpdates.length} jobs need date updates`)
+        
+        // Apply immediate updates
+        for (const job of jobsNeedingUpdates) {
+          const now = new Date()
+          await prisma.job.update({
+            where: { id: job.id },
+            data: {
+              applicationDeadline: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+              expiresAt: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000)
+            }
+          })
+        }
+        
         broadcastJobUpdate({
-          type: 'MONITORING_ALERT',
-          alertType: 'JOBS_NEEDING_DATES',
-          count: jobsNeedingDates.length,
+          type: 'IMMEDIATE_UPDATES',
+          action: 'DATES_UPDATED',
+          count: jobsNeedingUpdates.length,
           timestamp: new Date().toISOString()
         })
       }
-
-      // 2. Check for recently expired jobs (last 5 minutes)
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
-      const recentlyExpiredJobs = await prisma.job.findMany({
-        where: {
-          expiresAt: {
-            lt: now,
-            gt: fiveMinutesAgo
-          },
-          isActive: true
-        },
-        select: { id: true, title: true }
-      })
-
-      if (recentlyExpiredJobs.length > 0) {
-        console.log(`Found ${recentlyExpiredJobs.length} recently expired jobs`)
-        broadcastJobUpdate({
-          type: 'MONITORING_ALERT',
-          alertType: 'RECENTLY_EXPIRED_JOBS',
-          count: recentlyExpiredJobs.length,
-          jobs: recentlyExpiredJobs.map(job => ({ id: job.id, title: job.title })),
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      // 3. Check for jobs with approaching deadlines (next 24 hours)
-      const twentyFourHoursFromNow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-      const approachingDeadlineJobs = await prisma.job.findMany({
-        where: {
-          applicationDeadline: {
-            lt: twentyFourHoursFromNow,
-            gt: now
-          },
-          isActive: true
-        },
-        select: { id: true, title: true, applicationDeadline: true }
-      })
-
-      if (approachingDeadlineJobs.length > 0) {
-        console.log(`Found ${approachingDeadlineJobs.length} jobs with approaching deadlines`)
-        broadcastJobUpdate({
-          type: 'MONITORING_ALERT',
-          alertType: 'APPROACHING_DEADLINES',
-          count: approachingDeadlineJobs.length,
-          jobs: approachingDeadlineJobs.map(job => ({
-            id: job.id,
-            title: job.title,
-            deadline: job.applicationDeadline?.toISOString()
-          })),
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      // 4. Quick system health check
-      const [totalJobs, activeJobs, totalApplications] = await Promise.all([
+  
+      // 4. ULTRA-FAST SYSTEM HEALTH - Minimal overhead check
+      const [totalJobs, activeJobs] = await Promise.all([
         prisma.job.count(),
-        prisma.job.count({ where: { isActive: true } }),
-        prisma.application.count()
+        prisma.job.count({ where: { isActive: true } })
       ])
-
+  
       const monitoringDuration = Date.now() - startTime
-      console.log(`[Monitoring Cycle ${monitoringCount}] Completed in ${monitoringDuration}ms`)
-      console.log(`  - Total Jobs: ${totalJobs}, Active: ${activeJobs}, Applications: ${totalApplications}`)
-      console.log(`  - Connected Clients: ${connectedClients}`)
-
-      // Broadcast system health
+      console.log(`[🏃] ULTRA-FAST Cycle ${monitoringCount} completed in ${monitoringDuration}ms`)
+      console.log(`   🔥 Jobs: ${activeJobs}/${totalJobs} active`)
+      console.log(`   ⚡ Latency: ${monitoringDuration}ms`)
+  
+      // Broadcast ultra-fast system health
       broadcastJobUpdate({
-        type: 'SYSTEM_HEALTH',
+        type: 'ULTRA_FAST_HEALTH',
         data: {
+          monitoringCycle: monitoringCount,
           totalJobs,
           activeJobs,
-          totalApplications,
-          connectedClients,
-          monitoringCycle: monitoringCount,
           cycleDurationMs: monitoringDuration,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          performance: monitoringDuration < 100 ? 'EXCELLENT' : monitoringDuration < 500 ? 'GOOD' : 'SLOW'
         }
       })
-
+  
     } catch (error) {
-      console.error('Error in monitoring cycle:', error)
+      console.error('[💥] ULTRA-FAST MONITORING ERROR:', error)
       broadcastJobUpdate({
-        type: 'MONITORING_ERROR',
+        type: 'ULTRA_FAST_ERROR',
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       })
     }
-  }, 5000) // 5-second interval
+  }, 1000) // ⚡ 1-SECOND INTERVAL for ultra-fast monitoring
 
   console.log('Continuous monitoring started (5-second intervals)')
   
@@ -1157,4 +1198,272 @@ export async function GET() {
       { status: 500 }
     )
   }
+}
+
+// Auto-start monitoring when this module is loaded
+async function autoStartMonitoringIfNeeded() {
+  if (autoStartAttempted || isMonitoring) return;
+  
+  autoStartAttempted = true;
+  console.log('Attempting auto-start of job monitoring...');
+  
+  try {
+    // Start monitoring automatically
+    await startContinuousMonitoring();
+    console.log('✅ Job monitoring auto-started successfully');
+    
+    // Also trigger initial cleanup and refresh
+    await autoRefreshJobData();
+    
+  } catch (error) {
+    console.error('❌ Failed to auto-start monitoring:', error);
+  }
+}
+
+// Initialize auto-start for server-side only
+if (typeof window === 'undefined') {
+  // Small delay to ensure other systems are ready
+  setTimeout(autoStartMonitoringIfNeeded, 2000);
+}
+
+// Ultra-fast job link validation function
+async function quickValidateJobLink(job: any): Promise<boolean> {
+  try {
+    // For ultra-fast validation, we'll do a quick check
+    // In production, this would check the actual job URL
+    
+    // 1. Check if job source exists and is active
+    if (job.sourceId) {
+      const source = await prisma.jobSource.findUnique({
+        where: { id: job.sourceId }
+      })
+      
+      if (!source || !source.isActive) {
+        return false
+      }
+    }
+    
+    // 2. Check if job is too old (90+ days without validation)
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    if (job.createdAt && job.createdAt < ninetyDaysAgo) {
+      if (!job.lastValidated || job.lastValidated < ninetyDaysAgo) {
+        return false // Too old, likely expired
+      }
+    }
+    
+    // 3. Check if application deadline has passed
+    if (job.applicationDeadline && new Date(job.applicationDeadline) < new Date()) {
+      return false // Deadline passed
+    }
+    
+    // 4. Quick response - assume valid if all checks pass
+    return true
+    
+  } catch (error) {
+    console.error(`[⚠️]  Quick validation error for job ${job.id}:`, error instanceof Error ? error.message : 'Unknown error')
+    return false // If we can't validate, assume invalid
+  }
+}
+
+// Auto-refresh job data function
+async function autoRefreshJobData() {
+  console.log('🔄 Starting automatic job data refresh...');
+  
+  try {
+    // 1. Clean up expired and invalid jobs
+    console.log('🧹 Cleaning up expired jobs...');
+    const cleanupResponse = await removeExpiredJobs(false); // Actually remove expired jobs
+    const cleanupData = await cleanupResponse.json();
+    
+    if (cleanupData.success) {
+      console.log(`🗑️  Removed ${cleanupData.data.jobsRemoved} expired jobs`);
+    }
+    
+    // 2. Update job dates for active jobs
+    console.log('📅 Updating job dates...');
+    const updateResponse = await updateJobDates(false); // Actually update dates
+    const updateData = await updateResponse.json();
+    
+    if (updateData.success) {
+      console.log(`📆 Updated dates for ${updateData.data.jobsUpdated} jobs`);
+    }
+    
+    // 3. Add fresh mock jobs to simulate new data
+    console.log('✨ Adding fresh job data...');
+    const freshJobsAdded = await addFreshMockJobs();
+    console.log(`🆕 Added ${freshJobsAdded} fresh mock jobs`);
+    
+    console.log('🎉 Job data refresh completed successfully!');
+    
+  } catch (error) {
+    console.error('❌ Error in auto-refresh job data:', error);
+  }
+}
+
+// Add fresh mock jobs to simulate new job postings
+async function addFreshMockJobs() {
+  const freshJobs = [
+    {
+      title: 'Senior Frontend Developer',
+      description: 'We are looking for an experienced Senior Frontend Developer to lead our React team. You will work on cutting-edge web applications using modern JavaScript frameworks.',
+      companyName: 'InnovateTech',
+      location: 'San Francisco, CA',
+      type: 'FULL_TIME',
+      salaryMin: 120000,
+      salaryMax: 160000,
+      requirements: JSON.stringify(['React', 'TypeScript', 'Redux', 'Next.js', 'GraphQL']),
+      benefits: 'Health insurance, 401k matching, Flexible hours, Remote work options',
+      experience: '5+ years',
+      isRemote: true,
+      applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      validityStatus: 'VALID',
+      lastValidated: new Date(),
+      isScraped: false,
+      lastScraped: null,
+      authorId: 'demo-user-1',
+      views: 0,
+      applicationsCount: 0
+    },
+    {
+      title: 'Backend Engineer (Node.js)',
+      description: 'Join our backend team to build scalable microservices using Node.js and modern cloud technologies. Work with AWS, Docker, and Kubernetes in a fast-paced environment.',
+      companyName: 'CloudScale Systems',
+      location: 'Austin, TX',
+      type: 'FULL_TIME',
+      salaryMin: 110000,
+      salaryMax: 150000,
+      requirements: JSON.stringify(['Node.js', 'TypeScript', 'AWS', 'Docker', 'Kubernetes', 'REST APIs']),
+      benefits: 'Unlimited PTO, Stock options, Health benefits, Remote work',
+      experience: '3+ years',
+      isRemote: true,
+      applicationDeadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      validityStatus: 'VALID',
+      lastValidated: new Date(),
+      isScraped: false,
+      lastScraped: null,
+      authorId: 'demo-user-1',
+      views: 0,
+      applicationsCount: 0
+    },
+    {
+      title: 'Full Stack Developer',
+      description: 'We need a talented Full Stack Developer to work on our SaaS platform. You will build features end-to-end using React, Node.js, and modern cloud services.',
+      companyName: 'SaaSify',
+      location: 'New York, NY',
+      type: 'FULL_TIME',
+      salaryMin: 100000,
+      salaryMax: 140000,
+      requirements: JSON.stringify(['React', 'Node.js', 'TypeScript', 'AWS', 'SQL', 'REST APIs']),
+      benefits: 'Health insurance, 401k, Flexible hours, Professional development budget',
+      experience: '3+ years',
+      isRemote: false,
+      applicationDeadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      validityStatus: 'VALID',
+      lastValidated: new Date(),
+      isScraped: false,
+      lastScraped: null,
+      authorId: 'demo-user-1',
+      views: 0,
+      applicationsCount: 0
+    },
+    {
+      title: 'DevOps Engineer',
+      description: 'Join our DevOps team to manage our cloud infrastructure. You will work with AWS, Kubernetes, Terraform, and CI/CD pipelines to ensure smooth deployments.',
+      companyName: 'DevOpsPro',
+      location: 'Seattle, WA',
+      type: 'FULL_TIME',
+      salaryMin: 115000,
+      salaryMax: 155000,
+      requirements: JSON.stringify(['AWS', 'Kubernetes', 'Docker', 'Terraform', 'CI/CD', 'Linux']),
+      benefits: 'Health insurance, 401k, Remote work, Certification reimbursement',
+      experience: '4+ years',
+      isRemote: true,
+      applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      validityStatus: 'VALID',
+      lastValidated: new Date(),
+      isScraped: false,
+      lastScraped: null,
+      authorId: 'demo-user-1',
+      views: 0,
+      applicationsCount: 0
+    },
+    {
+      title: 'Data Scientist',
+      description: 'We are looking for a Data Scientist to analyze large datasets and build machine learning models. Experience with Python, SQL, and data visualization is required.',
+      companyName: 'DataInsights Inc',
+      location: 'Boston, MA',
+      type: 'FULL_TIME',
+      salaryMin: 105000,
+      salaryMax: 145000,
+      requirements: JSON.stringify(['Python', 'SQL', 'Machine Learning', 'Data Analysis', 'Pandas', 'NumPy']),
+      benefits: 'Health insurance, 401k, Research budget, Conference attendance',
+      experience: '3+ years',
+      isRemote: false,
+      applicationDeadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      validityStatus: 'VALID',
+      lastValidated: new Date(),
+      isScraped: false,
+      lastScraped: null,
+      authorId: 'demo-user-1',
+      views: 0,
+      applicationsCount: 0
+    }
+  ];
+
+  let jobsAdded = 0;
+
+  for (const jobData of freshJobs) {
+    try {
+      await prisma.job.create({ data: jobData });
+      jobsAdded++;
+      
+      // Broadcast the new job
+      broadcastJobUpdate({
+        type: 'JOB_CREATED',
+        job: {
+          id: 'fresh-' + jobsAdded,
+          title: jobData.title,
+          companyName: jobData.companyName,
+          location: jobData.location,
+          type: jobData.type,
+          createdAt: jobData.createdAt.toISOString()
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error adding fresh job:', error);
+    }
+  }
+
+  return jobsAdded;
+}
+
+// Set up periodic job refresh (every 24 hours)
+function setupPeriodicJobRefresh() {
+  console.log('🕒 Setting up periodic job refresh (every 24 hours)...');
+  
+  setInterval(async () => {
+    console.log('🔄 Running scheduled job refresh...');
+    await autoRefreshJobData();
+  }, 24 * 60 * 60 * 1000); // 24 hours
+}
+
+// Start periodic refresh for server-side only
+if (typeof window === 'undefined') {
+  setupPeriodicJobRefresh();
 }

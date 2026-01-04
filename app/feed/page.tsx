@@ -112,8 +112,8 @@ export default function FeedPage() {
   }
 
   return (
-      <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto flex pt-6">
+      <div className="min-h-screen bg-background w-full">
+      <div className="flex w-full">
         <LeftSidebar />
 
         <main className="flex-1 max-w-2xl mx-4 lg:mx-8">

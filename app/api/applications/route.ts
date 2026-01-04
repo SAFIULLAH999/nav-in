@@ -2,35 +2,30 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma-mock'
 
-// Mock applications data
-const mockApplications = [
-  {
-    id: 'app-1',
-    jobId: 'job-1',
+// Enhanced mock applications data that matches actual fresh jobs
+async function getMockApplications(userId = 'demo-user-1') {
+  // Get actual jobs from database to ensure ID consistency
+  const jobs = await prisma.job.findMany({
+    where: { isActive: true },
+    take: 5,
+    orderBy: { createdAt: 'desc' }
+  });
+
+  // Create mock applications that match actual job IDs
+  return jobs.map((job, index) => ({
+    id: `app-${Date.now()}-${index}`,
+    jobId: job.id,
     job: {
-      title: 'Senior Frontend Developer',
-      companyName: 'TechCorp Inc.',
-      location: 'San Francisco, CA',
-      type: 'Full-time'
+      title: job.title,
+      companyName: job.companyName,
+      location: job.location,
+      type: job.type
     },
-    status: 'pending',
-    appliedAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    lastUpdated: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: 'app-2',
-    jobId: 'job-2',
-    job: {
-      title: 'Product Manager',
-      companyName: 'InnovateTech',
-      location: 'New York, NY',
-      type: 'Full-time'
-    },
-    status: 'reviewed',
-    appliedAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-    lastUpdated: new Date(Date.now() - 86400000).toISOString()
-  }
-]
+    status: index === 0 ? 'pending' : index === 1 ? 'reviewed' : 'accepted',
+    appliedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
+    lastUpdated: new Date(Date.now() - index * 86400000).toISOString()
+  }));
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -54,8 +49,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // For demo purposes, return mock applications
+    // For demo purposes, return mock applications that match actual jobs
     // In a real app, this would query the database based on userId
+    const mockApplications = await getMockApplications(userId)
+    
     return NextResponse.json({
       success: true,
       data: mockApplications
@@ -124,23 +121,34 @@ export async function POST(req: NextRequest) {
       coverLetter = body.coverLetter
     }
 
-    // For demo purposes, create a mock application
+    // For demo purposes, create a mock application with actual job details
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      select: {
+        id: true,
+        title: true,
+        companyName: true,
+        location: true,
+        type: true
+      }
+    });
+
     const newApplication = {
       id: `app-${Date.now()}`,
       jobId: jobId,
       job: {
-        title: 'Software Engineer Position',
-        companyName: 'Demo Company',
-        location: 'Remote',
-        type: 'Full-time'
+        title: job?.title || 'Software Engineer Position',
+        companyName: job?.companyName || 'Demo Company',
+        location: job?.location || 'Remote',
+        type: job?.type || 'Full-time'
       },
       status: 'pending',
       appliedAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString()
     }
 
-    // Add to mock applications
-    mockApplications.unshift(newApplication)
+    // For demo purposes, we'll just return the new application
+    // In a real app, this would be saved to the database
 
     // In a real app, this would:
     // 1. Check if job exists

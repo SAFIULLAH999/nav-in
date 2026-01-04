@@ -67,8 +67,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-6xl mx-auto pt-20 px-4">
+        <div className="max-w-6xl mx-auto pt-6 px-4">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
           </div>
@@ -80,8 +79,7 @@ export default function AnalyticsPage() {
   if (!analytics) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-6xl mx-auto pt-20 px-4">
+        <div className="max-w-6xl mx-auto pt-6 px-4">
           <div className="text-center py-12">
             <p className="text-text-muted">No analytics data available</p>
           </div>

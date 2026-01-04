@@ -78,6 +78,19 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
 
       setUser(mockFirebaseUser as AuthUser);
       setLoading(false);
+
+      // Persist a client-side access token so API calls can use it (CreatePostCard, fetches, etc.)
+      ;(async () => {
+        try {
+          const token = await mockFirebaseUser.getIdToken()
+          if (token) {
+            // Store in localStorage to match other components' expectations
+            localStorage.setItem('accessToken', token)
+          }
+        } catch (err) {
+          console.error('Failed to set access token for Clerk user:', err)
+        }
+      })()
     } else {
       // No user, try Firebase auth state
       try {
@@ -106,6 +119,14 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
+  }, [clerkUser]);
+
+  // Keep local storage cleaned up: remove access token when clerk user signs out
+  useEffect(() => {
+    if (!clerkUser) {
+      localStorage.removeItem('accessToken')
+      sessionStorage.removeItem('accessToken')
+    }
   }, [clerkUser]);
 
   const signIn = async (email: string, password: string) => {
@@ -143,6 +164,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
       await firebaseAuth.signOutUser();
       // Force state update after sign out
       setUser(null);
+      // Clear any stored client-side auth tokens
+      localStorage.removeItem('accessToken')
+      sessionStorage.removeItem('accessToken')
     } catch (error) {
       const authError = error as FirebaseAuthError;
       setError(authError.message);

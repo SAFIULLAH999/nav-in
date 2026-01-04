@@ -36,7 +36,7 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
-              className="bg-transparent border-none outline-none px-4 py-3 text-sm text-muted-foreground cursor-pointer min-w-[120px]"
+              className="bg-transparent border-none outline-none pl-4 pr-2 py-2 text-sm text-muted-foreground cursor-pointer min-w-[120px]"
             >
               <option value="all">All</option>
               <option value="people">People</option>
@@ -56,7 +56,7 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
             }}
             onFocus={() => setIsExpanded(true)}
             placeholder={placeholder}
-            className="bg-transparent border-none outline-none px-2 py-3 text-foreground placeholder-muted-foreground flex-1 min-w-[120px]"
+            className="bg-transparent border-none outline-none px-3 py-2 text-foreground placeholder-muted-foreground flex-1 min-w-[120px]"
           />
 
           {/* Clear Button */}

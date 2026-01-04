@@ -14,7 +14,7 @@ export default function SecuritySettingsPage() {
   return (
       <div className="min-h-screen bg-background">
 
-      <div className="max-w-4xl mx-auto pt-20 px-4 py-8">
+      <div className="max-w-4xl mx-auto pt-6 px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text mb-2">Security Settings</h1>
