@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Navbar from '@/components/Navbar'
 import { Target, TrendingUp, BookOpen, Award, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -51,7 +50,6 @@ export default function InsightsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="max-w-6xl mx-auto pt-20 px-4">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -64,7 +62,6 @@ export default function InsightsPage() {
   if (!insights) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="max-w-6xl mx-auto pt-20 px-4">
           <div className="text-center py-12">
             <p className="text-text-muted">No insights data available</p>
@@ -75,8 +72,7 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+      <div className="min-h-screen bg-background">
 
       <div className="max-w-6xl mx-auto pt-20 px-4">
         <motion.div

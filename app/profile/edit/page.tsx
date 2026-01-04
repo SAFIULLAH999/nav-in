@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Navbar from '@/components/Navbar'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
@@ -293,7 +292,6 @@ export default function EditProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="max-w-4xl mx-auto pt-20 px-4 py-8">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
         </div>
@@ -303,7 +301,6 @@ export default function EditProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <Toaster position="top-right" />
 
       <div className="max-w-4xl mx-auto pt-20 px-4 py-8">

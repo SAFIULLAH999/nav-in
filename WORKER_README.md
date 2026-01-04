@@ -38,7 +38,7 @@ npm run worker:prod
 ## 🔧 Configuration
 
 ### Environment Variables
-Copy `backend/.env.worker` to `.env` and configure:
+Copy `backend/.env.example` to `.env` and configure:
 
 ```env
 # Database

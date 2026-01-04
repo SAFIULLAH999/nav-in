@@ -26,7 +26,7 @@ export const emailTemplates = {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">Welcome to NavIN, ${name}!</h1>
         <p>Your account has been successfully created. You can now start connecting with professionals, posting updates, and exploring job opportunities.</p>
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
           <h3>Your Profile Details:</h3>
           <p><strong>Username:</strong> ${username}</p>
           <p><strong>Member since:</strong> ${new Date().toLocaleDateString()}</p>
@@ -39,7 +39,7 @@ export const emailTemplates = {
           <li>Sharing your insights and updates</li>
         </ul>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Start Exploring</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">Start Exploring</a>
         </div>
       </div>
     `
@@ -51,7 +51,7 @@ export const emailTemplates = {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">New Connection Request</h1>
         <p><strong>${senderName}</strong> (@${senderUsername}) wants to connect with you on NavIN.</p>
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
           <p>This connection request helps you:</p>
           <ul>
             <li>Expand your professional network</li>
@@ -60,8 +60,8 @@ export const emailTemplates = {
           </ul>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/network" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">View Request</a>
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/profile/${senderUsername}" style="background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Profile</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/network" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px; margin-right: 10px;">View Request</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/profile/${senderUsername}" style="background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">View Profile</a>
         </div>
       </div>
     `
@@ -81,8 +81,8 @@ export const emailTemplates = {
           <li>Stay updated with each other's activities</li>
         </ul>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/messages" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">Send Message</a>
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Feed</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/messages" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px; margin-right: 10px;">Send Message</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/feed" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">View Feed</a>
         </div>
       </div>
     `
@@ -94,13 +94,13 @@ export const emailTemplates = {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">New Job Application</h1>
         <p><strong>${applicantName}</strong> has applied for the position:</p>
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
           <h3>${jobTitle}</h3>
           <p><strong>Company:</strong> ${company}</p>
           <p><strong>Applied on:</strong> ${new Date().toLocaleDateString()}</p>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Applications</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">View Applications</a>
         </div>
       </div>
     `
@@ -113,7 +113,7 @@ export const emailTemplates = {
         <h1 style="color: #2563eb;">New Job Application Received</h1>
         <p>Hi <strong>${employerName}</strong>,</p>
         <p><strong>${applicantName}</strong> has applied for the position:</p>
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
           <h3>${jobTitle}</h3>
           <p><strong>Company:</strong> ${company}</p>
           <p><strong>Applicant:</strong> ${applicantName}</p>
@@ -123,7 +123,7 @@ export const emailTemplates = {
         </div>
         <p>Please review the application and contact the candidate if interested.</p>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View All Applications</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs/applications" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">View All Applications</a>
         </div>
       </div>
     `
@@ -136,7 +136,7 @@ export const emailTemplates = {
         <h1 style="color: #059669;">Thank You for Applying!</h1>
         <p>Dear <strong>${applicantName}</strong>,</p>
         <p>Thank you for your interest in joining our team! We've received your application for the position:</p>
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
           <h3>${jobTitle}</h3>
           <p><strong>Company:</strong> ${company}</p>
           <p><strong>Application sent to:</strong> ${employerEmail}</p>
@@ -147,8 +147,8 @@ export const emailTemplates = {
         <p>Your application is now under review. We'll carefully review your qualifications and get back to you soon. In the meantime, feel free to explore more opportunities on our platform.</p>
         <p>Best regards,<br>The ${company} Team</p>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/applications" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px;">View My Applications</a>
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse More Jobs</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/applications" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px; margin-right: 10px;">View My Applications</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/jobs" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">Browse More Jobs</a>
         </div>
       </div>
     `
@@ -163,7 +163,7 @@ export const emailTemplates = {
         <p>You have requested to reset your password for your NavIN account.</p>
         <p>Please click the button below to reset your password. This link will expire in 1 hour.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/reset-password?token=${resetToken}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Reset Password</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/reset-password?token=${resetToken}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">Reset Password</a>
         </div>
         <p style="color: #6b7280; font-size: 14px;">If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
       </div>
@@ -179,10 +179,10 @@ export const emailTemplates = {
         <p>Welcome to NavIN! Please verify your email address to activate your account and start connecting with professionals.</p>
         <p>Click the button below to verify your email address:</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/verify-email?token=${verificationToken}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Verify Email</a>
+          <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/verify-email?token=${verificationToken}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">Verify Email</a>
         </div>
         <p style="color: #6b7280; font-size: 14px;">This verification link will expire in 24 hours. If you didn't create an account with NavIN, please ignore this email.</p>
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
           <p><strong>Why verify your email?</strong></p>
           <ul>
             <li>Secure your account</li>
@@ -203,7 +203,7 @@ export const emailTemplates = {
         <p>${message}</p>
         ${actionUrl && actionText ? `
           <div style="text-align: center; margin-top: 30px;">
-            <a href="${actionUrl.startsWith('http') ? actionUrl : (process.env.NEXTAUTH_URL || 'http://localhost:3002') + actionUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">${actionText}</a>
+            <a href="${actionUrl.startsWith('http') ? actionUrl : (process.env.NEXTAUTH_URL || 'http://localhost:3002') + actionUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px;">${actionText}</a>
           </div>
         ` : ''}
       </div>

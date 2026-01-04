@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { MessageCircle } from 'lucide-react'
-import Navbar from '@/components/Navbar'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { RightSidebar } from '@/components/RightSidebar'
 import { CreatePostCard } from '@/components/CreatePostCard'
@@ -113,13 +112,12 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="max-w-7xl mx-auto flex pt-16">
+      <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto flex pt-6">
         <LeftSidebar />
 
         <main className="flex-1 max-w-2xl mx-4 lg:mx-8">
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Welcome Section - Only for new users */}
             {isNewUser && (
               <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
@@ -160,7 +158,7 @@ export default function FeedPage() {
 
                 {/* Load More Button */}
                 <div className="text-center pt-6">
-                  <button className="px-8 py-3 bg-secondary text-text hover:bg-secondary/80 rounded-xl transition-colors font-medium">
+                  <button className="px-6 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors font-medium">
                     Load More Posts
                   </button>
                 </div>
@@ -177,7 +175,7 @@ export default function FeedPage() {
                 <p className="text-text-muted mb-6">Be the first to share something with your network!</p>
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
                 >
                   Create First Post
                 </button>

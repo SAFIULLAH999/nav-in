@@ -207,7 +207,7 @@ When we transfer data internationally, we ensure that appropriate safeguards are
   },
   {
     id: 'children',
-    title: '10. Children's Privacy',
+    title: '10. Children\'s Privacy',
     content: `Our Service is not intended for children under 16 years of age:
 
 **Age Restrictions:**

@@ -94,7 +94,7 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
           </div>
           <button
             onClick={() => router.push('/sign-in')}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className="px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm"
           >
             Log In
           </button>
@@ -151,28 +151,28 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
             <div className="flex items-center space-x-4">
               <button
                 type="button"
-                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-1 rounded-lg hover:bg-secondary/50"
               >
                 <Image className="w-5 h-5" />
                 <span className="text-sm">Photo</span>
               </button>
               <button
                 type="button"
-                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-1 rounded-lg hover:bg-secondary/50"
               >
                 <Video className="w-5 h-5" />
                 <span className="text-sm">Video</span>
               </button>
               <button
                 type="button"
-                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-1 rounded-lg hover:bg-secondary/50"
               >
                 <Calendar className="w-5 h-5" />
                 <span className="text-sm">Event</span>
               </button>
               <button
                 type="button"
-                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-secondary/50"
+                className="flex items-center space-x-2 text-text-muted hover:text-primary transition-colors p-1 rounded-lg hover:bg-secondary/50"
               >
                 <MapPin className="w-5 h-5" />
                 <span className="text-sm">Location</span>
@@ -183,14 +183,14 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="px-4 py-2 text-text-muted hover:text-text transition-colors"
+                className="px-3 py-1 text-text-muted hover:text-text transition-colors text-sm"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!content.trim()}
-                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-1 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
               >
                 Post
               </button>

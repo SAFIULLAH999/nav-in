@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma-mock'
 import { z } from 'zod'
+import { broadcastJobUpdate } from '../jobs/websocket/route'
 
 const createJobSchema = z.object({
   title: z.string().min(1, 'Job title is required').max(200, 'Title too long'),
@@ -229,6 +230,12 @@ export async function POST(request: NextRequest) {
         title: newJob.author?.title || 'Recruiter'
       }
     }
+
+    // Broadcast the new job to all WebSocket clients
+    broadcastJobUpdate({
+      type: 'JOB_CREATED',
+      job: transformedJob
+    })
 
     return NextResponse.json({
       success: true,

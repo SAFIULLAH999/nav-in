@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Navbar from '@/components/Navbar'
 import { TwoFactorAuth } from '@/components/TwoFactorAuth'
 import { Shield, Lock, Eye, Bell } from 'lucide-react'
 
@@ -13,8 +12,7 @@ export default function SecuritySettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+      <div className="min-h-screen bg-background">
 
       <div className="max-w-4xl mx-auto pt-20 px-4 py-8">
         {/* Header */}

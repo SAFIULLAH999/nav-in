@@ -127,3 +127,6 @@ dump.rdb
 # Backup files
 *.backup
 *.bak
+
+# clerk configuration (can include secrets)
+/.clerk/

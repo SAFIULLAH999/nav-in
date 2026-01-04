@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Navbar from '@/components/Navbar'
 import { ArrowLeft, Upload, FileText, Send, User, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFirebase } from '@/components/FirebaseProvider'
@@ -193,7 +192,6 @@ export default function ApplyPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="max-w-4xl mx-auto pt-20 px-4">
           <div className="bg-card rounded-xl shadow-soft border border-border p-8 text-center">
             <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -207,7 +205,6 @@ export default function ApplyPage() {
   if (error || !job) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="max-w-4xl mx-auto pt-20 px-4">
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
             <p className="text-red-600 mb-4">{error || 'Job not found'}</p>
@@ -225,7 +222,6 @@ export default function ApplyPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
 
       <div className="max-w-4xl mx-auto pt-20 px-4 pb-8">
         {/* Header */}

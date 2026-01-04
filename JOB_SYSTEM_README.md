@@ -64,7 +64,7 @@ npm run seed-jobs
 
 ### 3. Configure Email (Optional)
 
-Create a `.env` file in the backend directory:
+Copy `backend/.env.example` to `backend/.env` and configure:
 
 ```env
 # Email Configuration (for Gmail)

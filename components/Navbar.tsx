@@ -52,7 +52,7 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/20 dark:border-gray-700/20 shadow-lg shadow-black/5">
+    <nav className="sticky top-0 z-50 nav-premium shadow-lg shadow-black/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
@@ -237,7 +237,7 @@ export default function Navbar() {
 
       {/* Premium Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/60 dark:border-gray-700/60">
+        <div className="md:hidden nav-premium border-t border-gray-200/60 dark:border-gray-700/60">
           <div className="px-4 py-6 space-y-4">
             {/* Mobile Search */}
             <div className="relative">
