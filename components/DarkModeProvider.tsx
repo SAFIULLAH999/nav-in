@@ -31,6 +31,9 @@ export const DarkModeProvider: React.FC<DarkModeProviderProps> = ({ children }) 
 
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       setIsDarkMode(true)
+    } else {
+      // Initialize with light mode if no preference or light mode is preferred
+      setIsDarkMode(false)
     }
   }, [])
 
@@ -38,9 +41,11 @@ export const DarkModeProvider: React.FC<DarkModeProviderProps> = ({ children }) 
     // Apply theme to document
     if (isDarkMode) {
       document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
       localStorage.setItem('theme', 'dark')
     } else {
       document.documentElement.classList.remove('dark')
+      document.documentElement.classList.add('light')
       localStorage.setItem('theme', 'light')
     }
   }, [isDarkMode])

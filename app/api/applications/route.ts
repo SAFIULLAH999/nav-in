@@ -51,11 +51,11 @@ export async function GET(req: NextRequest) {
 
     // For demo purposes, return mock applications that match actual jobs
     // In a real app, this would query the database based on userId
-    const mockApplications = await getMockApplications(userId)
-    
+    const applications = await getMockApplications(userId)
+
     return NextResponse.json({
       success: true,
-      data: mockApplications
+      data: applications
     })
   } catch (error) {
     console.error('Error fetching applications:', error)
