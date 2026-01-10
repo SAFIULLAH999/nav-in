@@ -29,3 +29,49 @@
 {"level":"info","message":"✅ Created job: DevOps Engineer at CloudTech Solutions","timestamp":"2025-10-24 13:25:26"}
 {"level":"info","message":"✅ Created job: Mobile App Developer at MobileFirst","timestamp":"2025-10-24 13:25:26"}
 {"level":"info","message":"🎉 Successfully seeded 5 jobs","timestamp":"2025-10-24 13:25:26"}
+{"level":"info","message":"🚀 Starting BullMQ Worker...","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"Worker error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"❌ Worker error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"Worker error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"❌ Worker error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"Redis client error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"level":"warn","message":"Redis connection closed","timestamp":"2026-01-10 15:25:06"}
+{"level":"info","message":"Redis client reconnecting...","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"Redis client error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"level":"warn","message":"Redis connection closed","timestamp":"2026-01-10 15:25:06"}
+{"level":"info","message":"Redis client reconnecting...","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"Redis client error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"level":"warn","message":"Redis connection closed","timestamp":"2026-01-10 15:25:06"}
+{"level":"info","message":"Redis client reconnecting...","timestamp":"2026-01-10 15:25:06"}
+{"code":"ECONNREFUSED","level":"error","message":"Redis client error:","stack":"AggregateError [ECONNREFUSED]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)","timestamp":"2026-01-10 15:25:06"}
+{"level":"info","message":"🎭 Mock Queue \"job-processing\" initialized","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🎭 Mock Worker initialized with concurrency 5","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🎭 Mock Queue \"job-processing\" initialized","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🎭 Mock Worker initialized with concurrency 5","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🎭 Mock Redis service initialized","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🎭 Mock Redis service initialized","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🎭 Starting Mock Worker...","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"✅ Mock Redis connected successfully","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"📊 Mock Worker Configuration:","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"   Concurrency: 5","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"   Retry Attempts: 3","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"✅ Mock Worker started successfully","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"📋 Worker is listening for jobs...","timestamp":"2026-01-10 15:31:41"}
+{"level":"info","message":"🔄 Press Ctrl+C to stop the worker","timestamp":"2026-01-10 15:31:41"}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:32:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:33:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:34:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:35:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:36:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:37:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:38:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:39:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:40:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:41:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:42:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:43:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:44:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:45:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:46:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:47:41","total":0}
+{"completed":0,"failed":0,"level":"info","message":"📊 Queue Stats:","pending":0,"processing":0,"timestamp":"2026-01-10 15:48:41","total":0}

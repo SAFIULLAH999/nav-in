@@ -1,18 +1,65 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { Camera, MapPin, Link as LinkIcon, Calendar, Edit, Plus, MessageCircle, UserPlus, MoreHorizontal, Briefcase, GraduationCap } from 'lucide-react'
 import { motion } from 'framer-motion'
+import toast, { Toaster } from 'react-hot-toast'
 import { useFirebase } from '@/components/FirebaseProvider'
 import { OpenToBadge } from '@/components/OpenToBadge'
+import Avatar from '@/components/Avatar'
 
 export default function ProfilePage() {
   const { user } = useFirebase()
   const router = useRouter()
   const [profileData, setProfileData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingAvatar(true)
+    try {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = async () => {
+        const dataUrl = reader.result as string
+        const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+        if (!token) {
+          alert('You must be signed in to update your avatar.')
+          setUploadingAvatar(false)
+          return
+        }
+
+        const response = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ avatar: dataUrl })
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          setProfileData(prev => ({ ...prev, avatar: result.data.avatar }))
+          toast.success('Avatar updated')
+        } else {
+          console.error('Avatar upload failed:', result.error)
+          toast.error(result.error || 'Failed to upload avatar')
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      alert('Failed to upload avatar')
+    } finally {
+      setUploadingAvatar(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -64,6 +111,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Toaster position="top-right" />
       <div className="max-w-4xl mx-auto pt-6 px-4">
         {/* Profile Header */}
         <motion.div
@@ -73,8 +121,7 @@ export default function ProfilePage() {
         >
           {/* Cover Photo */}
           <div className="h-48 bg-gradient-to-r from-primary to-secondary relative">
-            <button className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition-colors">
-              <Camera className="w-5 h-5" />
+            <button onClick={() => fileInputRef?.current?.click()} className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition-colors">
             </button>
           </div>
 
@@ -82,20 +129,13 @@ export default function ProfilePage() {
           <div className="relative px-6 pb-6">
             {/* Profile Picture */}
             <div className="absolute -top-16 left-6">
-              <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-card overflow-hidden">
-                {profileData?.avatar ? (
-                  <img
-                    src={profileData.avatar}
-                    alt={profileData.name || 'Profile'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  (profileData?.name || user.displayName)
-                    ? (profileData?.name || user.displayName)!.charAt(0).toUpperCase()
-                    : user.email?.charAt(0).toUpperCase()
-                )}
+              <div className="w-32 h-32 rounded-full border-4 border-card overflow-hidden">
+                <Avatar src={profileData?.avatar || null} name={profileData?.name || user.displayName || user.email} size="xl" />
               </div>
-              <button className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors">
+
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+
+              <button disabled={uploadingAvatar} onClick={() => fileInputRef?.current?.click()} className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50">
                 <Camera className="w-4 h-4" />
               </button>
             </div>
@@ -193,7 +233,7 @@ function AboutTab() {
         <p className="text-text-muted">
           Add your professional summary and what makes you unique.
         </p>
-        <button className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
+        <button onClick={() => router.push('/profile/edit#summary')} className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
           Add Summary
         </button>
       </div>
@@ -205,7 +245,7 @@ function AboutTab() {
             Add your skills
           </span>
         </div>
-        <button className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
+        <button onClick={() => router.push('/profile/edit#skills')} className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
           Add Skills
         </button>
       </div>
@@ -217,7 +257,7 @@ function AboutTab() {
             Add your website, LinkedIn, or other professional links
           </div>
         </div>
-        <button className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
+        <button onClick={() => router.push('/profile/edit#contact')} className="mt-4 text-primary hover:text-primary/80 text-sm font-medium">
           Add Contact Info
         </button>
       </div>
@@ -230,7 +270,7 @@ function ExperienceTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-text">Experience</h3>
-        <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg bg-secondary">
+        <button onClick={() => router.push('/profile/edit#experience')} className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg bg-secondary">
           <Plus className="w-4 h-4" />
           <span>Add Experience</span>
         </button>
@@ -258,7 +298,7 @@ function EducationTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-text">Education</h3>
-        <button className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg bg-secondary">
+        <button onClick={() => router.push('/profile/edit#education')} className="flex items-center space-x-2 px-4 py-2 border border-border rounded-lg bg-secondary">
           <Plus className="w-4 h-4" />
           <span>Add Education</span>
         </button>

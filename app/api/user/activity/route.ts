@@ -20,6 +20,23 @@ export async function GET(request: NextRequest) {
     // Get users who have been active in the last 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
 
+    // Development fallback: return mock users if DATABASE_URL isn't set
+    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+      const mockUsers = [
+        { id: 'u1', name: 'Alice Johnson', avatar: '', title: 'Frontend Engineer', lastSeen: new Date().toISOString(), isOnline: true },
+        { id: 'u2', name: 'Bob Smith', avatar: '', title: 'Product Designer', lastSeen: new Date().toISOString(), isOnline: true }
+      ]
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          activeUsers: mockUsers,
+          count: mockUsers.length,
+          timestamp: new Date().toISOString()
+        }
+      })
+    }
+
     const activeUsers = await prisma.user.findMany({
       where: {
         lastLoginAt: {

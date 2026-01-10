@@ -17,7 +17,7 @@ interface OnlineUsersListProps {
 }
 
 export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({ className = '' }) => {
-  const { activeUsers } = useSocket()
+  const { activeUsers, activeUserDetails, onUserOnline, onUserOffline } = useSocket()
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -30,14 +30,30 @@ export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({ className = ''
         return
       }
 
+      setLoading(true)
+
       try {
-        // Use the activity API to get user details for online users
+        // If provider already has detailed active user info, use it (faster / realtime)
+        if (activeUserDetails && activeUserDetails.length > 0) {
+          const currentTime = new Date()
+          const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000)
+
+          const recentUsers = activeUserDetails.filter((user: any) => {
+            const lastSeen = new Date(user.lastSeen)
+            return lastSeen >= fiveMinutesAgo
+          })
+
+          setOnlineUsers(recentUsers)
+          setLoading(false)
+          return
+        }
+
+        // Fallback: Use the activity API to get user details for online users
         const response = await fetch('/api/user/activity?limit=100')
 
         if (response.ok) {
           const data = await response.json()
           if (data.success) {
-            // Filter to only include users who are currently active
             const currentTime = new Date()
             const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000)
 
@@ -57,7 +73,58 @@ export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({ className = ''
     }
 
     loadOnlineUsers()
-  }, [activeUsers])
+  }, [activeUsers, activeUserDetails])
+
+  // Set up real-time user presence listeners
+  useEffect(() => {
+    // Using handlers from top-level useSocket() call
+
+    const handleUserOnline = (data: { userId: string }) => {
+      // When a user comes online, fetch their details and add to the list
+      console.log(`User ${data.userId} came online`)
+      
+      // Fetch user details for the newly online user
+      const fetchUserDetails = async () => {
+        try {
+          const response = await fetch(`/api/user/activity?userId=${data.userId}`)
+          if (response.ok) {
+            const result = await response.json()
+            if (result.success && result.data.activeUsers.length > 0) {
+              const user = result.data.activeUsers[0]
+              setOnlineUsers(prev => {
+                // Check if user is already in the list
+                const userExists = prev.some(u => u.id === user.id)
+                if (!userExists) {
+                  return [...prev, user]
+                }
+                return prev
+              })
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching online user details:', error)
+        }
+      }
+
+      fetchUserDetails()
+    }
+
+    const handleUserOffline = (data: { userId: string }) => {
+      // When a user goes offline, remove them from the list
+      console.log(`User ${data.userId} went offline`)
+      setOnlineUsers(prev => prev.filter(user => user.id !== data.userId))
+    }
+
+    // Subscribe to real-time events
+    const unsubscribeOnline = onUserOnline(handleUserOnline)
+    const unsubscribeOffline = onUserOffline(handleUserOffline)
+
+    return () => {
+      // Clean up subscriptions
+      unsubscribeOnline()
+      unsubscribeOffline()
+    }
+  }, [onUserOnline, onUserOffline])
 
   if (loading) {
     return (
@@ -88,7 +155,7 @@ export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({ className = ''
           <Users className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-text">Online Users</h3>
         </div>
-        <span className="text-sm text-text-muted bg-secondary px-2 py-1 rounded-full">
+        <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full font-semibold inline-flex items-center justify-center">
           {onlineUsers.length}
         </span>
       </div>

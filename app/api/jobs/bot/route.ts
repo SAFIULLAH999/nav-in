@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma-mock'
+import { prisma } from '@/lib/prisma'
 import { broadcastJobUpdate } from '../websocket/route'
 import { EmailService } from '@/lib/email'
 import { JobQueueManager } from '@/lib/queue/job-queue-manager'
@@ -505,9 +505,9 @@ async function startContinuousMonitoring() {
             })
             validatedCount++
           }
-        } catch (error) {
-          console.error(`[⚠️]  Link validation error for job ${job.id}:`, error.message)
-        }
+    } catch (error) {
+      console.error(`[⚠️]  Link validation error for job ${job.id}:`, error instanceof Error ? error.message : 'Unknown error')
+    }
       }
   
       if (validatedCount > 0 || invalidCount > 0) {

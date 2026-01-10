@@ -5,6 +5,7 @@ import { Heart, MessageCircle, Share, MoreHorizontal, Flag } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Post } from '@/types'
 import { useSocket } from '@/components/SocketProvider'
+import Avatar from '@/components/Avatar'
 
 interface PostCardProps {
   post: Post
@@ -221,14 +222,14 @@ export const PostCard = ({ post }: PostCardProps) => {
       <div className="p-6 pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
-              {post.author.name.charAt(0)}
+            <div>
+              <Avatar src={post.author.avatar || null} name={post.author.name || 'User'} size="lg" className="w-12 h-12" />
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2">
                 <h3 className="font-semibold text-text">{post.author.name}</h3>
                 <span className="text-text-muted">•</span>
-                <span className="text-text-muted text-sm">{post.timestamp}</span>
+                <span className="text-text-muted text-sm">{new Date(post.timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
               </div>
               <p className="text-sm text-text-muted">{post.author.title}</p>
             </div>
@@ -359,16 +360,8 @@ export const PostCard = ({ post }: PostCardProps) => {
                 ) : comments.length > 0 ? (
                   comments.map((comment) => (
                     <div key={comment.id} className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {comment.author.avatar ? (
-                          <img
-                            src={comment.author.avatar}
-                            alt={comment.author.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          comment.author.name.charAt(0).toUpperCase()
-                        )}
+                      <div>
+                        <Avatar src={comment.author.avatar || null} name={comment.author.name || 'User'} size="sm" />
                       </div>
                       <div className="flex-1">
                         <div className="bg-secondary/30 rounded-lg p-3">

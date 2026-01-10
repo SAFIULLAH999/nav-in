@@ -107,7 +107,7 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-xl shadow-soft border border-border p-6"
+      className="bg-card rounded-xl shadow-soft border border-border p-4"
     >
       {alert && (
         <Alert variant={alert.type === 'error' ? 'destructive' : 'default'} className="mb-4">
@@ -117,7 +117,7 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
       {!isExpanded ? (
         <div
           onClick={() => setIsExpanded(true)}
-          className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
+          className="flex items-center space-x-3 p-3 bg-secondary/30 rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
         >
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
             {user.displayName

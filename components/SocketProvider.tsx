@@ -9,6 +9,8 @@ interface SocketContextType {
   isConnected: boolean
   isServerless: boolean
   activeUsers: string[]
+  /** Detailed info for active users (objects with id, name, avatar, title, lastSeen) */
+  activeUserDetails: any[]
   sendMessage: (receiverId: string, content: string) => void
   joinConversation: (otherUserId: string) => void
   leaveConversation: (otherUserId: string) => void
@@ -44,6 +46,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false)
   const [isServerless, setIsServerless] = useState(false)
   const [activeUsers, setActiveUsers] = useState<string[]>([])
+  const [activeUserDetails, setActiveUserDetails] = useState<any[]>([])
   const { user } = useUser()
   const { getToken } = useAuth()
   const messageCallbacks = useRef<((message: any) => void)[]>([])
@@ -88,8 +91,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         if (response.ok) {
           const data = await response.json()
           if (data.success) {
+            // Keep list of ids for lightweight presence checks
             const activeUserIds = data.data.activeUsers.map((user: any) => user.id)
             setActiveUsers(activeUserIds)
+            // Also store detailed user objects to avoid extra fetches elsewhere
+            setActiveUserDetails(data.data.activeUsers)
           }
         }
       } catch (error) {
@@ -101,8 +107,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeSocket = async () => {
       if (user && !socket) {
-        // For now, always use serverless mode (API polling) since socket.io server is not set up
-        const useServerless = true
+        // Enable Socket.IO client for real-time features
+        const useServerless = false
 
         if (useServerless) {
           console.log('Using API-based real-time features (socket.io server not configured)')
@@ -115,6 +121,99 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           }, 30000) // Update every 30 seconds
 
           // Initial activity update
+          updateUserActivity()
+
+          return () => {
+            clearInterval(activityInterval)
+          }
+        }
+
+        // Initialize Socket.IO client
+        try {
+          console.log('Initializing Socket.IO client...')
+          
+          // Get token for authentication
+          const token = await getToken()
+
+          // Initialize socket connection
+          const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
+            path: '/api/socket/io',
+            auth: {
+              token: token
+            }
+          })
+
+          newSocket.on('connect', () => {
+            console.log('Connected to socket server')
+            setIsConnected(true)
+            setIsServerless(false)
+
+            // Authenticate user
+            newSocket.emit('authenticate', token)
+          })
+
+          newSocket.on('disconnect', () => {
+            console.log('Disconnected from socket server')
+            setIsConnected(false)
+          })
+
+          newSocket.on('auth_error', (error: string) => {
+            console.error('Socket authentication failed:', error)
+          })
+
+          // Handle real-time messaging
+          newSocket.on('new_message', (message: any) => {
+            messageCallbacks.current.forEach(callback => callback(message))
+          })
+
+          newSocket.on('message_sent', (message: any) => {
+            messageCallbacks.current.forEach(callback => callback(message))
+          })
+
+          // Handle user presence
+          newSocket.on('user_online', (data: { userId: string }) => {
+            setActiveUsers(prev => {
+              const newUsers = [...prev, data.userId]
+              return Array.from(new Set(newUsers))
+            })
+            userOnlineCallbacks.current.forEach(callback => callback(data))
+          })
+
+          newSocket.on('user_offline', (data: { userId: string }) => {
+            setActiveUsers(prev => prev.filter(id => id !== data.userId))
+            userOfflineCallbacks.current.forEach(callback => callback(data))
+          })
+
+          // Handle notifications
+          newSocket.on('new_notification', (notification: any) => {
+            notificationCallbacks.current.forEach(callback => callback(notification))
+          })
+
+          // Handle post updates (likes, comments, shares)
+          newSocket.on('post_liked', (data: any) => {
+            postUpdateCallbacks.current.forEach(callback => callback(data))
+          })
+
+          newSocket.on('post_commented', (data: any) => {
+            postUpdateCallbacks.current.forEach(callback => callback(data))
+          })
+
+          newSocket.on('post_shared', (data: any) => {
+            postUpdateCallbacks.current.forEach(callback => callback(data))
+          })
+
+          setSocket(newSocket)
+
+        } catch (error) {
+          console.error('Failed to initialize Socket.IO client:', error)
+          // Fallback to serverless mode if Socket.IO fails
+          setIsConnected(true)
+          setIsServerless(true)
+          
+          const activityInterval = setInterval(() => {
+            updateUserActivity()
+          }, 30000)
+
           updateUserActivity()
 
           return () => {
@@ -327,6 +426,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     isConnected,
     isServerless,
     activeUsers,
+    activeUserDetails,
     sendMessage,
     joinConversation,
     leaveConversation,

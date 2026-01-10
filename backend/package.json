@@ -18,6 +18,7 @@
     "db:studio": "prisma studio",
     "schedule-jobs": "tsx src/schedule-jobs.ts",
     "worker": "tsx src/worker-bullmq.ts",
+    "worker:mock": "tsx src/worker-mock.ts",
     "seed-jobs": "tsx src/utils/seed-jobs.ts"
   },
   "keywords": [

@@ -28,6 +28,8 @@ import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { useDarkMode } from "@/components/DarkModeProvider"
 import SearchBar from "./SearchBar"
+import Avatar from '@/components/Avatar'
+import { useFirebase } from '@/components/FirebaseProvider'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -39,6 +41,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const { user, isLoaded, isSignedIn } = useUser()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
+  const { signOut: firebaseSignOut } = useFirebase()
 
   const navigation = [
     { name: "Home", href: "/feed", icon: Home },
@@ -200,11 +203,7 @@ export default function Navbar() {
                   className="flex items-center space-x-2 p-1 rounded-xl hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all duration-300 touch-target focus-visible"
                 >
                   <div className="relative">
-                    <img
-                      src={user.imageUrl}
-                      alt={user.fullName || "User"}
-                      className="w-8 h-8 rounded-full ring-2 ring-white dark:ring-gray-700 shadow-lg"
-                    />
+                    <Avatar src={user.imageUrl || null} name={user.fullName || user.username || 'User'} size="sm" className="ring-2 ring-white dark:ring-gray-700 shadow-lg" />
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                     </div>
@@ -217,11 +216,7 @@ export default function Navbar() {
                   <div className="px-4 py-3 border-b border-gray-200/60 dark:border-gray-700/60">
                     <div className="flex items-center space-x-3">
                       <div className="relative">
-                        <img
-                          src={user.imageUrl}
-                          alt={user.fullName || "User"}
-                          className="w-10 h-10 rounded-full ring-2 ring-white dark:ring-gray-700"
-                        />
+                        <Avatar src={user.imageUrl || null} name={user.fullName || user.username || 'User'} size="md" className="ring-2 ring-white dark:ring-gray-700" />
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         </div>
@@ -234,6 +229,26 @@ export default function Navbar() {
                   </div>
                   {profileMenuItems.map((item) => {
                     const Icon = item.icon
+                    if (item.name === 'Sign out') {
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={async () => {
+                            try {
+                              await firebaseSignOut()
+                              window.location.href = '/sign-in'
+                            } catch (err) {
+                              console.error('Sign out failed', err)
+                            }
+                          }}
+                          className="w-full text-left flex items-center px-4 py-3 hover:bg-gray-50/80 dark:hover:bg-gray-700/80 transition-colors duration-200"
+                        >
+                          <Icon className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400" />
+                          <span className="text-gray-900 dark:text-white">{item.name}</span>
+                        </button>
+                      )
+                    }
+
                     return (
                       <Link
                         key={item.name}
@@ -251,13 +266,13 @@ export default function Navbar() {
               <div className="flex items-center space-x-2">
                 <Link
                   href="/sign-in"
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-lg transition-colors duration-200"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 h-9 flex items-center rounded-lg transition-colors duration-200"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 h-9 flex items-center rounded-lg shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105"
                 >
                   Sign Up
                 </Link>
