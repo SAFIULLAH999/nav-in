@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Bar Fix Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #fafafa;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .search-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        
+        .before-after {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        .section {
+            flex: 1;
+        }
+        
+        .section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* Original search bar styles */
+        .original-search {
+            background: #1a1a1a;
+            border: 1px solid #27272a;
+            border-radius: 9999px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            height: 40px;
+        }
+        
+        .original-search input {
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 8px 12px;
+            color: #fafafa;
+            flex: 1;
+            min-width: 120px;
+            max-width: 680px;
+            height: 40px;
+        }
+        
+        .original-search button {
+            width: 40px;
+            height: 40px;
+            background: #00a86b;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* New minimal search bar styles */
+        .minimal-search {
+            background: #1a1a1a;
+            border: 1px solid #27272a;
+            border-radius: 9999px;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            height: 36px;
+        }
+        
+        .minimal-search input {
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 4px 8px;
+            color: #fafafa;
+            flex: 1;
+            min-width: 100px;
+            max-width: 400px;
+            height: 28px;
+            font-size: 14px;
+        }
+        
+        .minimal-search input::placeholder {
+            font-size: 12px;
+        }
+        
+        .minimal-search button {
+            width: 32px;
+            height: 32px;
+            background: #00a86b;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 4px;
+        }
+        
+        .minimal-search select {
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 4px 4px 4px 12px;
+            color: #a1a1aa;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 100px;
+            max-width: 100px;
+        }
+        
+        /* Comparison table */
+        .comparison-table {
+            margin-top: 40px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #27272a;
+        }
+        
+        .comparison-table th {
+            background: #1a1a1a;
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:hover {
+            background: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1 class="text-2xl font-bold text-center mb-8">Search Bar Fix Test</h1>
+        
+        <div class="before-after">
+            <div class="section">
+                <h2>Original Search Bar</h2>
+                <div class="original-search">
+                    <select class="bg-transparent border-none outline-none pl-4 pr-2 py-2 text-sm text-gray-400 cursor-pointer min-w-[120px]">
+                        <option value="all">All</option>
+                        <option value="people">People</option>
+                        <option value="jobs">Jobs</option>
+                    </select>
+                    <input type="text" placeholder="Search professionals, jobs, companies...">
+                    <button type="submit">🔍</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>New Minimal Search Bar</h2>
+                <div class="minimal-search">
+                    <select class="bg-transparent border-none outline-none pl-3 pr-1 py-1 text-xs text-gray-400 cursor-pointer min-w-[100px] max-w-[100px]">
+                        <option value="all">All</option>
+                        <option value="people">People</option>
+                        <option value="jobs">Jobs</option>
+                    </select>
+                    <input type="text" placeholder="Search professionals, jobs, companies...">
+                    <button type="submit">🔍</button>
+                </div>
+            </div>
+        </div>
+        
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Original</th>
+                    <th>New Minimal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Height</td>
+                    <td>40px</td>
+                    <td>36px</td>
+                </tr>
+                <tr>
+                    <td>Input Height</td>
+                    <td>40px</td>
+                    <td>28px</td>
+                </tr>
+                <tr>
+                    <td>Font Size</td>
+                    <td>16px</td>
+                    <td>14px</td>
+                </tr>
+                <tr>
+                    <td>Placeholder Size</td>
+                    <td>16px</td>
+                    <td>12px</td>
+                </tr>
+                <tr>
+                    <td>Search Button Size</td>
+                    <td>40px</td>
+                    <td>32px</td>
+                </tr>
+                <tr>
+                    <td>Search Icon Size</td>
+                    <td>16px</td>
+                    <td>12px</td>
+                </tr>
+                <tr>
+                    <td>Max Width</td>
+                    <td>680px</td>
+                    <td>400px</td>
+                </tr>
+                <tr>
+                    <td>Padding</td>
+                    <td>8px 16px</td>
+                    <td>4px 8px</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="mt-8 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+            <h3 class="font-semibold mb-2">✅ Changes Applied:</h3>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+                <li>Reduced overall height from 40px to 36px</li>
+                <li>Reduced input height from 40px to 28px</li>
+                <li>Smaller font size (14px) and placeholder (12px)</li>
+                <li>Smaller search button (32px) with smaller icon (12px)</li>
+                <li>Reduced max-width from 680px to 400px for more compact appearance</li>
+                <li>Tighter padding and spacing throughout</li>
+                <li>More minimal dropdown styling</li>
+                <li>Compact search results with smaller avatars and text</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

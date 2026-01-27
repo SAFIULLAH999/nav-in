@@ -138,22 +138,7 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
       <form onSubmit={handleSubmit} className="relative">
         <div className={`flex items-center bg-background border border-border rounded-full transition-all duration-300 ${
           isExpanded ? 'shadow-lg' : 'hover:shadow-md'
-        } ${mobile ? 'mobile-search' : ''}`}>
-          {/* Search Type Selector - Hidden on mobile */}
-          {!mobile && (
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="bg-transparent border-none outline-none pl-4 pr-2 py-2 text-sm text-muted-foreground cursor-pointer min-w-[120px]"
-            >
-              <option value="all">All</option>
-              <option value="people">People</option>
-              <option value="jobs">Jobs</option>
-              <option value="companies">Companies</option>
-              <option value="posts">Posts</option>
-            </select>
-          )}
-
+        } ${mobile ? 'mobile-search' : ''} ${mobile ? 'h-10' : 'h-8'} w-[250px]`}>
           {/* Search Input */}
           <input
             type="text"
@@ -168,36 +153,36 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
             aria-label="Search"
             aria-controls="search-results-list"
             aria-activedescendant={selectedIndex >= 0 ? `search-result-${selectedIndex}` : undefined}
-            className="bg-transparent border-none outline-none px-3 py-2 text-foreground placeholder-muted-foreground flex-1 min-w-[120px] max-w-[680px] h-10"
+            className="bg-transparent border-none outline-none px-2 py-0.5 text-sm text-foreground placeholder-muted-foreground placeholder:text-xs flex-1 min-w-[120px] max-w-[150px] h-6"
           />
 
-          {/* Clear Button */}
+          {/* Clear Button - Smaller */}
           {query && (
             <button
               type="button"
               onClick={clearSearch}
-              className="p-2 hover:bg-secondary rounded-full transition-colors"
+              className="p-1.5 hover:bg-secondary rounded-full transition-colors mr-1"
             >
-              <X className="w-4 h-4 text-muted-foreground" />
+              <X className="w-3 h-3 text-muted-foreground" />
             </button>
           )}
 
-          {/* Search Button */}
+          {/* Search Button - Smaller and more minimal */}
           <button
             type="submit"
-            className="w-10 h-10 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors mr-2 flex items-center justify-center"
+            className="w-8 h-8 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors flex items-center justify-center mr-1"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-3 h-3" />
           </button>
         </div>
       </form>
 
-      {/* Search Results Dropdown */}
+      {/* Search Results Dropdown - More minimal */}
       {isExpanded && query && (
-        <div id="search-results-list" className="absolute top-full mt-2 max-w-[420px] w-full bg-card rounded-xl shadow-xl border border-border z-50 max-h-96 overflow-y-auto" role="listbox" aria-label="Search results">
-          <div className="p-4">
-            <div className="text-sm text-muted-foreground mb-3">
-              Search results for "{query}" in {searchType.charAt(0).toUpperCase() + searchType.slice(1)}
+        <div id="search-results-list" className="absolute top-full mt-1 max-w-[400px] w-full bg-card rounded-lg shadow-lg border border-border z-50 max-h-80 overflow-y-auto" role="listbox" aria-label="Search results">
+          <div className="p-3">
+            <div className="text-xs text-muted-foreground mb-2">
+              Results for "{query}" in {searchType.charAt(0).toUpperCase() + searchType.slice(1)}
             </div>
 
             {/* Results */}
@@ -223,15 +208,15 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
                       setQuery('')
                       setResults([])
                     }}
-                    className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer ${selectedIndex === idx ? 'bg-secondary' : 'hover:bg-secondary'}`}
+                    className={`flex items-center space-x-2 p-2 rounded-md cursor-pointer ${selectedIndex === idx ? 'bg-secondary' : 'hover:bg-secondary'}`}
                   >
                     {item.avatar ? (
                       <Avatar src={item.avatar || null} name={item.title} size="sm" />
                     ) : (
-                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-white font-medium">{item.title?.charAt(0)}</div>
+                      <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-white font-medium text-xs">{item.title?.charAt(0)}</div>
                     )}
                     <div className="flex-1">
-                      <div className="text-sm font-medium">{item.title}</div>
+                      <div className="text-xs font-medium truncate">{item.title}</div>
                       <div className="text-xs text-text-muted truncate">{item.subtitle}</div>
                     </div>
                     <div className="text-xs text-text-muted">{item.type}</div>
@@ -240,7 +225,7 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
               )}
             </div>
 
-            <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+            <div className="mt-2 pt-2 border-t border-border flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
@@ -253,11 +238,11 @@ export default function SearchBar({ onSearch, placeholder = "Search professional
                     router.push(`/network?query=${q}`)
                   }
                 }}
-                className="text-sm text-primary hover:text-primary/80 font-medium"
+                className="text-xs text-primary hover:text-primary/80 font-medium"
               >
-                View all results →
+                View all →
               </button>
-              <div className="text-xs text-text-muted">Showing {results.length} results</div>
+              <div className="text-xs text-text-muted">{results.length} results</div>
             </div>
           </div>
         </div>

@@ -94,40 +94,25 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 nav-premium shadow-lg shadow-black/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo and Brand */}
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-3 group">
+          {/* Logo and Brand - Simplified */}
+          <div className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center space-x-2 group">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-all duration-300 group-hover:scale-105">
-                  <Crown className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-all duration-300 group-hover:scale-105">
+                  <Crown className="w-4 h-4 text-white" />
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-2.5 h-2.5 text-white" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-1.5 h-1.5 text-white" />
                 </div>
               </div>
-              <div className="hidden sm:block">
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                  NavIn
-                </span>
-                {!loadingPremiumStatus && (
-                  <div className="text-xs -mt-1">
-                    {isPremium ? (
-                      isTrial ? (
-                        <span className="text-yellow-500 dark:text-yellow-400 font-medium">Trial</span>
-                      ) : (
-                        <span className="text-gray-500 dark:text-gray-400">Premium</span>
-                      )
-                    ) : (
-                      <span className="text-gray-400 dark:text-gray-500">Basic</span>
-                    )}
-                  </div>
-                )}
-              </div>
+              <span className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                NavIn
+              </span>
             </Link>
           </div>
 
-          {/* Premium Search Bar */}
-          <div className="flex-1 max-w-2xl mx-4 relative">
+          {/* Compact Search Bar */}
+          <div className="flex-1 max-w-md mx-4 relative">
             <SearchBar />
           </div>
 
