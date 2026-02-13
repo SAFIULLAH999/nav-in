@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { broadcastJobUpdate } from '../jobs/websocket/route'
+
+// Lazy import to avoid circular dependency issues
+let broadcastJobUpdate: ((data: any) => void) | null = null
+try {
+  const wsModule = require('../jobs/websocket/route')
+  broadcastJobUpdate = wsModule.broadcastJobUpdate
+} catch (e) {
+  console.warn('WebSocket module not available, job broadcasts disabled')
+  broadcastJobUpdate = null
+}
 
 const createJobSchema = z.object({
   title: z.string().min(1, 'Job title is required').max(200, 'Title too long'),
@@ -33,8 +42,8 @@ export async function GET(request: NextRequest) {
     // Build where clause for filtering
     const where: any = {
       isActive: true,
-      // Not expired
       AND: [
+        // Not expired
         {
           OR: [
             { expiresAt: null },
@@ -44,26 +53,30 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Add search conditions to AND array
+    // Note: SQLite contains is case-insensitive by default
     if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-        { companyName: { contains: search } },
-        { requirements: { contains: search } },
-        { benefits: { contains: search } }
-      ]
+      where.AND.push({
+        OR: [
+          { title: { contains: search } },
+          { description: { contains: search } },
+          { companyName: { contains: search } },
+          { requirements: { contains: search } },
+          { benefits: { contains: search } }
+        ]
+      })
     }
 
     if (location) {
-      where.location = { contains: location }
+      where.AND.push({ location: { contains: location } })
     }
 
     if (company) {
-      where.companyName = { contains: company }
+      where.AND.push({ companyName: { contains: company } })
     }
 
     if (type) {
-      where.type = type
+      where.AND.push({ type: type })
     }
 
     const jobs = await prisma.job.findMany({
@@ -87,7 +100,10 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-    })
+    }).catch(error => {
+      console.error('Database query error:', error);
+      throw new Error('Failed to fetch jobs from database');
+    });
 
     // Transform jobs for frontend
     const transformedJobs = jobs.map(job => {
@@ -139,12 +155,12 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error fetching jobs:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch jobs', data: [] },
-      { status: 500 }
-    )
-  }
+   console.error('Error fetching jobs:', error)
+   return NextResponse.json(
+     { success: false, error: 'Failed to fetch jobs', data: [], details: error instanceof Error ? error.message : 'Unknown error' },
+     { status: 500 }
+   )
+ }
 }
 
 // POST - Create a new job posting
@@ -232,10 +248,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Broadcast the new job to all WebSocket clients
-    broadcastJobUpdate({
-      type: 'JOB_CREATED',
-      job: transformedJob
-    })
+    if (broadcastJobUpdate) {
+      broadcastJobUpdate({
+        type: 'JOB_CREATED',
+        job: transformedJob
+      })
+    }
 
     return NextResponse.json({
       success: true,

@@ -17,7 +17,7 @@ export interface AuthenticatedRequest extends NextRequest {
  */
 export function generateAccessToken(payload: JWTPayload): string {
   return jwt.sign(payload, process.env.JWT_SECRET || 'fallback-secret', {
-    expiresIn: '7d'
+    expiresIn: '15m' // Shortened from 7d to 15m for better security
   })
 }
 

@@ -1,254 +1,219 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react'
+import { Star, User, Briefcase, MessageCircle, ThumbsUp } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface Recommendation {
-  id: string;
-  relationship: string;
-  position?: string;
-  content: string;
-  status: string;
+  id: string
   recommender: {
-    id: string;
-    name: string;
-    title?: string;
-    avatar?: string;
-    company?: string;
-  };
-  createdAt: string;
+    id: string
+    name: string
+    title: string
+    avatar: string
+    company: string
+  }
+  relationship: string
+  position: string | null
+  content: string
+  status: string
+  createdAt: string
 }
 
-export default function RecommendationsSection({ userId }: { userId: string }) {
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+interface RecommendationsSectionProps {
+  userId: string
+  isCurrentUser?: boolean
+}
+
+export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
+  userId,
+  isCurrentUser = false
+}) => {
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
-    fetchRecommendations();
-  }, [userId]);
+    fetchRecommendations()
+  }, [userId])
 
   const fetchRecommendations = async () => {
     try {
-      const response = await fetch('/api/recommendations/received?status=ACCEPTED');
-      const data = await response.json();
-      setRecommendations(data);
+      setLoading(true)
+      setError(null)
+
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      const response = await fetch(`/api/recommendations/request?status=ACCEPTED&userId=${userId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        setRecommendations(data.data || [])
+      } else {
+        setError(data.error || 'Failed to fetch recommendations')
+        setRecommendations([])
+      }
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
+      console.error('Error fetching recommendations:', error)
+      setError('Failed to fetch recommendations. Please try again.')
+      setRecommendations([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const visibleRecommendations = showAll ? recommendations : recommendations.slice(0, 2)
 
   if (loading) {
-    return <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>;
+    return (
+      <div className="bg-card rounded-xl shadow-soft border border-border p-6">
+        <div className="animate-pulse space-y-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-secondary rounded-full"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-secondary rounded w-1/3"></div>
+                  <div className="h-2 bg-secondary rounded w-1/4"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-2 bg-secondary rounded w-full"></div>
+                <div className="h-2 bg-secondary rounded w-3/4"></div>
+                <div className="h-2 bg-secondary rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button
+          onClick={fetchRecommendations}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Recommendations</h2>
-        <button
-          onClick={() => setShowRequestModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          Ask for recommendation
-        </button>
-      </div>
-
-      {recommendations.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No recommendations yet</p>
-          <button
-            onClick={() => setShowRequestModal(true)}
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Request your first recommendation
-          </button>
+    <div className="bg-card rounded-xl shadow-soft border border-border overflow-hidden">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-text flex items-center">
+            <Star className="w-5 h-5 mr-2 text-primary" />
+            Recommendations
+          </h3>
+          {recommendations.length > 0 && (
+            <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+              {recommendations.length} {recommendations.length === 1 ? 'recommendation' : 'recommendations'}
+            </span>
+          )}
         </div>
-      ) : (
-        <div className="space-y-6">
-          {recommendations.map((rec) => (
-            <motion.div
-              key={rec.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="border-b pb-6 last:border-b-0"
-            >
-              <div className="flex items-start gap-4">
-                <img
-                  src={rec.recommender.avatar || '/default-avatar.png'}
-                  alt={rec.recommender.name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-bold text-gray-900">{rec.recommender.name}</h3>
-                    <span className="text-gray-500">·</span>
-                    <span className="text-gray-600">{rec.relationship}</span>
+
+        {recommendations.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Star className="w-8 h-8 text-text-muted" />
+            </div>
+            <h4 className="font-semibold text-text mb-2">No recommendations yet</h4>
+            <p className="text-text-muted text-sm">
+              {isCurrentUser
+                ? 'You haven\'t received any recommendations yet. Request recommendations from colleagues!'
+                : 'This user hasn\'t received any recommendations yet.'}
+            </p>
+            {isCurrentUser && (
+              <button
+                onClick={() => window.location.href = '/network'}
+                className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                Request Recommendations
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {visibleRecommendations.map((recommendation) => (
+              <motion.div
+                key={recommendation.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-secondary/30 rounded-lg p-6 hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-start space-x-4">
+                  {/* Recommender Info */}
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    {recommendation.recommender.avatar ? (
+                      <img
+                        src={recommendation.recommender.avatar}
+                        alt={recommendation.recommender.name}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-7 h-7 text-primary" />
+                    )}
                   </div>
-                  {rec.recommender.title && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      {rec.recommender.title}
-                      {rec.recommender.company && ` at ${rec.recommender.company}`}
-                    </p>
-                  )}
-                  {rec.position && (
-                    <p className="text-sm text-gray-500 mb-3">
-                      {rec.recommender.name} worked with you as {rec.position}
-                    </p>
-                  )}
-                  <p className="text-gray-700 leading-relaxed">{rec.content}</p>
-                  <p className="text-sm text-gray-400 mt-3">
-                    {new Date(rec.createdAt).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="mb-3">
+                      <p className="font-semibold text-text">{recommendation.recommender.name}</p>
+                      <p className="text-sm text-text-muted">{recommendation.recommender.title}</p>
+                      {recommendation.recommender.company && (
+                        <p className="text-xs text-text-muted flex items-center">
+                          <Briefcase className="w-3 h-3 mr-1" />
+                          {recommendation.recommender.company}
+                        </p>
+                      )}
+                      <p className="text-xs text-text-muted mt-1">
+                        {recommendation.relationship} {recommendation.position && `for ${recommendation.position}`}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4 border border-border">
+                      <p className="text-text italic mb-3">"{recommendation.content}"</p>
+
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-text-muted">
+                          Recommended {new Date(recommendation.createdAt).toLocaleDateString()}
+                        </p>
+                        <button className="flex items-center space-x-1 text-xs text-text-muted hover:text-primary transition-colors">
+                          <ThumbsUp className="w-3 h-3" />
+                          <span>Helpful</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </motion.div>
+            ))}
+
+            {recommendations.length > 2 && !showAll && (
+              <div className="text-center pt-4">
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors font-medium"
+                >
+                  Show All Recommendations ({recommendations.length})
+                </button>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {showRequestModal && (
-        <RequestRecommendationModal
-          onClose={() => setShowRequestModal(false)}
-          onSuccess={fetchRecommendations}
-        />
-      )}
+            )}
+          </div>
+        )}
+      </div>
     </div>
-  );
-}
-
-function RequestRecommendationModal({ 
-  onClose, 
-  onSuccess 
-}: { 
-  onClose: () => void; 
-  onSuccess: () => void; 
-}) {
-  const [formData, setFormData] = useState({
-    recommenderId: '',
-    relationship: '',
-    position: '',
-    message: ''
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/recommendations/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        onSuccess();
-        onClose();
-      } else {
-        alert('Failed to request recommendation');
-      }
-    } catch (error) {
-      console.error('Error requesting recommendation:', error);
-      alert('An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-      >
-        <h3 className="text-xl font-bold mb-4">Request a Recommendation</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Who do you want to ask?
-            </label>
-            <input
-              type="text"
-              placeholder="Search connections..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.recommenderId}
-              onChange={(e) => setFormData({ ...formData, recommenderId: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Relationship
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.relationship}
-              onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
-              required
-            >
-              <option value="">Select relationship</option>
-              <option value="Manager">Manager</option>
-              <option value="Colleague">Colleague</option>
-              <option value="Client">Client</option>
-              <option value="Mentor">Mentor</option>
-              <option value="Mentee">Mentee</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Position (optional)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., Senior Developer"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Personal message (optional)
-            </label>
-            <textarea
-              placeholder="Add a personal note to your request..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {loading ? 'Sending...' : 'Send Request'}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
-  );
+  )
 }

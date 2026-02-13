@@ -17,6 +17,17 @@ interface Application {
   appliedAt: string
   lastUpdated: string
   notes?: string
+  atsStatus?: string
+  atsData?: {
+    parsingProgress: number
+    parsedFields: string[]
+    errors: string[]
+    contentAnalysis?: {
+      wordCount: number
+      characterCount: number
+      hasContactInfo: boolean
+    }
+  }
 }
 
 interface ApplicationTrackerProps {
@@ -166,11 +177,33 @@ export const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({
                           </div>
                         </div>
 
-                        {/* Status Badge */}
-                        <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm border ${statusInfo.bgColor}`}>
-                          <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
-                          <span className={statusInfo.color}>{statusInfo.label}</span>
-                        </div>
+                       {/* Status Badge */}
+                       <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm border ${statusInfo.bgColor}`}>
+                         <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
+                         <span className={statusInfo.color}>{statusInfo.label}</span>
+                       </div>
+
+                       {/* ATS Status */}
+                       {application.atsStatus && (
+                         <div className="mt-2">
+                           <div className="flex items-center space-x-2 text-xs">
+                             <div className="w-full bg-gray-200 rounded-full h-2">
+                               <div
+                                 className="bg-primary h-2 rounded-full"
+                                 style={{ width: `${application.atsData?.parsingProgress || 0}%` }}
+                               ></div>
+                             </div>
+                             <span className={`text-xs ${application.atsStatus === 'COMPLETED' ? 'text-green-600' : 'text-yellow-600'}`}>
+                               {application.atsStatus === 'COMPLETED' ? 'Parsed' : 'Parsing...'}
+                             </span>
+                           </div>
+                           {application.atsData?.errors && application.atsData.errors.length > 0 && (
+                             <div className="mt-1 text-xs text-red-600">
+                               {application.atsData.errors.length} field(s) missing
+                             </div>
+                           )}
+                         </div>
+                       )}
                       </div>
                     </div>
                   </div>

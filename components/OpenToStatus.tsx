@@ -39,6 +39,8 @@ const VISIBILITY_OPTIONS = [
   { value: 'PUBLIC', label: 'Public' },
   { value: 'CONNECTIONS_ONLY', label: 'Connections Only' },
   { value: 'PRIVATE', label: 'Private' },
+  { value: 'RECRUITER_ONLY', label: 'Recruiters Only' },
+  { value: 'CURRENT_EMPLOYER_EXCLUDED', label: 'Public (Exclude Current Employer)' },
 ];
 
 export function OpenToStatus() {

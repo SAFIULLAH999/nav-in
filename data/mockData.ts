@@ -34,6 +34,9 @@ export interface Job {
   description: string
   requirements: string[]
   postedDate: string
+  matchScore?: number
+  skillsMatch?: string
+  experienceMatch?: string
 }
 
 export const mockPosts: Post[] = [
@@ -152,7 +155,10 @@ export const mockJobs: Job[] = [
       'Knowledge of modern CSS frameworks',
       'Experience with testing frameworks (Jest, React Testing Library)'
     ],
-    postedDate: '2 days ago'
+    postedDate: '2 days ago',
+    matchScore: 85,
+    skillsMatch: '90%',
+    experienceMatch: '80%'
   },
   {
     id: '2',

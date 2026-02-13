@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
+    const filter = searchParams.get('filter') || 'all'
     const offset = (page - 1) * limit
 
     // Get current user for personalized feed (optional)
@@ -48,51 +49,203 @@ export async function GET(request: NextRequest) {
       const connectionIds = userConnections.flatMap(conn =>
         [conn.senderId, conn.receiverId].filter(id => id !== currentUserId)
       )
-      const followedIds = followedUsers.map(f => f.followingId)
+      const followedIds = followedUsers.map(follow => follow.followingId)
 
       // Prioritize posts from connections and followed users
       const priorityUserIds = [...connectionIds, ...followedIds]
 
-      posts = await prisma.post.findMany({
-        take: limit,
-        skip: offset,
-        where: {
-          OR: [
-            { authorId: { in: priorityUserIds } },
-            { authorId: { notIn: priorityUserIds } } // Include all posts as fallback
-          ]
-        },
-        orderBy: [
-          // Then order by engagement score (likes + comments + shares)
-          { likes: { _count: 'desc' } },
-          { comments: { _count: 'desc' } },
-          { shares: { _count: 'desc' } },
-          // Finally by recency
-          { createdAt: 'desc' }
-        ],
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatar: true,
-              title: true,
-            }
+      // Apply filter based on query parameter
+      if (filter === 'job_updates') {
+        // Fetch job-related posts
+        posts = await prisma.post.findMany({
+          take: limit,
+          skip: offset,
+          where: {
+            OR: [
+              { authorId: { in: priorityUserIds } },
+              { authorId: { notIn: priorityUserIds } }
+            ],
+            content: { contains: 'job', mode: 'insensitive' }
           },
-          likes: {
-            where: { userId: currentUserId },
-            select: { id: true }
-          },
-          _count: {
-            select: {
-              likes: true,
-              comments: true,
-              shares: true
+          orderBy: [
+            { createdAt: 'desc' }
+          ],
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+              }
+            },
+            likes: {
+              where: { userId: currentUserId },
+              select: { id: true }
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true
+              }
             }
           }
-        }
-      })
+        })
+      } else if (filter === 'connections') {
+        // Fetch posts from new connections
+        posts = await prisma.post.findMany({
+          take: limit,
+          skip: offset,
+          where: {
+            authorId: { in: priorityUserIds }
+          },
+          orderBy: [
+            { createdAt: 'desc' }
+          ],
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+              }
+            },
+            likes: {
+              where: { userId: currentUserId },
+              select: { id: true }
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true
+              }
+            }
+          }
+        })
+      } else if (filter === 'endorsements') {
+        // Fetch posts containing endorsements
+        posts = await prisma.post.findMany({
+          take: limit,
+          skip: offset,
+          where: {
+            OR: [
+              { authorId: { in: priorityUserIds } },
+              { authorId: { notIn: priorityUserIds } }
+            ],
+            content: { contains: 'endorsed', mode: 'insensitive' }
+          },
+          orderBy: [
+            { createdAt: 'desc' }
+          ],
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+              }
+            },
+            likes: {
+              where: { userId: currentUserId },
+              select: { id: true }
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true
+              }
+            }
+          }
+        })
+      } else if (filter === 'recommendations') {
+        // Fetch posts containing recommendations
+        posts = await prisma.post.findMany({
+          take: limit,
+          skip: offset,
+          where: {
+            OR: [
+              { authorId: { in: priorityUserIds } },
+              { authorId: { notIn: priorityUserIds } }
+            ],
+            content: { contains: 'recommend', mode: 'insensitive' }
+          },
+          orderBy: [
+            { createdAt: 'desc' }
+          ],
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+              }
+            },
+            likes: {
+              where: { userId: currentUserId },
+              select: { id: true }
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true
+              }
+            }
+          }
+        })
+      } else {
+        // Default: all posts with engagement algorithm
+        posts = await prisma.post.findMany({
+          take: limit,
+          skip: offset,
+          where: {
+            OR: [
+              { authorId: { in: priorityUserIds } },
+              { authorId: { notIn: priorityUserIds } } // Include all posts as fallback
+            ]
+          },
+          orderBy: [
+            // Then order by engagement score (likes + comments + shares)
+            { likes: { _count: 'desc' } },
+            { comments: { _count: 'desc' } },
+            { shares: { _count: 'desc' } },
+            // Finally by recency
+            { createdAt: 'desc' }
+          ],
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true,
+                title: true,
+              }
+            },
+            likes: {
+              where: { userId: currentUserId },
+              select: { id: true }
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true
+              }
+            }
+          }
+        })
+      }
     } else {
       // Public feed for non-authenticated users - order by engagement and recency
       posts = await prisma.post.findMany({
@@ -172,7 +325,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: authResult.error },
         { status: 401 }
-      )
+      );
     }
 
     const body = await request.json()

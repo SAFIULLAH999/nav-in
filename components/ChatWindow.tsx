@@ -1,6 +1,6 @@
 'use client'
 
-import { Phone, Video, Info, Smile, Paperclip, Send } from 'lucide-react'
+import { Phone, Video, Info, Smile, Paperclip, Send, Check, CheckCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface Message {
@@ -73,11 +73,46 @@ export function ChatWindow() {
         </div>
       </div>
 
+      {/* User Status Info */}
+      <div className="px-4 py-2 border-b border-gray-200">
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+            <span>Online</span>
+          </div>
+          <div className="flex items-center">
+            <span>Last active: 5 minutes ago</span>
+          </div>
+          <div className="flex items-center">
+            <span className="flex items-center">
+              <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-bounce"></span>
+              <span>Typing...</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
+      </div>
+
+      {/* Message Status */}
+      <div className="px-4 pb-2">
+        <div className="flex justify-end">
+          <div className="text-xs text-gray-500 flex items-center space-x-2">
+            <span className="flex items-center">
+              <Check className="w-3 h-3 mr-1" />
+              <span>Seen</span>
+            </span>
+            <span className="flex items-center">
+              <CheckCheck className="w-3 h-3 mr-1" />
+              <span>Delivered</span>
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Message Input */}

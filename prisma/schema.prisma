@@ -139,6 +139,7 @@ model User {
   profileViews          ProfileView[] @relation("ProfileViewed")
   viewedProfiles        ProfileView[] @relation("ProfileViewer")
   profileAnalytics      ProfileAnalytics?
+  matchScores           JobMatchScore[]
 }
 
 model OpenTo {
@@ -608,6 +609,15 @@ model Job {
   employerUsername String?  // Username for profile reference
   employerName     String?  // Name of the hiring contact
 
+  // Easy Apply vs External Application settings
+  isEasyApply         Boolean  @default(false) // Whether this job supports Easy Apply
+  applicationMethod   String   @default("EXTERNAL") // EASY_APPLY, EXTERNAL, EMAIL, PHONE
+  externalApplicationUrl String? // URL for external applications
+  customApplicationInstructions String? // Custom instructions for application
+  requiresResume     Boolean  @default(true) // Whether resume is required
+  requiresCoverLetter Boolean @default(false) // Whether cover letter is required
+  applicationQuestions String? // JSON array of custom application questions
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -617,6 +627,7 @@ model Job {
   messageThreads MessageThread[]
   recruiterMessages RecruiterMessage[]
   scrapingSource JobSource?  @relation("JobScrapingSource", fields: [sourceId], references: [id], onDelete: SetNull)
+  matchScores  JobMatchScore[]
 }
 
 model CompanyPost {
@@ -657,10 +668,31 @@ model Message {
   senderId   String
   receiverId String
   isRead     Boolean  @default(false)
+  readAt     DateTime?
+  deliveredAt DateTime?
+  messageType String   @default("TEXT") // TEXT, IMAGE, VIDEO, FILE, AUDIO
+  mediaUrl   String?   // URL for media files
+  mediaType  String?   // IMAGE, VIDEO, FILE, AUDIO
+  mediaSize  Int?      // File size in bytes
+  mediaName  String?   // Original file name
+  status     String   @default("SENT") // SENT, DELIVERED, READ, FAILED
+  retryCount Int      @default(0)
+  error      String?   // Error message if failed
+  encryptionStatus String @default("ENCRYPTED") // ENCRYPTED, DECRYPTED, PENDING
+  reactions  String?   // JSON array of reactions
+  replyTo    String?   // Message ID this is a reply to
+  forwardedFrom String? // Original message ID if forwarded
+  threadId   String?   // Thread ID for group conversations
+  metadata   String?   // JSON for additional metadata
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  reply    Message? @relation("MessageReply", fields: [replyTo], references: [id], onDelete: SetNull)
+  replies  Message[] @relation("MessageReply")
+  forwardedFromMessage Message? @relation("MessageForward", fields: [forwardedFrom], references: [id], onDelete: SetNull)
+  forwardedMessages Message[] @relation("MessageForward")
 }
 
 model MessageTemplate {
@@ -1119,6 +1151,8 @@ model ProfileMedia {
   type        String   // IMAGE, VIDEO, DOCUMENT, PRESENTATION
   url         String   // Media URL (Cloudinary, S3, etc.)
   thumbnail   String?  // Thumbnail for videos
+  medium      String?  // Medium-sized image variant
+  large       String?  // Large-sized image variant
   title       String?
   description String?
   category    String?  // PROFILE_HIGHLIGHT, WORK_SAMPLE, ACHIEVEMENT
@@ -1374,4 +1408,33 @@ model InMail {
 
   sender   User @relation("InMailSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("InMailReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model JobMatchScore {
+  id                    String   @id @default(cuid())
+  jobId                 String
+  userId                String
+  overallScore          Int      // Overall match percentage (0-100)
+  skillMatch            Int      // Skills match percentage (0-100)
+  experienceMatch       Int      // Experience match percentage (0-100)
+  educationMatch        Int      // Education match percentage (0-100)
+  locationMatch         Int      // Location match percentage (0-100)
+  cultureFit            Int      // Culture fit percentage (0-100)
+  keywordsMatch         Int      // Keywords match percentage (0-100)
+  requiredSkillsMatched String   // JSON array of matched required skills
+  requiredSkillsMissing String   // JSON array of missing required skills
+  niceToHaveSkillsMatched String // JSON array of matched nice-to-have skills
+  niceToHaveSkillsMissing String // JSON array of missing nice-to-have skills
+  experienceLevel       String   // Experience level match (ENTRY, JUNIOR, MID, SENIOR, LEAD)
+  locationCompatibility String   // Location compatibility (REMOTE, ON_SITE, HYBRID, FLEXIBLE)
+  lastUpdated           DateTime @updatedAt
+  createdAt             DateTime @default(now())
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
+  @@index([userId])
+  @@index([jobId])
+  @@index([overallScore])
 }

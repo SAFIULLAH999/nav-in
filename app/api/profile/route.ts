@@ -133,28 +133,32 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Update user profile
-    const updatedUser = await prisma.user.update({
-      where: { id: payload.userId },
-      data: {
-        name: updateData.name,
-        username: updateData.username,
-        bio: updateData.bio,
-        title: updateData.title,
-        company: updateData.company,
-        location: updateData.location,
-        website: updateData.website,
-        skills: updateData.skills ? JSON.stringify(updateData.skills) : null,
-        avatar: updateData.avatar,
-        summary: updateData.summary,
-        socialLinks: updateData.socialLinks,
-        updatedAt: new Date()
-      },
-      include: {
-        experiences: true,
-        education: true
-      }
-    })
+   // Update user profile
+   const updatedUser = await prisma.user.update({
+     where: { id: payload.userId },
+     data: {
+       name: updateData.name,
+       username: updateData.username,
+       bio: updateData.bio,
+       title: updateData.title,
+       company: updateData.company,
+       location: updateData.location,
+       website: updateData.website,
+       skills: updateData.skills ? JSON.stringify(updateData.skills) : null,
+       avatar: updateData.avatar,
+       summary: updateData.summary,
+       socialLinks: updateData.socialLinks,
+       updatedAt: new Date()
+     },
+     include: {
+       experiences: true,
+       education: true
+     }
+   })
+
+   // Clear any cached profile data to ensure fresh data is fetched
+   // In a real app, you would implement proper cache invalidation here
+   // For example, using Redis or other caching mechanisms
 
     const profile = {
       id: updatedUser.id,

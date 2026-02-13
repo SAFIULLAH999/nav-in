@@ -1,235 +1,132 @@
 import { NextRequest, NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
-import { authenticateRequest } from '@/lib/jwt'
-import { z } from 'zod'
 
-const giveEndorsementSchema = z.object({
-  receiverId: z.string().min(1, 'Receiver ID is required'),
-  skillId: z.string().min(1, 'Skill ID is required'),
-  message: z.string().max(200, 'Message too long').optional()
-})
+export const dynamic = 'force-dynamic'
 
-// GET - Get endorsements given by current user
-export async function GET(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    // Authenticate user
-    const authResult = await authenticateRequest(request)
+    const token = req.headers.get('authorization')?.replace('Bearer ', '')
 
-    if ('error' in authResult) {
-      return NextResponse.json(
-        { success: false, error: authResult.error },
-        { status: 401 }
-      )
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const currentUserId = authResult.user.userId
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
+    const giverId = decoded.userId
 
-    const givenEndorsements = await prisma.endorsement.findMany({
+    const body = await req.json()
+    const { receiverId, skillId, message } = body
+
+    if (!receiverId || !skillId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Check if the giver has the skill they're endorsing
+    const giverSkill = await prisma.userSkill.findFirst({
       where: {
-        giver: {
-          userId: currentUserId
-        }
-      },
-      include: {
-        receiver: {
-          include: {
-            skill: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                avatar: true,
-                title: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
-
-    const transformedEndorsements = givenEndorsements.map(endorsement => ({
-      id: endorsement.id,
-      skill: endorsement.receiver.skill,
-      receiver: endorsement.receiver.user,
-      message: endorsement.message,
-      createdAt: endorsement.createdAt.toISOString()
-    }))
-
-    return NextResponse.json({
-      success: true,
-      data: transformedEndorsements
-    })
-  } catch (error) {
-    console.error('Error fetching endorsements:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch endorsements' },
-      { status: 500 }
-    )
-  }
-}
-
-// POST - Give an endorsement
-export async function POST(request: NextRequest) {
-  try {
-    // Authenticate user
-    const authResult = await authenticateRequest(request)
-
-    if ('error' in authResult) {
-      return NextResponse.json(
-        { success: false, error: authResult.error },
-        { status: 401 }
-      )
-    }
-
-    const body = await request.json()
-    const { receiverId, skillId, message } = giveEndorsementSchema.parse(body)
-
-    const currentUserId = authResult.user.userId
-
-    // Get current user data for notification
-    const currentUser = await prisma.user.findUnique({
-      where: { id: currentUserId },
-      select: { name: true }
-    })
-
-    // Prevent self-endorsement
-    if (currentUserId === receiverId) {
-      return NextResponse.json(
-        { success: false, error: 'Cannot endorse yourself' },
-        { status: 400 }
-      )
-    }
-
-    // Check if receiver exists and is active
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId }
-    })
-
-    if (!receiver || !receiver.isActive) {
-      return NextResponse.json(
-        { success: false, error: 'User not found or inactive' },
-        { status: 404 }
-      )
-    }
-
-    // Check if receiver has the skill
-    const receiverSkill = await prisma.userSkill.findUnique({
-      where: {
-        userId_skillId: {
-          userId: receiverId,
-          skillId
-        }
-      }
-    })
-
-    if (!receiverSkill) {
-      return NextResponse.json(
-        { success: false, error: 'User does not have this skill' },
-        { status: 400 }
-      )
-    }
-
-    // Check if giver has the same skill (you should have a skill to endorse it)
-    const giverSkill = await prisma.userSkill.findUnique({
-      where: {
-        userId_skillId: {
-          userId: currentUserId,
-          skillId
-        }
+        userId: giverId,
+        skillId: skillId
       }
     })
 
     if (!giverSkill) {
-      return NextResponse.json(
-        { success: false, error: 'You must have this skill to endorse others' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'You must have this skill to endorse others' }, { status: 400 })
     }
 
     // Check if endorsement already exists
-    const existingEndorsement = await prisma.endorsement.findUnique({
+    const existingEndorsement = await prisma.endorsement.findFirst({
       where: {
-        giverId_receiverId_skillId: {
-          giverId: giverSkill.id,
-          receiverId: receiverSkill.id,
-          skillId
-        }
+        giverId,
+        receiverId,
+        skillId
       }
     })
 
     if (existingEndorsement) {
-      return NextResponse.json(
-        { success: false, error: 'You have already endorsed this skill' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'You have already endorsed this skill' }, { status: 400 })
     }
 
     // Create endorsement
     const endorsement = await prisma.endorsement.create({
       data: {
-        giverId: giverSkill.id,
-        receiverId: receiverSkill.id,
+        giverId,
+        receiverId,
         skillId,
-        message: message?.trim() || null
-      },
-      include: {
-        receiver: {
-          include: {
-            skill: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                avatar: true,
-                title: true
-              }
-            }
-          }
-        }
-      }
-    })
-
-    // Create notification for receiver
-    await prisma.notification.create({
-      data: {
-        userId: receiverId,
-        type: 'ENDORSEMENT',
-        title: 'New Skill Endorsement',
-        message: `${currentUser?.name || 'Someone'} endorsed your ${endorsement.receiver.skill.name} skill`,
-        data: JSON.stringify({
-          endorsementId: endorsement.id,
-          skillId,
-          endorserId: currentUserId
-        })
+        message: message || null
       }
     })
 
     return NextResponse.json({
       success: true,
-      data: {
-        id: endorsement.id,
-        skill: endorsement.receiver.skill,
-        receiver: endorsement.receiver.user,
-        message: endorsement.message,
-        createdAt: endorsement.createdAt.toISOString()
-      },
-      message: 'Endorsement given successfully'
+      endorsement
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Validation error', details: error.errors },
-        { status: 400 }
-      )
+    console.error('Error creating endorsement:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const token = req.headers.get('authorization')?.replace('Bearer ', '')
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.error('Error giving endorsement:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to give endorsement' },
-      { status: 500 }
-    )
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
+    const userId = decoded.userId
+
+    const { searchParams } = new URL(req.url)
+    const targetUserId = searchParams.get('userId') || userId
+
+    // Get endorsements for a specific user
+    const endorsements = await prisma.endorsement.findMany({
+      where: {
+        receiverId: targetUserId
+      },
+      include: {
+        giver: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                title: true,
+                avatar: true
+              }
+            }
+          }
+        },
+        receiver: {
+          select: {
+            skill: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: endorsements.map(endorsement => ({
+        id: endorsement.id,
+        giver: endorsement.giver.user,
+        skill: endorsement.receiver.skill,
+        message: endorsement.message,
+        createdAt: endorsement.createdAt
+      }))
+    })
+  } catch (error) {
+    console.error('Error fetching endorsements:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

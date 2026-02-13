@@ -20,8 +20,21 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
       <div className="h-48 bg-gradient-to-r from-primary via-primary/80 to-accent relative">
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute -bottom-16 left-6">
-          <div className="w-32 h-32 bg-primary rounded-full border-4 border-white flex items-center justify-center text-white text-3xl font-bold shadow-soft">
-            {user.avatar}
+          <div className="w-32 h-32 bg-primary rounded-full border-4 border-white flex items-center justify-center text-white text-3xl font-bold shadow-soft overflow-hidden">
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = 'https://via.placeholder.com/150';
+                }}
+              />
+            ) : (
+              user.avatar
+            )}
           </div>
         </div>
         {isOwnProfile && (
@@ -70,40 +83,73 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
           )}
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-gray-200">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Users className="w-5 h-5 text-primary mr-2" />
-              <span className="text-2xl font-bold text-gray-900">{user.connections.toLocaleString()}</span>
-            </div>
-            <span className="text-gray-600 text-sm">connections</span>
-          </div>
+       {/* Connection Tiers Visualization */}
+       {isOwnProfile && (
+         <div className="pt-6 border-t border-gray-200">
+           <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Network Tiers</h3>
+           <div className="grid grid-cols-3 gap-4">
+             <div className="text-center">
+               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                 <Users className="w-8 h-8 text-primary" />
+               </div>
+               <div className="text-2xl font-bold text-gray-900">128</div>
+               <div className="text-sm text-gray-600">1st Degree</div>
+               <div className="text-xs text-gray-500">Direct connections</div>
+             </div>
+             <div className="text-center">
+               <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                 <Users className="w-8 h-8 text-secondary" />
+               </div>
+               <div className="text-2xl font-bold text-gray-900">456</div>
+               <div className="text-sm text-gray-600">2nd Degree</div>
+               <div className="text-xs text-gray-500">Connections of connections</div>
+             </div>
+             <div className="text-center">
+               <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                 <Users className="w-8 h-8 text-accent" />
+               </div>
+               <div className="text-2xl font-bold text-gray-900">1,234</div>
+               <div className="text-sm text-gray-600">3rd Degree</div>
+               <div className="text-xs text-gray-500">Extended network</div>
+             </div>
+           </div>
+         </div>
+       )}
 
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Eye className="w-5 h-5 text-primary mr-2" />
-              <span className="text-2xl font-bold text-gray-900">234</span>
-            </div>
-            <span className="text-gray-600 text-sm">profile views</span>
-          </div>
+       {/* Stats Grid */}
+       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-gray-200">
+         <div className="text-center">
+           <div className="flex items-center justify-center mb-1">
+             <Users className="w-5 h-5 text-primary mr-2" />
+             <span className="text-2xl font-bold text-gray-900">{user.connections.toLocaleString()}</span>
+           </div>
+           <span className="text-gray-600 text-sm">connections</span>
+         </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Briefcase className="w-5 h-5 text-primary mr-2" />
-              <span className="text-2xl font-bold text-gray-900">12</span>
-            </div>
-            <span className="text-gray-600 text-sm">jobs applied</span>
-          </div>
+         <div className="text-center">
+           <div className="flex items-center justify-center mb-1">
+             <Eye className="w-5 h-5 text-primary mr-2" />
+             <span className="text-2xl font-bold text-gray-900">234</span>
+           </div>
+           <span className="text-gray-600 text-sm">profile views</span>
+         </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Award className="w-5 h-5 text-primary mr-2" />
-              <span className="text-2xl font-bold text-gray-900">8</span>
-            </div>
-            <span className="text-gray-600 text-sm">certifications</span>
-          </div>
-        </div>
+         <div className="text-center">
+           <div className="flex items-center justify-center mb-1">
+             <Briefcase className="w-5 h-5 text-primary mr-2" />
+             <span className="text-2xl font-bold text-gray-900">12</span>
+           </div>
+           <span className="text-gray-600 text-sm">jobs applied</span>
+         </div>
+
+         <div className="text-center">
+           <div className="flex items-center justify-center mb-1">
+             <Award className="w-5 h-5 text-primary mr-2" />
+             <span className="text-2xl font-bold text-gray-900">8</span>
+           </div>
+           <span className="text-gray-600 text-sm">certifications</span>
+         </div>
+       </div>
       </div>
     </motion.div>
   )

@@ -2,6 +2,47 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma-mock'
 
+// Simulate ATS parsing process
+async function simulateATSParsing(content: string) {
+  // Simulate parsing delay
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
+  // Simple content analysis
+  const hasName = content.toLowerCase().includes('name')
+  const hasExperience = content.toLowerCase().includes('experience') || content.toLowerCase().includes('year')
+  const hasSkills = content.toLowerCase().includes('skill') || content.toLowerCase().includes('expertise')
+
+  const parsedFields = []
+  const errors = []
+
+  if (hasName) parsedFields.push('name')
+  else errors.push('name')
+
+  if (hasExperience) parsedFields.push('experience')
+  else errors.push('experience')
+
+  if (hasSkills) parsedFields.push('skills')
+  else errors.push('skills')
+
+  const status = errors.length === 0 ? 'COMPLETED' : 'PARTIAL'
+  const progress = Math.min(100, (parsedFields.length / 3) * 100)
+
+  return {
+    status,
+    data: {
+      parsingProgress: progress,
+      parsedFields,
+      errors,
+      contentAnalysis: {
+        wordCount: content.split('\\s+').length,
+        characterCount: content.length,
+        hasContactInfo: content.includes('@') || content.includes('phone')
+      }
+    },
+    message: status === 'COMPLETED' ? 'Resume parsed successfully' : 'Partial parsing completed'
+  }
+}
+
 // Enhanced mock applications data that matches actual fresh jobs
 async function getMockApplications(userId = 'demo-user-1') {
   // Get actual jobs from database to ensure ID consistency
@@ -144,7 +185,18 @@ export async function POST(req: NextRequest) {
       },
       status: 'pending',
       appliedAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      atsStatus: 'PARSING',
+      atsData: {
+        parsingProgress: 0,
+        parsedFields: [] as string[],
+        errors: [] as string[],
+        contentAnalysis: {
+          wordCount: 0,
+          characterCount: 0,
+          hasContactInfo: false
+        }
+      }
     }
 
     // For demo purposes, we'll just return the new application
@@ -155,11 +207,19 @@ export async function POST(req: NextRequest) {
     // 2. Check if user already applied
     // 3. Create application record
     // 4. Send notifications
+    // 5. Parse resume with ATS compatibility
+
+    // Simulate ATS parsing process
+    const atsParsingResult = await simulateATSParsing(coverLetter || '')
+    newApplication.atsStatus = atsParsingResult.status
+    newApplication.atsData = atsParsingResult.data
 
     return NextResponse.json({
       success: true,
       data: newApplication,
-      message: 'Application submitted successfully!'
+      message: 'Application submitted successfully!',
+      atsStatus: atsParsingResult.status,
+      atsMessage: atsParsingResult.message
     })
   } catch (error) {
     console.error('Error creating application:', error)

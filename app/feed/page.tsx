@@ -80,18 +80,18 @@ export default function FeedPage() {
     }
   }
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (filterType: string = 'all') => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch('/api/posts')
+      const response = await fetch(`/api/posts?filter=${filterType}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
       const data = await response.json()
-
+ 
       if (data.success) {
         setPosts(data.data || [])
       } else {
@@ -126,6 +126,48 @@ export default function FeedPage() {
               </div>
             )}
 
+          {/* Enhanced Feed Filter Controls */}
+          <div className="bg-card rounded-xl shadow-soft border border-border p-4">
+            <div className="flex space-x-2 overflow-x-auto pb-2">
+              <button
+                onClick={() => fetchPosts('all')}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+              >
+                All Activity
+              </button>
+              <button
+                onClick={() => fetchPosts('job_updates')}
+                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+              >
+                Job Updates
+              </button>
+              <button
+                onClick={() => fetchPosts('posts')}
+                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+              >
+                Posts Only
+              </button>
+              <button
+                onClick={() => fetchPosts('connections')}
+                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+              >
+                New Connections
+              </button>
+              <button
+                onClick={() => fetchPosts('endorsements')}
+                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+              >
+                Endorsements
+              </button>
+              <button
+                onClick={() => fetchPosts('recommendations')}
+                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+              >
+                Recommendations
+              </button>
+            </div>
+          </div>
+
             <CreatePostCard onPostCreated={handlePostCreated} />
 
             {/* Loading State */}
@@ -141,7 +183,7 @@ export default function FeedPage() {
               <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
                 <p className="text-red-600 mb-4">{error}</p>
                 <button
-                  onClick={fetchPosts}
+                  onClick={() => fetchPosts()}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Try Again

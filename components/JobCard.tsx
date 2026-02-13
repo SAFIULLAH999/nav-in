@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Clock, DollarSign, Bookmark, ExternalLink } from 'lucide-react'
+import { MapPin, Clock, DollarSign, Bookmark, ExternalLink, Target, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Job } from '@/data/mockData'
 
@@ -69,6 +69,35 @@ export function JobCard({ job }: JobCardProps) {
         </div>
       </div>
 
+      {/* Job Match Score */}
+      {job.matchScore && (
+        <div className="mb-4">
+          <div className="flex items-center space-x-2">
+            <Target className="w-4 h-4 text-green-600" />
+            <span className="text-sm font-medium text-text">Job Match Score</span>
+            <div className="flex-1">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full"
+                  style={{ width: `${job.matchScore}%` }}
+                ></div>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-green-600">{job.matchScore}%</span>
+          </div>
+          <div className="mt-2 flex items-center space-x-4 text-xs text-text-muted">
+            <div className="flex items-center">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span>Skills: {job.skillsMatch || 'N/A'}</span>
+            </div>
+            <div className="flex items-center">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span>Experience: {job.experienceMatch || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between pt-4 border-t border-border">
         <span className="text-xs text-text-muted">
           Posted {job.postedDate}
@@ -82,6 +111,19 @@ export function JobCard({ job }: JobCardProps) {
           </button>
           <button className="border border-border text-text px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors">
             Save
+          </button>
+        </div>
+      </div>
+
+      {/* Easy Apply vs External */}
+      <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ExternalLink className="w-4 h-4 text-text-muted" />
+            <span className="text-text-muted">Apply through {job.company} website</span>
+          </div>
+          <button className="text-primary hover:text-primary/80 transition-colors">
+            Easy Apply
           </button>
         </div>
       </div>
