@@ -29,6 +29,7 @@ import connectionRoutes from './routes/connections';
 import analyticsRoutes from './routes/analytics';
 import uploadRoutes from './routes/upload';
 import adminRoutes from './routes/admin';
+import endorsementsRoutes from './routes/endorsements';
 
 // Import middleware
 import { rateLimitMiddleware } from './middleware/rateLimit';
@@ -129,6 +130,7 @@ app.use(`${API_PREFIX}/connections`, connectionRoutes);
 app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
 app.use(`${API_PREFIX}/upload`, uploadRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
+app.use(`${API_PREFIX}/endorsements`, endorsementsRoutes);
 
 // API documentation endpoint
 app.get(`${API_PREFIX}`, (req, res) => {
@@ -146,6 +148,7 @@ app.get(`${API_PREFIX}`, (req, res) => {
       analytics: `${API_PREFIX}/analytics`,
       upload: `${API_PREFIX}/upload`,
       admin: `${API_PREFIX}/admin`,
+      endorsements: `${API_PREFIX}/endorsements`,
       health: '/health',
     },
     documentation: `${API_PREFIX}/docs`,

@@ -61,6 +61,9 @@ model User {
   isActive      Boolean   @default(true)
   lastLoginAt   DateTime?
   openToStatus  String?   // Current "Open To" status
+  currentOpenToType String? // Quick access to current OpenTo type (WORK, HIRING, FREELANCE, etc.)
+  githubUsername String?  // GitHub username for portfolio sync
+  githubToken   String?   // Encrypted GitHub OAuth token
   twoFactorEnabled Boolean @default(false)
   twoFactorSecret String?  // Encrypted TOTP secret
   backupCodes    String?  // JSON array of encrypted backup codes
@@ -348,11 +351,13 @@ model QuizAttempt {
   answers       String   // JSON object with questionId -> userAnswer
   timeSpent     Int      // Time spent in seconds
   passed        Boolean  @default(false)
+  badgeEarnedId String?  // Link to earned VerificationBadge (if passed with 80%+)
   completedAt   DateTime @default(now())
   createdAt     DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  badge VerificationBadge? @relation(fields: [badgeEarnedId], references: [id], onDelete: SetNull)
 
   @@unique([userId, quizId])
 }
@@ -787,7 +792,7 @@ model VerificationRequest {
 model VerificationBadge {
   id          String   @id @default(cuid())
   userId      String
-  type        String   // VERIFIED_ID, VERIFIED_EMPLOYMENT, VERIFIED_EDUCATION, PREMIUM
+  type        String   // VERIFIED_ID, VERIFIED_EMPLOYMENT, VERIFIED_EDUCATION, SKILL_VERIFIED, PREMIUM
   badgeData   String   // JSON object with badge information
   issuedAt    DateTime @default(now())
   expiresAt   DateTime?
@@ -796,6 +801,7 @@ model VerificationBadge {
   updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizAttempts QuizAttempt[]
 
   @@unique([userId, type])
   @@index([isActive])
@@ -1148,14 +1154,16 @@ model License {
 model ProfileMedia {
   id          String   @id @default(cuid())
   userId      String
-  type        String   // IMAGE, VIDEO, DOCUMENT, PRESENTATION
-  url         String   // Media URL (Cloudinary, S3, etc.)
+  type        String   // IMAGE, VIDEO, DOCUMENT, PRESENTATION, GITHUB_REPO
+  url         String   // Media URL (Cloudinary, S3, GitHub, etc.)
   thumbnail   String?  // Thumbnail for videos
   medium      String?  // Medium-sized image variant
   large       String?  // Large-sized image variant
   title       String?
   description String?
   category    String?  // PROFILE_HIGHLIGHT, WORK_SAMPLE, ACHIEVEMENT
+  sourceType  String?  // Source of media: null (uploaded), "GITHUB" (auto-synced)
+  sourceId    String?  // External ID (e.g., GitHub repo ID)
   order       Int      @default(0)
   isPublic    Boolean  @default(true)
   metadata    String?  // JSON with dimensions, duration, file size, etc.
@@ -1165,6 +1173,7 @@ model ProfileMedia {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, category])
+  @@index([userId, sourceType])
 }
 
 model SalaryInsight {
