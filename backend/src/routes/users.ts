@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { body, validationResult } from 'express-validator';
+import { body, validationResult, param } from 'express-validator';
 import { prisma } from '../utils/prisma';
 import { logger } from '../utils/logger';
 import { authenticateToken } from '../middleware/auth';
+import { calculateProfileStrength, getProfileSuggestions } from '../services/profileStrength';
 
 const router = Router();
 
@@ -236,6 +237,48 @@ router.delete('/profile/open-to/:type', authenticateToken,
         success: false,
         error: {
           message: 'Failed to clear open-to status',
+          statusCode: 500,
+        },
+      });
+    }
+  }
+);
+
+// GET /profile/:userId/strength-score - Get profile strength score
+router.get('/strength-score/:userId',
+  param('userId').isString().notEmpty(),
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: 'Validation failed',
+            statusCode: 400,
+            details: errors.array(),
+          },
+        });
+      }
+
+      const { userId } = req.params;
+
+      const strength = await calculateProfileStrength(userId);
+      const suggestions = getProfileSuggestions(strength);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          strength,
+          suggestions,
+        },
+      });
+    } catch (error) {
+      logger.error('Error calculating profile strength:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to calculate profile strength',
           statusCode: 500,
         },
       });
