@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma-mock'
+import { prisma } from '@/lib/prisma'
 import https from 'https'
 import http from 'http'
 

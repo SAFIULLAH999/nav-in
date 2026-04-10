@@ -10,11 +10,8 @@ interface JobCardProps {
 
 export function JobCard({ job }: JobCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      className="bg-card rounded-xl border border-border p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer"
+    <div
+      className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-corporate hover:shadow-corporate-xl transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:border-primary/30 group"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
@@ -40,11 +37,11 @@ export function JobCard({ job }: JobCardProps) {
           </div>
         </div>
         <div className="flex space-x-2">
-          <button className="p-2 hover:bg-secondary rounded-full transition-colors">
-            <Bookmark className="w-5 h-5 text-text-muted" />
+          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            <Bookmark className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
-          <button className="p-2 hover:bg-secondary rounded-full transition-colors">
-            <ExternalLink className="w-5 h-5 text-text-muted" />
+          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            <ExternalLink className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
       </div>
@@ -116,17 +113,17 @@ export function JobCard({ job }: JobCardProps) {
       </div>
 
       {/* Easy Apply vs External */}
-      <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-sm">
+      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <ExternalLink className="w-4 h-4 text-text-muted" />
-            <span className="text-text-muted">Apply through {job.company} website</span>
+            <ExternalLink className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-gray-500 dark:text-gray-400">Apply through {job.company} website</span>
           </div>
           <button className="text-primary hover:text-primary/80 transition-colors">
             Easy Apply
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

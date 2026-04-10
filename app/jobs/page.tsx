@@ -85,8 +85,11 @@ export default function JobsPage() {
           setCurrentPage(prev => prev + 1)
         } else {
           setJobs(data.data || [])
+          setCurrentPage(1)
         }
-        setHasMore(data.pagination?.hasMore || false)
+        // Use the hasMore from pagination, otherwise calculate it
+        const hasMoreData = data.pagination?.hasMore ?? (data.data?.length === 10)
+        setHasMore(hasMoreData)
       } else {
         setError(data.error || 'Failed to fetch jobs')
         if (!append) setJobs([])
@@ -229,7 +232,7 @@ export default function JobsPage() {
       })
       if (response.ok) {
         const data = await response.json()
-        if (data.success) {
+        if (data.success && Array.isArray(data.data)) {
           const appliedIds = new Set<string>(data.data.map((app: any) => app.jobId))
           setAppliedJobIds(appliedIds)
           console.log('Applied job IDs:', Array.from(appliedIds))

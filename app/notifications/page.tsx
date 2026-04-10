@@ -59,10 +59,10 @@ export default function NotificationsPage() {
         localStorage.getItem('accessToken') ||
         sessionStorage.getItem('accessToken');
 
-      await fetch(\`/api/v1/notifications/\${notificationId}/read\`, {
+      await fetch(`/api/v1/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
-          Authorization: \`Bearer \${token}\`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -82,10 +82,10 @@ export default function NotificationsPage() {
         localStorage.getItem('accessToken') ||
         sessionStorage.getItem('accessToken');
 
-      await fetch(\`/api/v1/notifications/\${notificationId}\`, {
+      await fetch(`/api/v1/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
-          Authorization: \`Bearer \${token}\`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -113,7 +113,7 @@ export default function NotificationsPage() {
           </h1>
           <p className="text-gray-600 mt-1">
             {unreadCount > 0
-              ? \`\${unreadCount} unread notification\${unreadCount !== 1 ? 's' : ''}\`
+              ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
               : 'All caught up!'}
           </p>
         </div>

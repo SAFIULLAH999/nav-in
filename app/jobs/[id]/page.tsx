@@ -70,8 +70,8 @@ export default function JobDetailsPage() {
       }
       
       const data = await response.json()
-      
-      if (data.success) {
+
+      if (data.success && data.data) {
         setJob(data.data)
       } else {
         setError(data.error || 'Failed to fetch job details')
@@ -117,14 +117,13 @@ export default function JobDetailsPage() {
         return
       }
 
-      const response = await fetch('/api/applications', {
+      const response = await fetch(`/api/jobs/${params.id as string}/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          jobId: params.id as string,
           coverLetter: coverLetter || 'I am interested in this position and would like to apply.'
         })
       })

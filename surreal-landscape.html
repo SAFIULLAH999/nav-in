@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surreal Dreamscape</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #0a0a1a;
+            font-family: 'Inter', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(10,10,26,0.3) 100%);
+        }
+
+        .title {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="overlay"></div>
+    <div class="title">Dreamscape • Surreal Horizon</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        const particles = [];
+        const orbs = [];
+        const trees = [];
+        const clouds = [];
+        const waterfalls = [];
+        let time = 0;
+
+        // Color palette
+        const colors = {
+            amethyst: '#8B5CF6',
+            deepPurple: '#4C1D95',
+            electricTurquoise: '#06B6D4',
+            deepBlue: '#0369A1',
+            goldenYellow: '#F59E0B',
+            fieryOrange: '#EA580C',
+            pastelPink: '#F472B6',
+            softPurple: '#C084FC',
+            mint: '#34D399'
+        };
+
+        // Initialize scene elements
+        function init() {
+            // Create floating islands
+            for (let i = 0; i < 5; i++) {
+                islands.push({
+                    x: width * (0.2 + i * 0.15),
+                    y: height * (0.3 + Math.random() * 0.3),
+                    width: 150 + Math.random() * 200,
+                    height: 40 + Math.random() * 30,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    floatSpeed: 0.0005 + Math.random() * 0.001
+                });
+            }
+
+            // Create bioluminescent trees
+            for (let i = 0; i < 30; i++) {
+                trees.push({
+                    x: Math.random() * width,
+                    y: height * 0.6 + Math.random() * height * 0.3,
+                    height: 30 + Math.random() * 60,
+                    swayOffset: Math.random() * Math.PI * 2,
+                    swaySpeed: 0.002 + Math.random() * 0.003,
+                    color: [colors.amethyst, colors.electricTurquoise, colors.pastelPink, colors.mint][Math.floor(Math.random() * 4)],
+                    glowIntensity: 0.5 + Math.random() * 0.5
+                });
+            }
+
+            // Create clouds
+            for (let i = 0; i < 8; i++) {
+                clouds.push({
+                    x: Math.random() * width,
+                    y: height * (0.1 + Math.random() * 0.3),
+                    width: 100 + Math.random() * 200,
+                    height: 30 + Math.random() * 40,
+                    speed: 0.05 + Math.random() * 0.1,
+                    hue: Math.random() * 360,
+                    opacity: 0.3 + Math.random() * 0.3
+                });
+            }
+
+            // Create light orbs
+            for (let i = 0; i < 20; i++) {
+                orbs.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: 2 + Math.random() * 5,
+                    speedX: (Math.random() - 0.5) * 0.3,
+                    speedY: (Math.random() - 0.5) * 0.3,
+                    color: [colors.amethyst, colors.electricTurquoise, colors.goldenYellow, colors.pastelPink][Math.floor(Math.random() * 4)],
+                    pulseOffset: Math.random() * Math.PI * 2,
+                    trail: []
+                });
+            }
+
+            // Create waterfall particles
+            for (let i = 0; i < 5; i++) {
+                waterfalls.push({
+                    x: width * (0.25 + i * 0.15),
+                    startY: height * 0.25,
+                    endY: height * 0.6,
+                    particles: []
+                });
+            }
+        }
+
+        const islands = [];
+
+        // Draw gradient sky
+        function drawSky() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, '#0f0f2e');
+            gradient.addColorStop(0.3, '#1e1b4b');
+            gradient.addColorStop(0.6, '#312e81');
+            gradient.addColorStop(1, '#1e3a5f');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Stars
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            for (let i = 0; i < 100; i++) {
+                const x = (i * 137.508) % width;
+                const y = (i * 73.731) % (height * 0.5);
+                const twinkle = Math.sin(time * 0.002 + i) * 0.3 + 0.7;
+                ctx.globalAlpha = twinkle * 0.8;
+                ctx.beginPath();
+                ctx.arc(x, y, 1 + Math.sin(time * 0.001 + i) * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // Draw floating islands
+        function drawIslands() {
+            islands.forEach((island, index) => {
+                const floatY = island.y + Math.sin(time * island.floatSpeed + island.floatOffset) * 10;
+                
+                ctx.save();
+                ctx.translate(island.x, floatY);
+                
+                // Island shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.ellipse(0, island.height + 50, island.width * 0.6, 20, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Island body
+                const gradient = ctx.createLinearGradient(0, -island.height, 0, island.height);
+                gradient.addColorStop(0, '#4ade80');
+                gradient.addColorStop(0.3, '#22c55e');
+                gradient.addColorStop(1, '#78350f');
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.moveTo(-island.width / 2, 0);
+                ctx.quadraticCurveTo(-island.width / 2 - 20, island.height / 2, -island.width / 4, island.height);
+                ctx.lineTo(island.width / 4, island.height);
+                ctx.quadraticCurveTo(island.width / 2 + 20, island.height / 2, island.width / 2, 0);
+                ctx.quadraticCurveTo(island.width / 4, -island.height / 2, 0, -island.height / 3);
+                ctx.quadraticCurveTo(-island.width / 4, -island.height / 2, -island.width / 2, 0);
+                ctx.fill();
+                
+                // Glowing edge
+                ctx.strokeStyle = `rgba(139, 92, 246, ${0.3 + Math.sin(time * 0.001 + index) * 0.2})`;
+                ctx.lineWidth = 2;
+                ctx.shadowColor = '#8B5CF6';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                ctx.restore();
+            });
+        }
+
+        // Draw waterfalls
+        function drawWaterfalls() {
+            waterfalls.forEach(waterfall => {
+                const gradient = ctx.createLinearGradient(waterfall.x, waterfall.startY, waterfall.x, waterfall.endY);
+                gradient.addColorStop(0, 'rgba(6, 182, 212, 0.8)');
+                gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.6)');
+                gradient.addColorStop(1, 'rgba(6, 182, 212, 0.2)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(waterfall.x - 3, waterfall.startY);
+                for (let y = waterfall.startY; y < waterfall.endY; y += 20) {
+                    const wave = Math.sin(time * 0.003 + y * 0.02) * 5;
+                    ctx.lineTo(waterfall.x - 3 + wave, y);
+                }
+                ctx.lineTo(waterfall.x + 3, waterfall.endY);
+                for (let y = waterfall.endY; y > waterfall.startY; y -= 20) {
+                    const wave = Math.sin(time * 0.003 + y * 0.02 + Math.PI) * 5;
+                    ctx.lineTo(waterfall.x + 3 + wave, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // Splash particles
+                if (Math.random() < 0.3) {
+                    waterfall.particles.push({
+                        x: waterfall.x + (Math.random() - 0.5) * 20,
+                        y: waterfall.endY,
+                        vy: -1 - Math.random() * 2,
+                        life: 1,
+                        size: 2 + Math.random() * 3
+                    });
+                }
+
+                waterfall.particles = waterfall.particles.filter(p => {
+                    p.y += p.vy;
+                    p.vy += 0.05;
+                    p.life -= 0.02;
+                    if (p.life <= 0) return false;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(6, 182, 212, ${p.life})`;
+                    ctx.fill();
+                    return true;
+                });
+            });
+        }
+
+        // Draw bioluminescent trees
+        function drawTrees() {
+            trees.forEach((tree, index) => {
+                const sway = Math.sin(time * tree.swaySpeed + tree.swayOffset) * 5;
+                
+                ctx.save();
+                ctx.translate(tree.x, tree.y);
+                
+                // Trunk
+                ctx.strokeStyle = '#3d2914';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(sway * 0.5, -tree.height / 2, sway, -tree.height);
+                ctx.stroke();
+                
+                // Glowing canopy
+                const glowSize = 20 + Math.sin(time * 0.002 + index) * 5;
+                const gradient = ctx.createRadialGradient(sway, -tree.height, 0, sway, -tree.height, glowSize);
+                gradient.addColorStop(0, tree.color);
+                gradient.addColorStop(0.5, tree.color + '80');
+                gradient.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(sway, -tree.height, glowSize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+
+        // Draw drifting clouds
+        function drawClouds() {
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > width + cloud.width) cloud.x = -cloud.width;
+                cloud.hue += 0.1;
+                
+                const hue = (cloud.hue + time * 0.005) % 360;
+                const color = `hsla(${hue}, 70%, 60%, ${cloud.opacity})`;
+                
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                
+                for (let i = 0; i < 5; i++) {
+                    const cx = cloud.x + (i - 2) * cloud.width * 0.25;
+                    const cy = cloud.y + Math.sin(time * 0.001 + i) * 5;
+                    const r = cloud.height * (0.6 + Math.sin(i * 0.8) * 0.4);
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            });
+        }
+
+        // Draw orbiting light orbs with trails
+        function drawOrbs() {
+            orbs.forEach(orb => {
+                orb.x += orb.speedX;
+                orb.y += orb.speedY;
+                
+                if (orb.x < 0 || orb.x > width) orb.speedX *= -1;
+                if (orb.y < 0 || orb.y > height) orb.speedY *= -1;
+                
+                const pulse = 0.7 + Math.sin(time * 0.003 + orb.pulseOffset) * 0.3;
+                const radius = orb.radius * pulse;
+                
+                orb.trail.push({ x: orb.x, y: orb.y, alpha: 1 });
+                if (orb.trail.length > 20) orb.trail.shift();
+                
+                orb.trail.forEach((point, i) => {
+                    point.alpha -= 0.05;
+                    if (point.alpha > 0) {
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, radius * (i / orb.trail.length), 0, Math.PI * 2);
+                        ctx.fillStyle = orb.color + Math.floor(point.alpha * 50).toString(16).padStart(2, '0');
+                        ctx.fill();
+                    }
+                });
+                
+                const gradient = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, radius * 3);
+                gradient.addColorStop(0, orb.color);
+                gradient.addColorStop(0.3, orb.color + '80');
+                gradient.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(orb.x, orb.y, radius * 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(orb.x, orb.y, radius * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // Draw particle system
+        function drawParticles() {
+            if (Math.random() < 0.3) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: height + 10,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: -0.5 - Math.random() * 1,
+                    size: 1 + Math.random() * 2,
+                    life: 1,
+                    color: [colors.amethyst, colors.electricTurquoise, colors.pastelPink][Math.floor(Math.random() * 3)]
+                });
+            }
+
+            particles.forEach((p, i) => {
+                p.x += p.vx + Math.sin(time * 0.001 + i) * 0.2;
+                p.y += p.vy;
+                p.life -= 0.005;
+                
+                if (p.life <= 0 || p.y < -10) {
+                    particles.splice(i, 1);
+                    return;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fillStyle = p.color + Math.floor(p.life * 200).toString(16).padStart(2, '0');
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Draw reflective water surface
+        function drawWater() {
+            const waterGradient = ctx.createLinearGradient(0, height * 0.75, 0, height);
+            waterGradient.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
+            waterGradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.4)');
+            waterGradient.addColorStop(1, 'rgba(30, 58, 95, 0.8)');
+            
+            ctx.fillStyle = waterGradient;
+            ctx.fillRect(0, height * 0.75, width, height * 0.25);
+            
+            // Ripples
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, height * 0.75 + i * 15 + Math.sin(time * 0.002 + i) * 3);
+                for (let x = 0; x < width; x += 20) {
+                    const y = height * 0.75 + i * 15 + Math.sin(time * 0.002 + x * 0.01 + i) * 3;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        // Draw energy vortexes
+        function drawVortexes() {
+            const vortexPositions = [
+                { x: width * 0.2, y: height * 0.6 },
+                { x: width * 0.8, y: height * 0.55 }
+            ];
+
+            vortexPositions.forEach((pos, index) => {
+                const rotation = time * 0.001 + index;
+                const size = 60 + Math.sin(time * 0.001 + index * 2) * 10;
+                
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.rotate(rotation);
+                
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const gradient = ctx.createRadialGradient(0, 0, 0, Math.cos(angle) * size, Math.sin(angle) * size, size);
+                    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.5)');
+                    gradient.addColorStop(1, 'transparent');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size, angle - 0.2, angle + 0.2);
+                    ctx.lineTo(0, 0);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+        }
+
+        // Main animation loop
+        function animate() {
+            time++;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            drawSky();
+            drawClouds();
+            drawVortexes();
+            drawIslands();
+            drawWaterfalls();
+            drawWater();
+            drawTrees();
+            drawOrbs();
+            drawParticles();
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>

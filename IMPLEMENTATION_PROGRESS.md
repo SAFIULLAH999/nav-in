@@ -22,6 +22,7 @@ Successfully implemented Phase 1 core features for LinkedIn-alternative growth n
 - `GET /api/v1/endorsements/skills/leaderboard` - Skill expertise leaderboard
 - `GET /api/v1/endorsements/skills/recommendations` - AI-suggest skills to learn
 
+
 **Features:**
 - Prevent self-endorsement
 - Auto-award VerificationBadge when quiz passed (80%+ score)
