@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { broadcastJobUpdate } from '../websocket/route'
 import { EmailService } from '@/lib/email'
 import { JobQueueManager } from '@/lib/queue/job-queue-manager'
+import { cacheDeletePattern } from '@/lib/redis'
 
 // Global variables for monitoring
 let monitoringInterval: NodeJS.Timeout | null = null
@@ -1448,6 +1449,10 @@ async function addFreshMockJobs() {
     } catch (error) {
       console.error('Error adding fresh job:', error);
     }
+  }
+
+  if (jobsAdded > 0) {
+    await cacheDeletePattern('jobs:search:*')
   }
 
   return jobsAdded;

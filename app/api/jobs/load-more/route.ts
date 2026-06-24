@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { cacheDeletePattern } from '@/lib/redis'
 
 // POST - Load more jobs from external sources
 export async function POST(request: NextRequest) {
@@ -15,6 +16,44 @@ export async function POST(request: NextRequest) {
       limit || 20,
       page || 1
     )
+
+    if (mockJobs.length > 0) {
+      for (const job of mockJobs) {
+        try {
+          await prisma.job.upsert({
+            where: { id: job.id },
+            update: {},
+            create: {
+              id: job.id,
+              title: job.title,
+              description: job.description,
+              companyName: job.companyName,
+              location: job.location,
+              type: job.type,
+              salaryMin: job.salaryMin,
+              salaryMax: job.salaryMax,
+              requirements: JSON.stringify(job.requirements),
+              benefits: job.benefits,
+              experience: job.experience,
+              isRemote: job.isRemote,
+              applicationDeadline: new Date(job.applicationDeadline),
+              expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+              isActive: true,
+              validityStatus: 'VALID',
+              lastValidated: new Date(),
+              isScraped: false,
+              lastScraped: null,
+              authorId: 'demo-user-1',
+              views: job.views || 0,
+              applicationsCount: job.applicationsCount || 0
+            }
+          })
+        } catch (e) {
+          // ignore duplicate key errors
+        }
+      }
+      await cacheDeletePattern('jobs:search:*')
+    }
 
     return NextResponse.json({
       success: true,
