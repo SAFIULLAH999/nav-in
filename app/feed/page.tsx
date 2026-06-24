@@ -15,6 +15,7 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isNewUser, setIsNewUser] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('all')
 
   useEffect(() => {
     fetchPosts()
@@ -78,6 +79,7 @@ export default function FeedPage() {
     try {
       setLoading(true)
       setError(null)
+      setActiveFilter(filterType)
       const response = await fetch(`/api/posts?filter=${filterType}`)
 
       if (!response.ok) {
@@ -107,7 +109,7 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-background w-full flex justify-center">
-      <div className="flex w-full max-w-7xl">
+       <div className="flex">
         <LeftSidebar />
         <main className="flex-1 max-w-2xl mx-4 lg:mx-8 min-w-0">
           <div className="space-y-4">
@@ -124,37 +126,37 @@ export default function FeedPage() {
             <div className="flex space-x-2 overflow-x-auto pb-2">
               <button
                 onClick={() => fetchPosts('all')}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${activeFilter === 'all' ? 'bg-primary text-white' : 'bg-muted text-text hover:bg-muted/80'}`}
               >
                 All Activity
               </button>
               <button
                 onClick={() => fetchPosts('job_updates')}
-                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
+                className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${activeFilter === 'job_updates' ? 'bg-primary text-white' : 'bg-muted text-text hover:bg-muted/80'}`}
               >
                 Job Updates
               </button>
               <button
                 onClick={() => fetchPosts('posts')}
-                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
+                className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${activeFilter === 'posts' ? 'bg-primary text-white' : 'bg-muted text-text hover:bg-muted/80'}`}
               >
                 Posts Only
               </button>
               <button
                 onClick={() => fetchPosts('connections')}
-                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
+                className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${activeFilter === 'connections' ? 'bg-primary text-white' : 'bg-muted text-text hover:bg-muted/80'}`}
               >
                 New Connections
               </button>
               <button
                 onClick={() => fetchPosts('endorsements')}
-                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
+                className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${activeFilter === 'endorsements' ? 'bg-primary text-white' : 'bg-muted text-text hover:bg-muted/80'}`}
               >
                 Endorsements
               </button>
               <button
                 onClick={() => fetchPosts('recommendations')}
-                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
+                className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${activeFilter === 'recommendations' ? 'bg-primary text-white' : 'bg-muted text-text hover:bg-muted/80'}`}
               >
                 Recommendations
               </button>
