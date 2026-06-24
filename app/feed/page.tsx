@@ -106,11 +106,10 @@ export default function FeedPage() {
   }
 
   return (
-      <div className="min-h-screen bg-background w-full">
-      <div className="flex w-full">
+    <div className="min-h-screen bg-background w-full flex justify-center">
+      <div className="flex w-full max-w-7xl">
         <LeftSidebar />
-
-        <main className="flex-1 max-w-2xl mx-4 lg:mx-8">
+        <main className="flex-1 max-w-2xl mx-4 lg:mx-8 min-w-0">
           <div className="space-y-4">
             {/* Welcome Section - Only for new users */}
             {isNewUser && (

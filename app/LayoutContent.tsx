@@ -18,6 +18,7 @@ interface LayoutContentProps {
 export default function LayoutContent({ children }: LayoutContentProps) {
   const pathname = usePathname()
   const isFeedPage = pathname === '/feed'
+  const isHomePage = pathname === '/'
   const isAuthPage = pathname?.startsWith('/sign-in') || pathname?.startsWith('/sign-up')
 
   return (
@@ -31,7 +32,7 @@ export default function LayoutContent({ children }: LayoutContentProps) {
                   <div className="min-h-screen flex flex-col">
                     {!isAuthPage && <Navbar />}
                     <div className={`flex flex-1 w-full ${!isAuthPage ? 'pt-16' : ''}`}>
-                      {isFeedPage ? (
+                      {isFeedPage || isHomePage ? (
                         <>
                           {children}
                         </>
