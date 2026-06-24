@@ -137,7 +137,7 @@ function generateMockJobs(searchQuery: string, location: string, limit: number, 
       applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       views: Math.floor(Math.random() * 1000),
       applicationsCount: Math.floor(Math.random() * 50),
-      createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString(),
       author: {
         name: 'Hiring Manager',
         username: 'hiring-manager',

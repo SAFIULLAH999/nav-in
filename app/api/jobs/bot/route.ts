@@ -1430,22 +1430,29 @@ async function addFreshMockJobs() {
 
   for (const jobData of freshJobs) {
     try {
-      await prisma.job.create({ data: jobData });
-      jobsAdded++;
-      
-      // Broadcast the new job
-      broadcastJobUpdate({
-        type: 'JOB_CREATED',
-        job: {
-          id: 'fresh-' + jobsAdded,
+      const existing = await prisma.job.findFirst({
+        where: {
           title: jobData.title,
           companyName: jobData.companyName,
-          location: jobData.location,
-          type: jobData.type,
-          createdAt: jobData.createdAt.toISOString()
         }
-      });
-      
+      })
+
+      if (!existing) {
+        await prisma.job.create({ data: jobData })
+        jobsAdded++
+
+        broadcastJobUpdate({
+          type: 'JOB_CREATED',
+          job: {
+            id: 'fresh-' + jobsAdded,
+            title: jobData.title,
+            companyName: jobData.companyName,
+            location: jobData.location,
+            type: jobData.type,
+            createdAt: jobData.createdAt.toISOString()
+          }
+        })
+      }
     } catch (error) {
       console.error('Error adding fresh job:', error);
     }

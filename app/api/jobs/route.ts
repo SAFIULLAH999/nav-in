@@ -28,7 +28,70 @@ const createJobSchema = z.object({
   applicationDeadline: z.string().datetime().optional(),
 })
 
+function generateMockJobData(searchQuery: string, location: string, limit: number) {
+  const companies = [
+    'TechCorp Inc.', 'DataFlow Systems', 'StartupXYZ', 'CloudTech Solutions',
+    'MobileFirst', 'WebSolutions Ltd', 'DevStudio', 'CodeWorks', 'AppFactory',
+    'Digital Dynamics', 'SoftTech', 'ByteWorks', 'PixelPerfect', 'NetSolutions',
+    'CyberTech', 'DataDriven', 'CloudNine', 'TechFlow', 'CodeMasters', 'WebWizards'
+  ]
 
+  const jobTypes = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'REMOTE']
+  const locations = [
+    'San Francisco, CA', 'New York, NY', 'Austin, TX', 'Seattle, WA',
+    'Los Angeles, CA', 'Chicago, IL', 'Boston, MA', 'Denver, CO',
+    'Atlanta, GA', 'Miami, FL', 'Remote', 'San Diego, CA'
+  ]
+
+  const jobs = []
+  const usedIds = new Set<string>()
+
+  for (let i = 0; i < limit; i++) {
+    let id: string
+    do {
+      id = `mock-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${i}`
+    } while (usedIds.has(id))
+    usedIds.add(id)
+
+    const company = companies[Math.floor(Math.random() * companies.length)]
+    const jobType = jobTypes[Math.floor(Math.random() * companies.length) % jobTypes.length]
+    const jobLocation = location && location.toLowerCase() !== 'remote' ? location : locations[Math.floor(Math.random() * companies.length) % locations.length]
+
+    const salaryMin = Math.floor(Math.random() * 50000) + 50000
+    const salaryMax = salaryMin + Math.floor(Math.random() * 50000) + 20000
+
+    jobs.push({
+      id,
+      title: `${searchQuery} ${['Developer', 'Engineer', 'Manager', 'Specialist', 'Analyst'][Math.floor(Math.random() * 5)]}`,
+      description: `We are looking for a talented ${searchQuery} to join our growing team. You will work on exciting projects and collaborate with a dynamic team of professionals.`,
+      companyName: company,
+      location: jobLocation,
+      type: jobType,
+      salaryMin,
+      salaryMax,
+      requirements: JSON.stringify([
+        'JavaScript', 'TypeScript', 'React', 'Node.js', 'Python',
+        'AWS', 'Docker', 'Kubernetes', 'SQL', 'NoSQL'
+      ].sort(() => Math.random() - 0.5).slice(0, Math.floor(Math.random() * 5) + 3)),
+      benefits: 'Health insurance, 401k, remote work options, professional development',
+      experience: ['JUNIOR', 'MID', 'SENIOR'][Math.floor(Math.random() * 3)],
+      isRemote: jobLocation === 'Remote' || Math.random() > 0.5,
+      applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      validityStatus: 'VALID',
+      lastValidated: new Date(),
+      isScraped: false,
+      lastScraped: null,
+      authorId: 'demo-user-1',
+      views: 0,
+      applicationsCount: 0,
+      createdAt: new Date(),
+    })
+  }
+
+  return jobs
+}
 
 // GET - Search and filter jobs
 export async function GET(request: NextRequest) {
@@ -148,6 +211,41 @@ export async function GET(request: NextRequest) {
         success: true,
         data: [],
         pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasMore: false }
+      })
+    }
+
+    if (jobs.length === 0) {
+      console.log('Database empty - generating mock jobs')
+      const mockJobData = generateMockJobData(search, location, limit)
+      for (const job of mockJobData) {
+        try {
+          await prisma.job.create({ data: job })
+        } catch (e) {
+          // Ignore duplicate key errors
+        }
+      }
+      totalCount = await prisma.job.count({ where })
+      jobs = await prisma.job.findMany({
+        where: queryWhere,
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true,
+              title: true,
+            }
+          },
+          _count: {
+            select: {
+              applications: true
+            }
+          }
+        }
       })
     }
 

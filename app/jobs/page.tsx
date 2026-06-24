@@ -86,8 +86,10 @@ export default function JobsPage() {
         } else {
           setJobs(data.data || [])
           setCurrentPage(1)
+          if ((data.data || []).length === 0) {
+            loadMoreJobsInBackground()
+          }
         }
-        // Use the hasMore from pagination, otherwise calculate it
         const hasMoreData = data.pagination?.hasMore ?? (data.data?.length === 10)
         setHasMore(hasMoreData)
       } else {
@@ -150,41 +152,7 @@ export default function JobsPage() {
     try {
       setLoadingMore(true)
       setError(null)
-
-      const response = await fetch('/api/jobs/load-more', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          searchQuery: searchTerm || 'software engineer',
-          location: locationFilter || 'remote',
-          limit: 20,
-          page: currentPage + 1
-        })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        // Add new jobs to the list
-        const newJobs = data.data || []
-        setJobs(prev => {
-          const existingIds = new Set(prev.map(j => j.id))
-          const uniqueNewJobs = newJobs.filter((job: any) => !existingIds.has(job.id))
-          return [...prev, ...uniqueNewJobs]
-        })
-        setCurrentPage(prev => prev + 1)
-        setHasMore(data.meta?.hasMore !== false)
-        setLastFetchTime(new Date())
-        
-        // Show success message
-        if (newJobs.length > 0) {
-          console.log(`Loaded ${newJobs.length} new jobs from career sites`)
-        }
-      } else {
-        setError(data.error || 'Failed to load more jobs')
-      }
+      await fetchJobs(true)
     } catch (error) {
       console.error('Error loading more jobs:', error)
       setError('Failed to load more jobs. Please try again.')
