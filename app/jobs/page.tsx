@@ -406,7 +406,7 @@ export default function JobsPage() {
               <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-text-muted">Loading jobs...</p>
             </div>
-          ) : error ? (
+            ) : error ? (
             <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
               <p className="text-red-600 mb-4">{error}</p>
               <button
@@ -415,6 +415,27 @@ export default function JobsPage() {
               >
                 Try Again
               </button>
+            </div>
+          ) : loading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div key={idx} className="bg-card rounded-xl shadow-soft border border-border p-6 animate-pulse">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 rounded-lg bg-gray-200" />
+                    <div className="flex-1 space-y-3">
+                      <div className="h-5 bg-gray-200 rounded w-2/3" />
+                      <div className="h-4 bg-gray-200 rounded w-1/3" />
+                      <div className="flex items-center space-x-4">
+                        <div className="h-3 bg-gray-200 rounded w-24" />
+                        <div className="h-3 bg-gray-200 rounded w-24" />
+                        <div className="h-3 bg-gray-200 rounded w-24" />
+                      </div>
+                      <div className="h-4 bg-gray-200 rounded w-full" />
+                      <div className="h-4 bg-gray-200 rounded w-5/6" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredJobs.length > 0 ? (
             filteredJobs.map((job, index) => (

@@ -167,9 +167,28 @@ export default function FeedPage() {
 
             {/* Loading State */}
             {loading && (
-              <div className="bg-card rounded-xl shadow-md border border-border p-8 text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-text-muted">Loading posts...</p>
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="bg-card rounded-xl shadow-md border border-border p-6 animate-pulse">
+                    <div className="flex items-start space-x-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gray-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-1/3" />
+                        <div className="h-3 bg-gray-200 rounded w-1/4" />
+                      </div>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="h-4 bg-gray-200 rounded w-full" />
+                      <div className="h-4 bg-gray-200 rounded w-5/6" />
+                      <div className="h-4 bg-gray-200 rounded w-4/6" />
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="h-3 bg-gray-200 rounded w-12" />
+                      <div className="h-3 bg-gray-200 rounded w-12" />
+                      <div className="h-3 bg-gray-200 rounded w-12" />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
