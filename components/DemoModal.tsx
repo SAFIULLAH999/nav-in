@@ -140,7 +140,7 @@ export function DemoModal({ isOpen, onClose }: DemoModalProps) {
 
               {/* Right Side - Visual */}
               <div className="relative">
-                <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl flex items-center justify-center border border-border">
+                <div className="aspect-video bg-muted rounded-2xl flex items-center justify-center border border-border">
                   <div className="text-center">
                     <Icon className="w-16 h-16 text-primary mx-auto mb-4" />
                     <p className="text-text-muted">Interactive Demo Preview</p>

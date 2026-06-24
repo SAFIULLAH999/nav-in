@@ -33,7 +33,7 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="bg-surface border-t border-border">
+    <footer className="bg-muted border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="py-16">
@@ -159,7 +159,7 @@ export function Footer() {
                           href={social.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-all duration-300"
+                          className="w-10 h-10 bg-surface rounded-xl flex items-center justify-center text-text-muted hover:text-primary hover:bg-muted transition-all duration-300"
                         >
                           <Icon className="w-5 h-5" />
                         </a>

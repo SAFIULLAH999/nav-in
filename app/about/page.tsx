@@ -84,7 +84,7 @@ export default function AboutPage() {
           transition={{ delay: 0.2 }}
           className="mb-20"
         >
-          <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-12">
+          <div className="bg-muted rounded-3xl p-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-3xl font-bold text-text mb-6">Our Mission</h2>

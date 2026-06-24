@@ -126,7 +126,7 @@ export default function VideoPlayer({
 
       {controls && (
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${
+          className={`absolute bottom-0 left-0 right-0 bg-black/80 p-4 transition-opacity duration-300 ${
             showControls ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -138,11 +138,6 @@ export default function VideoPlayer({
             value={currentTime}
             onChange={handleSeek}
             className="w-full h-1 mb-3 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-            style={{
-              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                (currentTime / duration) * 100
-              }%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`,
-            }}
           />
 
           <div className="flex items-center justify-between text-white">

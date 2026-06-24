@@ -21,7 +21,6 @@ export default function FeedPage() {
     checkIfNewUser()
   }, [])
 
-  // Socket listeners for real-time feed updates
   useEffect(() => {
     const handleNewPost = (newPost: Post) => {
       setPosts(prevPosts => [newPost, ...prevPosts])
@@ -43,10 +42,7 @@ export default function FeedPage() {
       )
     }
 
-    // Listen for new posts from other users
     socket?.on('new_post_created', handleNewPost)
-
-    // Listen for post updates (likes, comments, shares)
     onPostUpdate(handlePostUpdate)
 
     return () => {
@@ -62,14 +58,12 @@ export default function FeedPage() {
         return
       }
 
-      // Check if user has any posts or connections
       const response = await fetch('/api/user/activity', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
         const data = await response.json()
-        // If user has no activity, consider them new
         setIsNewUser(!data.data?.hasPosts && !data.data?.hasConnections)
       } else {
         setIsNewUser(true)
@@ -85,13 +79,13 @@ export default function FeedPage() {
       setLoading(true)
       setError(null)
       const response = await fetch(`/api/posts?filter=${filterType}`)
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const data = await response.json()
- 
+
       if (data.success) {
         setPosts(data.data || [])
       } else {
@@ -120,14 +114,14 @@ export default function FeedPage() {
           <div className="space-y-4">
             {/* Welcome Section - Only for new users */}
             {isNewUser && (
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
+              <div className="bg-muted rounded-xl p-6 border border-border">
                 <h1 className="text-2xl font-bold text-text mb-2">Welcome to NavIN!</h1>
                 <p className="text-text-muted">Discover what's happening in your network and share your thoughts with others.</p>
               </div>
             )}
 
           {/* Enhanced Feed Filter Controls */}
-          <div className="bg-card rounded-xl shadow-soft border border-border p-4">
+          <div className="bg-card rounded-xl shadow-md border border-border p-4">
             <div className="flex space-x-2 overflow-x-auto pb-2">
               <button
                 onClick={() => fetchPosts('all')}
@@ -137,31 +131,31 @@ export default function FeedPage() {
               </button>
               <button
                 onClick={() => fetchPosts('job_updates')}
-                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
               >
                 Job Updates
               </button>
               <button
                 onClick={() => fetchPosts('posts')}
-                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
               >
                 Posts Only
               </button>
               <button
                 onClick={() => fetchPosts('connections')}
-                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
               >
                 New Connections
               </button>
               <button
                 onClick={() => fetchPosts('endorsements')}
-                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
               >
                 Endorsements
               </button>
               <button
                 onClick={() => fetchPosts('recommendations')}
-                className="px-4 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-muted text-text hover:bg-muted/80 rounded-lg transition-colors whitespace-nowrap"
               >
                 Recommendations
               </button>
@@ -172,7 +166,7 @@ export default function FeedPage() {
 
             {/* Loading State */}
             {loading && (
-              <div className="bg-card rounded-xl shadow-soft border border-border p-8 text-center">
+              <div className="bg-card rounded-xl shadow-md border border-border p-8 text-center">
                 <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p className="text-text-muted">Loading posts...</p>
               </div>
@@ -197,30 +191,15 @@ export default function FeedPage() {
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
-
-                {/* Load More Button */}
-                <div className="text-center pt-6">
-                  <button className="px-6 py-2 bg-secondary text-text hover:bg-secondary/80 rounded-lg transition-colors font-medium">
-                    Load More Posts
-                  </button>
-                </div>
               </>
             )}
 
             {/* Empty State */}
             {!loading && !error && posts.length === 0 && (
-              <div className="bg-card rounded-xl shadow-soft border border-border p-12 text-center">
-                <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-8 h-8 text-text-muted" />
-                </div>
+              <div className="bg-card rounded-xl shadow-md border border-border p-8 text-center">
+                <MessageCircle className="w-12 h-12 text-text-muted mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-text mb-2">No posts yet</h3>
-                <p className="text-text-muted mb-6">Be the first to share something with your network!</p>
-                <button
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
-                >
-                  Create First Post
-                </button>
+                <p className="text-text-muted">Be the first to share something with your network!</p>
               </div>
             )}
           </div>

@@ -21,7 +21,7 @@ export default function Avatar({ src, name, size = 'md', className = '' }: Avata
 
   if (!src || hasError) {
     return (
-      <div className={`bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold ${sizes[size]} ${className}`}>
+      <div className={`bg-primary rounded-full flex items-center justify-center text-white font-semibold ${sizes[size]} ${className}`}>
         {initials}
       </div>
     )

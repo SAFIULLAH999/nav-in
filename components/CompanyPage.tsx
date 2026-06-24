@@ -81,7 +81,7 @@ export default function CompanyPage({ companyId, currentUserId }: CompanyPagePro
       {/* Header */}
       <div className="bg-white rounded-lg shadow mb-6">
         {/* Cover Image */}
-        <div className="h-48 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-lg"></div>
+          <div className="h-48 bg-primary rounded-t-lg"></div>
 
         <div className="px-6 pb-6">
           {/* Logo and Basic Info */}

@@ -10,10 +10,7 @@ export function HeroSection() {
   const [showDemo, setShowDemo] = useState(false)
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-secondary/30 to-background">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(0,168,107,0.15)_1px,transparent_0)] bg-[length:20px_20px] opacity-30" />
-
+    <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
       <div className="relative max-w-7xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -26,9 +23,9 @@ export function HeroSection() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium"
+            className="inline-flex items-center px-4 py-2 rounded-full bg-muted border border-border text-text text-sm font-medium"
           >
-            <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
+            <span className="w-2 h-2 bg-accent rounded-full mr-2" />
             Now in Beta - Join 10,000+ professionals
           </motion.div>
 
@@ -46,7 +43,7 @@ export function HeroSection() {
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: 1.2, duration: 0.8 }}
-                className="absolute -bottom-2 left-0 right-0 h-1 bg-primary rounded-full origin-left"
+                className="absolute -bottom-2 left-0 right-0 h-1 bg-accent rounded-full origin-left"
               />
             </span>{' '}
             Your Professional Future
@@ -72,15 +69,15 @@ export function HeroSection() {
           >
             <Link
               href="/register"
-              className="group bg-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 transition-all duration-300 shadow-soft hover:shadow-medium flex items-center space-x-2"
+              className="group bg-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
             >
               <span>Get Started Free</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
 
-            <button 
+            <button
               onClick={() => setShowDemo(true)}
-              className="group border-2 border-primary/20 text-primary px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/5 transition-all duration-300 flex items-center space-x-2"
+              className="group border-2 border-border text-text px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-muted transition-all duration-300 flex items-center space-x-2"
             >
               <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>Watch Demo</span>
@@ -112,30 +109,6 @@ export function HeroSection() {
 
       {/* Demo Modal */}
       <DemoModal isOpen={showDemo} onClose={() => setShowDemo(false)} />
-
-      {/* Floating Elements */}
-      <motion.div
-        animate={{
-          y: [0, -20, 0],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute top-1/4 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl"
-      />
-      <motion.div
-        animate={{
-          y: [0, 20, 0],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute top-1/3 right-10 w-16 h-16 bg-accent/20 rounded-full blur-xl"
-      />
     </section>
   )
 }

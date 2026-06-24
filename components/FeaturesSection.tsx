@@ -9,37 +9,37 @@ const features = [
     icon: Users,
     title: 'Build Your Network',
     description: 'Connect with professionals in your field and discover new opportunities through meaningful relationships.',
-    color: 'bg-primary/10 text-primary'
+    color: 'bg-primary text-white'
   },
   {
     icon: Briefcase,
     title: 'Find Your Dream Job',
     description: 'Explore thousands of job opportunities from top companies and get matched with roles that fit your skills.',
-    color: 'bg-accent/10 text-accent'
+    color: 'bg-accent text-white'
   },
   {
     icon: MessageCircle,
     title: 'Real-time Messaging',
     description: 'Stay connected with your professional network through our integrated messaging system.',
-    color: 'bg-primary/10 text-primary'
+    color: 'bg-primary text-white'
   },
   {
     icon: TrendingUp,
     title: 'Career Growth Insights',
     description: 'Get personalized insights and recommendations to accelerate your career development.',
-    color: 'bg-accent/10 text-accent'
+    color: 'bg-accent text-white'
   },
   {
     icon: Shield,
     title: 'Privacy & Security',
     description: 'Your data is protected with enterprise-grade security and privacy controls.',
-    color: 'bg-primary/10 text-primary'
+    color: 'bg-primary text-white'
   },
   {
     icon: Zap,
     title: 'Lightning Fast',
     description: 'Built with modern technologies for the fastest and most responsive user experience.',
-    color: 'bg-accent/10 text-accent'
+    color: 'bg-accent text-white'
   }
 ]
 
@@ -56,7 +56,7 @@ export function FeaturesSection() {
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text mb-6">
             Everything You Need to{' '}
-            <span className="text-primary">Succeed</span>
+            <span className="text-accent">Succeed</span>
           </h2>
           <p className="text-lg text-text-muted max-w-3xl mx-auto">
             NavIN provides all the tools and connections you need to take your career to the next level.
@@ -73,7 +73,7 @@ export function FeaturesSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
-                className="group p-8 bg-background rounded-3xl shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-2"
+                className="group p-8 bg-background rounded-2xl border border-border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-2"
               >
                 <div className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-8 h-8" />
@@ -97,7 +97,7 @@ export function FeaturesSection() {
           transition={{ delay: 0.4, duration: 0.8 }}
           className="mt-16 text-center"
         >
-          <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-12">
+          <div className="bg-muted rounded-2xl p-12 border border-border">
             <h3 className="text-2xl sm:text-3xl font-bold text-text mb-4">
               Ready to Transform Your Career?
             </h3>
@@ -107,13 +107,13 @@ export function FeaturesSection() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/register"
-                className="bg-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 transition-colors shadow-soft hover:shadow-medium inline-block"
+                className="bg-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg inline-block"
               >
                 Join NavIN Today
               </Link>
               <Link
                 href="/about"
-                className="border-2 border-primary/20 text-primary px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/5 transition-colors inline-block"
+                className="border-2 border-border text-text px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-muted transition-colors inline-block"
               >
                 Learn More
               </Link>

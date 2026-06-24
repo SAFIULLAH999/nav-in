@@ -111,7 +111,7 @@ export default function StatusPage() {
           transition={{ delay: 0.2 }}
           className="mb-16"
         >
-          <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-8 border border-green-200">
+          <div className="bg-success/10 rounded-2xl p-8 border border-success/20">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
               <h2 className="text-2xl font-bold text-green-800">All Systems Operational</h2>

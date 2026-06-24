@@ -162,7 +162,7 @@ export default function PublicProfileClient({ initialUser }: PublicProfileClient
           className="bg-card rounded-xl shadow-soft border border-border overflow-hidden mb-8"
         >
           {/* Cover Photo */}
-          <div className="h-48 bg-gradient-to-r from-primary to-secondary relative">
+              <div className="h-48 bg-primary relative">
           </div>
 
           {/* Profile Info */}

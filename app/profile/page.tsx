@@ -120,7 +120,7 @@ export default function ProfilePage() {
           className="bg-card rounded-xl shadow-soft border border-border overflow-hidden mb-8"
         >
           {/* Cover Photo */}
-          <div className="h-48 bg-gradient-to-r from-primary to-secondary relative">
+          <div className="h-48 bg-primary relative">
             <button onClick={() => fileInputRef?.current?.click()} className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition-colors">
             </button>
           </div>

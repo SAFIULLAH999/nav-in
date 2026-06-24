@@ -97,7 +97,7 @@ export default function SkillPage() {
   const { skill, leaderboard, quizzes, endorsementCount } = skillData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -129,7 +129,7 @@ export default function SkillPage() {
           <div className="grid grid-cols-3 gap-4 mt-6">
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200"
+              className="bg-muted p-4 rounded-lg border border-border"
             >
               <div className="flex items-center gap-3">
                 <Users size={24} className="text-blue-600" />
@@ -144,7 +144,7 @@ export default function SkillPage() {
 
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200"
+              className="bg-muted p-4 rounded-lg border border-border"
             >
               <div className="flex items-center gap-3">
                 <BookOpen size={24} className="text-purple-600" />
@@ -159,7 +159,7 @@ export default function SkillPage() {
 
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200"
+              className="bg-muted p-4 rounded-lg border border-border"
             >
               <div className="flex items-center gap-3">
                 <Trophy size={24} className="text-green-600" />

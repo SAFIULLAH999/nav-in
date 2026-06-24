@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
@@ -33,7 +33,7 @@ import { useFirebase } from '@/components/FirebaseProvider'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [notificationCount, setNotificationCount] = useState(3) // Mock notification count
+  const [notificationCount, setNotificationCount] = useState(3)
   const [isPremium, setIsPremium] = useState(false)
   const [isTrial, setIsTrial] = useState(false)
   const [trialEndsAt, setTrialEndsAt] = useState<Date | null>(null)
@@ -58,7 +58,6 @@ export default function Navbar() {
     { name: "Sign out", href: "#", icon: LogOut },
   ]
 
-  // Check premium status when user is loaded
   useEffect(() => {
     if (isLoaded && user && isSignedIn) {
       const checkPremiumStatus = async () => {
@@ -91,16 +90,16 @@ export default function Navbar() {
   }, [isLoaded, user, isSignedIn])
 
   return (
-    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-surface border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo and Brand - Corporate */}
+          {/* Logo and Brand */}
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Crown className="w-4 h-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-bold text-text">
                 NavIn
               </span>
             </Link>
@@ -123,21 +122,21 @@ export default function Navbar() {
                   aria-label={`Navigate to ${item.name} page`}
                   className={`relative flex flex-col items-center px-3 py-2 rounded-lg transition-colors duration-150 touch-target focus-visible ${
                     isActive
-                      ? "text-primary dark:text-primary bg-gray-100 dark:bg-gray-700"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "text-primary bg-muted"
+                      : "text-text-muted hover:text-text hover:bg-muted"
                   }`}
                 >
-                   <div className="relative transition-transform duration-200 group-hover:scale-110">
+                   <div className="relative transition-transform duration-200">
                     <Icon className="w-5 h-5 mb-1 transition-all duration-200" />
                     {item.name === "Notifications" && notificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center animate-bounceSubtle">
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full border-2 border-surface flex items-center justify-center">
                         <span className="text-xs font-bold text-white">
                           {notificationCount > 9 ? '9+' : notificationCount}
                         </span>
                       </span>
                     )}
                   </div>
-                  <span className="text-xs font-medium transition-all duration-200 group-hover:font-medium">{item.name}</span>
+                  <span className="text-xs font-medium transition-all duration-200">{item.name}</span>
                   {isActive && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-full transition-all duration-300"></div>
                   )}
@@ -152,27 +151,17 @@ export default function Navbar() {
             <button
               onClick={toggleDarkMode}
               aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-              className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group relative touch-target focus-visible hover:scale-110 active:scale-95"
+              className="p-2.5 rounded-full hover:bg-muted transition-all duration-300 group relative touch-target focus-visible hover:scale-110 active:scale-95"
               title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
             >
               <div className="relative w-5 h-5 flex items-center justify-center">
                 {isDarkMode ? (
-                  <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-yellow-500 transition-all duration-300 rotate-0 scale-100" 
-                    style={{ 
-                      transform: `rotate(${Math.sin(Date.now() / 1000) * 10}deg)`,
-                      animation: 'sunRotate 10s linear infinite'
-                    }}
+                  <Sun className="w-5 h-5 text-text-muted group-hover:text-accent transition-all duration-300 rotate-0 scale-100"
                   />
                 ) : (
-                  <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-primary transition-all duration-300" />
+                  <Moon className="w-5 h-5 text-text-muted group-hover:text-primary transition-all duration-300" />
                 )}
               </div>
-              <style jsx>{`
-                @keyframes sunRotate {
-                  from { transform: rotate(0deg); }
-                  to { transform: rotate(360deg); }
-                }
-              `}</style>
             </button>
 
             {/* Post Button */}
@@ -188,206 +177,86 @@ export default function Navbar() {
             {/* User Profile */}
             {isLoaded && user ? (
               <div className="relative group">
-                <button 
+                <button
                   aria-label="User profile menu"
-                  className="flex items-center space-x-2 p-1 rounded-xl hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all duration-300 touch-target focus-visible"
+                  className="flex items-center space-x-2 p-1 rounded-xl hover:bg-muted transition-all duration-300 touch-target focus-visible"
                 >
                   <div className="relative">
-                    <Avatar src={user.imageUrl || null} name={user.fullName || user.username || 'User'} size="sm" className="ring-2 ring-white dark:ring-gray-700 shadow-lg" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
+                    <Avatar src={user.imageUrl || null} name={user.fullName || user.username || 'User'} size="sm" className="ring-2 ring-surface shadow-lg" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-surface flex items-center justify-center">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                     </div>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-200 transition-colors duration-200" />
+                  <ChevronDown className="w-4 h-4 text-text-muted" />
                 </button>
-
-                {/* Profile Dropdown */}
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-corporate-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                  <div className="px-4 py-3 border-b border-gray-200/60 dark:border-gray-700/60">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <Avatar src={user.imageUrl || null} name={user.fullName || user.username || 'User'} size="md" className="ring-2 ring-white dark:ring-gray-700" />
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900 dark:text-white">{user.fullName}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</div>
-                      </div>
-                    </div>
-                  </div>
-                  {profileMenuItems.map((item) => {
-                    const Icon = item.icon
-                    if (item.name === 'Sign out') {
-                      return (
-                        <button
-                          key={item.name}
-                          onClick={async () => {
-                            try {
-                              await firebaseSignOut()
-                              window.location.href = '/sign-in'
-                            } catch (err) {
-                              console.error('Sign out failed', err)
-                            }
-                          }}
-                          className="w-full text-left flex items-center px-4 py-3 hover:bg-gray-50/80 dark:hover:bg-gray-700/80 transition-colors duration-200"
-                        >
-                          <Icon className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400" />
-                          <span className="text-gray-900 dark:text-white">{item.name}</span>
-                        </button>
-                      )
-                    }
-
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className="flex items-center px-4 py-3 hover:bg-gray-50/80 dark:hover:bg-gray-700/80 transition-colors duration-200"
-                      >
-                        <Icon className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400" />
-                        <span className="text-gray-900 dark:text-white">{item.name}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Link
-                  href="/sign-in"
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 h-9 flex items-center rounded-lg transition-colors duration-200"
-                >
-                  Sign In
+              <div className="hidden md:flex items-center space-x-2">
+                <Link href="/sign-in">
+                  <Button variant="ghost" size="sm">Sign In</Button>
                 </Link>
-                <Link
-                  href="/sign-up"
-                  className="bg-primary text-white px-4 py-2 h-9 flex items-center rounded-lg transition-colors duration-150 hover:bg-primary/90"
-                >
-                  Sign Up
+                <Link href="/sign-up">
+                  <Button size="sm">Get Started</Button>
                 </Link>
               </div>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMenuOpen}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 touch-target focus-visible"
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
             >
               {isMenuOpen ? (
-                <X className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                <X className="w-6 h-6 text-text" />
               ) : (
-                <Menu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                <Menu className="w-6 h-6 text-text" />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-6 space-y-4">
-            {/* Mobile Search */}
-            <div className="relative">
-              <SearchBar mobile={true} />
-            </div>
-
-            {/* Mobile Navigation */}
-            <div className="space-y-2">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    aria-label={`Navigate to ${item.name} page`}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 mobile-nav-item focus-visible ${
-                      isActive
-                        ? "text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20"
-                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/80 dark:hover:bg-gray-800/50"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                )
-              })}
-            </div>
-
-            {/* Mobile Actions */}
-            <div className="pt-4 border-t border-gray-200/60 dark:border-gray-700/60 space-y-3">
-              {/* Mobile Theme Switcher */}
-              <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-gray-900 dark:text-white font-medium">Theme</span>
-                <button
-                  onClick={toggleDarkMode}
-                  aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-                  className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all duration-300 touch-target focus-visible"
+        <div className="md:hidden border-t border-border bg-surface">
+          <div className="px-4 pt-2 pb-4 space-y-1">
+            {navigation.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-muted text-primary"
+                      : "text-text-muted hover:bg-muted hover:text-text"
+                  }`}
                 >
-                  {isDarkMode ? (
-                    <Sun className="w-5 h-5 text-yellow-500" />
-                  ) : (
-                    <Moon className="w-5 h-5 text-blue-500" />
-                  )}
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {isDarkMode ? 'Light' : 'Dark'}
-                  </span>
-                </button>
-              </div>
-
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.name}</span>
+                </Link>
+              )
+            })}
+            <div className="pt-3 border-t border-border mt-3 space-y-2">
               {isLoaded && user ? (
                 <>
-                  <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50/80 dark:bg-gray-800/50 rounded-xl">
-                    <img
-                      src={user.imageUrl}
-                      alt={user.fullName || "User"}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900 dark:text-white">{user.fullName}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</div>
-                    </div>
-                  </div>
-                  {profileMenuItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setIsMenuOpen(false)}
-                        aria-label={item.name}
-                        className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 rounded-xl transition-colors duration-200 touch-target focus-visible"
-                      >
-                        <Icon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                        <span className="text-gray-900 dark:text-white">{item.name}</span>
-                      </Link>
-                    )
-                  })}
+                  <Link href="/profile" className="block">
+                    <Button variant="secondary" className="w-full">View Profile</Button>
+                  </Link>
+                  <Button variant="outline" className="w-full" onClick={() => firebaseSignOut?.()}>Sign Out</Button>
                 </>
               ) : (
-                <div className="space-y-2">
-                  <Link
-                    href="/sign-in"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-center px-4 py-3 border border-gray-200/60 dark:border-gray-600/60 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors duration-200 touch-target focus-visible"
-                  >
-                    Sign In
+                <>
+                  <Link href="/sign-in">
+                    <Button variant="secondary" className="w-full">Sign In</Button>
                   </Link>
-                  <Link
-                    href="/sign-up"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-center px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-lg touch-target focus-visible"
-                  >
-                    Sign Up
+                  <Link href="/sign-up">
+                    <Button className="w-full">Get Started</Button>
                   </Link>
-                </div>
+                </>
               )}
             </div>
           </div>

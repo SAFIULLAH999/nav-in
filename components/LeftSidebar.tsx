@@ -27,7 +27,6 @@ export function LeftSidebar() {
 
       if (!token || !user) return
 
-      // Load user profile
       const profileResponse = await fetch('/api/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -39,7 +38,6 @@ export function LeftSidebar() {
         setUserProfile(profileData.data)
       }
 
-      // Load connections count
       const connectionsResponse = await fetch('/api/connections', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -77,24 +75,24 @@ export function LeftSidebar() {
       className="hidden lg:block w-64 xl:w-80 bg-surface border-r border-border p-6 space-y-6"
     >
       {/* User Profile Card */}
-      <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl border border-primary/10 p-6 shadow-soft">
+      <div className="bg-muted rounded-2xl border border-border p-6 shadow-md">
         {loading ? (
           <div className="animate-pulse">
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-16 h-16 bg-secondary rounded-full"></div>
+              <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
               <div className="space-y-2">
-                <div className="h-4 bg-secondary rounded w-24"></div>
-                <div className="h-3 bg-secondary rounded w-32"></div>
+                <div className="h-4 bg-gray-300 rounded w-24"></div>
+                <div className="h-3 bg-gray-300 rounded w-32"></div>
               </div>
             </div>
-            <div className="h-3 bg-secondary rounded w-20 mb-4"></div>
-            <div className="h-10 bg-secondary rounded-2xl w-full"></div>
+            <div className="h-3 bg-gray-300 rounded w-20 mb-4"></div>
+            <div className="h-10 bg-gray-300 rounded-2xl w-full"></div>
           </div>
         ) : (
           <>
             <div className="flex items-center space-x-4 mb-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold text-xl shadow-soft">
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-semibold text-xl shadow-md">
                   {getUserInitials(getUserDisplayName())}
                 </div>
                 <div className="absolute -bottom-1 -right-1">
@@ -110,7 +108,7 @@ export function LeftSidebar() {
               {connectionsCount.toLocaleString()} connections
             </div>
             <Link href="/profile">
-              <button className="w-full text-sm text-primary hover:bg-primary/10 py-3 px-4 rounded-2xl transition-all duration-300 font-medium border border-primary/20 hover:border-primary/40">
+              <button className="w-full text-sm text-primary hover:bg-primary/10 py-3 px-4 rounded-2xl transition-all duration-300 font-medium border border-border hover:border-primary">
                 View Profile
               </button>
             </Link>
@@ -130,13 +128,13 @@ export function LeftSidebar() {
       <div className="pt-6 border-t border-border">
         <h4 className="text-base font-semibold text-text mb-4">Recent Activity</h4>
         <div className="space-y-3">
-          <div className="text-sm text-text-muted hover:text-primary cursor-pointer transition-colors p-2 rounded-xl hover:bg-secondary">
+          <div className="text-sm text-text-muted hover:text-primary cursor-pointer transition-colors p-2 rounded-xl hover:bg-muted">
             # React Development
           </div>
-          <div className="text-sm text-text-muted hover:text-primary cursor-pointer transition-colors p-2 rounded-xl hover:bg-secondary">
+          <div className="text-sm text-text-muted hover:text-primary cursor-pointer transition-colors p-2 rounded-xl hover:bg-muted">
             # Frontend Engineering
           </div>
-          <div className="text-sm text-text-muted hover:text-primary cursor-pointer transition-colors p-2 rounded-xl hover:bg-secondary">
+          <div className="text-sm text-text-muted hover:text-primary cursor-pointer transition-colors p-2 rounded-xl hover:bg-muted">
             # Career Growth
           </div>
         </div>
@@ -150,7 +148,7 @@ export function LeftSidebar() {
 
 function SidebarLink({ icon: Icon, label, count, href }: { icon: any, label: string, count?: string, href?: string }) {
   const content = (
-    <div className="flex items-center justify-between p-3 hover:bg-secondary rounded-2xl cursor-pointer transition-all duration-300 group w-full">
+    <div className="flex items-center justify-between p-3 hover:bg-muted rounded-2xl cursor-pointer transition-all duration-300 group w-full">
       <div className="flex items-center space-x-4">
         <Icon className="w-6 h-6 text-text-muted group-hover:text-primary transition-colors" />
         <span className="text-base font-medium text-text group-hover:text-primary transition-colors">{label}</span>

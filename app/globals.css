@@ -8,284 +8,110 @@
   * {
     @apply border-border;
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply bg-background text-text font-sans antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    /* Use CSS variable so dark mode can be pure black when needed */
     background: rgb(var(--background));
     min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-background text-text font-sans antialiased;
   }
 
-  /* Corporate Professional Variables */
   :root {
-    /* Primary Colors - Deep Corporate Navy */
-    --primary: 10 36 99;
+    --primary: 24 24 27;
     --primary-foreground: 255 255 255;
-    --primary-light: 30 64 175;
-    --primary-dark: 4 20 69;
+    --primary-light: 63 63 70;
+    --primary-dark: 9 9 11;
 
-    /* Slate Colors */
-    --slate: 62 76 89;
-    --slate-foreground: 255 255 255;
-
-    /* Accent Colors - Conservative Blue */
-    --accent: 30 64 175;
+    --accent: 239 68 68;
     --accent-foreground: 255 255 255;
 
-    /* Background Colors - Light Mode Default */
-    --background: 245 247 250;
-    --foreground: 26 32 44;
+    --background: 250 250 250;
+    --foreground: 24 24 27;
     --surface: 255 255 255;
-    --surface-light: 255 255 255;
+    --surface-light: 244 244 245;
 
-    /* Card Colors */
     --card: 255 255 255;
-    --card-foreground: 26 32 44;
+    --card-foreground: 24 24 27;
 
-    /* Muted Colors */
-    --muted: 247 250 252;
-    --muted-foreground: 74 85 104;
+    --muted: 244 244 245;
+    --muted-foreground: 113 113 122;
 
-    /* Border Colors */
-    --border: 226 232 240;
-    --border-light: 237 242 247;
+    --border: 228 228 231;
+    --border-light: 244 244 245;
 
-    /* Success, Warning, Error - Professional */
-    --success: 5 122 85;
-    --error: 197 48 48;
-    --warning: 192 86 33;
-    --info: 43 108 176;
+    --success: 34 197 94;
+    --error: 239 68 68;
+    --warning: 245 158 11;
+    --info: 59 130 246;
   }
 
-  /* Dark Mode */
   .dark {
-    --background: 15 20 25;
-    --foreground: 247 250 252;
-    --surface: 26 32 44;
-    --card: 26 32 44;
-    --muted: 45 55 72;
-    --muted-foreground: 160 174 192;
-    --border: 45 55 72;
+    --background: 9 9 11;
+    --foreground: 250 250 250;
+    --surface: 24 24 27;
+    --card: 24 24 27;
+    --muted: 39 39 42;
+    --muted-foreground: 161 161 170;
+    --border: 39 39 42;
   }
 }
 
 @layer components {
-  /* Corporate Card */
-  .corporate-card {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-corporate transition-all duration-300;
-  }
-
-  .corporate-card:hover {
-    @apply border-primary/30 dark:border-primary/40 shadow-corporate-xl -translate-y-1;
-  }
-
-  /* Accent Animations */
-  .animate-float-slow {
-    animation: floatSlow 6s ease-in-out infinite;
-  }
-
-  .animate-pulse-subtle {
-    animation: pulseSubtle 3s ease-in-out infinite;
-  }
-
-  .animate-glow-accent {
-    animation: glowAccent 2s ease-in-out infinite alternate;
-  }
-
-  .animate-shimmer {
-    background-size: 200% 100%;
-    animation: shimmerSlide 2s linear infinite;
-  }
-
-  .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
-  }
-
-  .hover-glow {
-    @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/20;
-  }
-
-  .hover-scale {
-    @apply transition-all duration-200 hover:scale-105 active:scale-95;
-  }
-
-  /* Corporate Navigation */
-  .nav-corporate {
-    @apply fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-subtle;
-  }
-
-  /* Corporate Button Styles */
   .btn-primary {
-    @apply bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50;
+    @apply bg-primary text-white font-semibold px-6 py-3 rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:opacity-90 active:scale-95;
   }
 
   .btn-secondary {
-    @apply bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium px-6 py-3 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500/50;
+    @apply bg-surface-light text-text font-semibold px-6 py-3 rounded-xl border border-border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:bg-border-light active:scale-95;
   }
 
   .btn-outline {
-    @apply border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium px-6 py-3 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500/50;
+    @apply border-2 border-primary text-primary font-semibold px-6 py-3 rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:bg-primary hover:text-white active:scale-95;
   }
 
-  /* Corporate Input Styles */
   .input-corporate {
-    @apply w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 px-4 py-3 rounded-lg transition-colors duration-150;
+    @apply w-full bg-surface border border-border text-foreground px-4 py-3 rounded-xl transition-all duration-150;
   }
 
   .input-corporate::placeholder {
-    @apply text-gray-500 dark:text-gray-400;
+    @apply text-muted-foreground;
   }
 
   .input-corporate:focus {
-    @apply outline-none border-primary dark:border-primary ring-2 ring-primary/20;
+    @apply outline-none border-primary ring-2 ring-primary/20;
   }
 
-  /* Corporate Avatar */
-  .avatar-corporate {
-    @apply bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600;
+  .card-base {
+    @apply bg-card text-card-foreground rounded-2xl border border-border transition-all duration-200;
   }
 
-  /* Corporate Badge */
   .badge-corporate {
-    @apply inline-flex items-center bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2.5 py-0.5 text-xs font-medium rounded;
+    @apply inline-flex items-center bg-surface-light text-foreground px-3 py-1 text-xs font-semibold rounded-full border border-border;
   }
 
   .badge-primary {
-    @apply bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium rounded;
+    @apply inline-flex items-center bg-primary text-white px-3 py-1 text-xs font-semibold rounded-full;
   }
 
-  /* Corporate Scrollbar */
   .scrollbar-corporate::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   .scrollbar-corporate::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800 rounded;
+    @apply bg-surface-light rounded;
   }
 
   .scrollbar-corporate::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 dark:bg-gray-600 rounded hover:bg-gray-500 dark:hover:bg-gray-500;
-  }
-
-  /* Corporate Backdrop */
-  .backdrop-corporate {
-    @apply bg-black/50;
-  }
-
-  /* Corporate Shadows */
-  .shadow-corporate {
-    @apply shadow-sm;
-  }
-
-  .shadow-corporate-lg {
-    @apply shadow-md;
-  }
-
-  .shadow-corporate-xl {
-    @apply shadow-lg;
-  }
-
-  /* Corporate Border */
-  .border-corporate {
-    @apply border border-gray-200 dark:border-gray-700;
+    @apply bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500;
   }
 }
 
-/* Enhanced Corporate Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: calc(200px + 100%) 0;
-  }
-}
-
-@keyframes shimmerSlide {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes pulseSubtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.02); }
-}
-
-@keyframes glowAccent {
-  from { 
-    box-shadow: 0 0 5px rgba(30, 64, 175, 0.2);
-  }
-  to { 
-    box-shadow: 0 0 15px rgba(30, 64, 175, 0.4), 0 0 30px rgba(30, 64, 175, 0.1);
-  }
-}
-
-@keyframes bounceSubtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes bounceSubtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Loading States */
-.skeleton-loading {
-  @apply bg-gray-200 dark:bg-gray-700;
-  background: linear-gradient(90deg, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.05) 75%);
-  background-size: 200px 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* Enhanced Touch Targets */
-.touch-target {
-  @apply min-h-[44px] min-w-[44px];
-}
-
-/* Focus Visible for Accessibility */
-.focus-visible {
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
-}
-
-/* Responsive Design Helpers */
-@media (max-width: 768px) {
-  .mobile-nav-item {
-    @apply py-4 px-4; /* Larger touch targets */
-  }
-  
-  .mobile-search {
-    @apply mx-2 rounded-lg;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }

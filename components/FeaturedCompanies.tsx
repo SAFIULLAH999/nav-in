@@ -127,7 +127,7 @@ export function FeaturedCompanies() {
           transition={{ delay: 0.4 }}
           className="text-center"
         >
-          <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl p-8">
+          <div className="bg-muted rounded-2xl p-8 border border-border">
             <h3 className="text-xl font-bold text-text mb-4">
               Want to feature your company here?
             </h3>

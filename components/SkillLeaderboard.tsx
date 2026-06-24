@@ -115,7 +115,7 @@ export const SkillLeaderboard: React.FC<SkillLeaderboardProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
+          className="mb-6 p-4 bg-muted rounded-lg border-2 border-border"
         >
           <div className="flex items-center justify-between">
             <div>

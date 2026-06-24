@@ -146,7 +146,7 @@ export default function PricingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-12 text-center"
+          className="bg-muted rounded-3xl p-12 text-center border border-border"
         >
           <Zap className="w-16 h-16 text-primary mx-auto mb-6" />
           <h3 className="text-2xl font-bold text-text mb-4">

@@ -12,7 +12,7 @@ export function RightSidebar() {
       className="hidden xl:block w-72 lg:w-80 bg-surface border-l border-border p-6 space-y-6"
     >
       {/* Trending Topics */}
-      <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl border border-primary/10 p-6 shadow-soft">
+      <div className="bg-muted rounded-2xl border border-border p-6 shadow-md">
         <h3 className="font-semibold text-lg text-text mb-4">Trending Topics</h3>
         <div className="space-y-4">
           <TrendingTopic
@@ -40,7 +40,7 @@ export function RightSidebar() {
       <OnlineUsersList />
 
       {/* Suggested People */}
-      <div className="bg-surface rounded-3xl border border-border p-6 shadow-soft">
+      <div className="bg-surface rounded-2xl border border-border p-6 shadow-md">
         <h3 className="font-semibold text-lg text-text mb-4">People you may know</h3>
         <div className="space-y-4">
           <SuggestedPerson
@@ -65,10 +65,7 @@ export function RightSidebar() {
       </div>
 
       {/* Advertisement Placeholder */}
-      <div className="bg-gradient-to-br from-primary to-accent rounded-3xl p-8 text-white shadow-soft relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10" />
-        <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
-
+      <div className="bg-primary rounded-2xl p-8 text-white shadow-md">
         <div className="relative">
           <div className="flex items-center mb-3">
             <Info className="w-5 h-5 mr-2" />
@@ -78,7 +75,7 @@ export function RightSidebar() {
           <p className="text-sm opacity-90 mb-6 leading-relaxed">
             Get unlimited access to insights and opportunities that matter to your career growth.
           </p>
-          <button className="bg-white text-primary px-6 py-3 rounded-2xl text-sm font-semibold hover:bg-white/90 transition-all duration-300 shadow-soft">
+          <button className="bg-accent text-white px-6 py-3 rounded-2xl text-sm font-semibold hover:bg-accent/90 transition-all duration-300 shadow-md">
             Learn more
           </button>
         </div>
@@ -110,12 +107,12 @@ export function RightSidebar() {
 
 function TrendingTopic({ title, posts, trending }: { title: string, posts: string, trending?: boolean }) {
   return (
-    <div className="flex items-center justify-between p-3 hover:bg-secondary/50 rounded-2xl cursor-pointer transition-all duration-300 group">
+    <div className="flex items-center justify-between p-3 hover:bg-background rounded-2xl cursor-pointer transition-all duration-300 group">
       <div className="flex-1">
         <div className="flex items-center space-x-3 mb-1">
           <h4 className="font-medium text-sm text-text group-hover:text-primary transition-colors">{title}</h4>
           {trending && (
-            <span className="bg-primary text-white text-xs px-2 py-1 rounded-full font-medium">
+            <span className="bg-accent text-white text-xs px-2 py-1 rounded-full font-medium">
               Trending
             </span>
           )}
@@ -129,8 +126,8 @@ function TrendingTopic({ title, posts, trending }: { title: string, posts: strin
 
 function SuggestedPerson({ name, title, mutual }: { name: string, title: string, mutual: number }) {
   return (
-    <div className="flex items-center space-x-4 p-2 rounded-2xl hover:bg-secondary transition-all duration-300">
-      <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center text-text font-semibold text-base">
+    <div className="flex items-center space-x-4 p-2 rounded-2xl hover:bg-muted transition-all duration-300">
+      <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-semibold text-base">
         {name.split(' ').map(n => n[0]).join('')}
       </div>
       <div className="flex-1 min-w-0">
@@ -138,7 +135,7 @@ function SuggestedPerson({ name, title, mutual }: { name: string, title: string,
         <p className="text-xs text-text-muted truncate">{title}</p>
         <p className="text-xs text-text-muted">{mutual} mutual connections</p>
       </div>
-      <button className="bg-primary text-white px-4 py-2 rounded-2xl text-xs font-medium hover:bg-primary/90 transition-colors shadow-soft">
+      <button className="bg-accent text-white px-4 py-2 rounded-2xl text-xs font-medium hover:bg-accent/90 transition-colors shadow-md">
         Connect
       </button>
     </div>

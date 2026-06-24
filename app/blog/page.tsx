@@ -121,7 +121,7 @@ export default function BlogPage() {
           transition={{ delay: 0.4 }}
           className="mt-16 text-center"
         >
-          <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-12">
+          <div className="bg-muted rounded-3xl p-12">
             <h3 className="text-2xl font-bold text-text mb-4">
               Stay Updated
             </h3>

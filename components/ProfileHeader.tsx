@@ -14,13 +14,13 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-soft"
+      className="bg-card rounded-2xl border border-border overflow-hidden shadow-md"
     >
       {/* Banner */}
-      <div className="h-48 bg-gradient-to-r from-primary via-primary/80 to-accent relative">
-        <div className="absolute inset-0 bg-black/10" />
+      <div className="h-48 bg-primary relative">
+        <div className="absolute inset-0 bg-primary/80" />
         <div className="absolute -bottom-16 left-6">
-          <div className="w-32 h-32 bg-primary rounded-full border-4 border-white flex items-center justify-center text-white text-3xl font-bold shadow-soft overflow-hidden">
+          <div className="w-32 h-32 bg-primary rounded-full border-4 border-card flex items-center justify-center text-white text-3xl font-bold shadow-md overflow-hidden">
             {user.avatar ? (
               <img
                 src={user.avatar}
@@ -38,7 +38,7 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
           </div>
         </div>
         {isOwnProfile && (
-          <button className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-700 p-2 rounded-full hover:bg-white transition-colors shadow-soft">
+          <button className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm text-text p-2 rounded-full hover:bg-card transition-colors shadow-md">
             <Edit3 className="w-5 h-5" />
           </button>
         )}
@@ -48,11 +48,11 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
       <div className="pt-20 px-6 pb-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">{user.name}</h1>
-            <p className="text-lg text-gray-600 mb-3">{user.title} at {user.company}</p>
+            <h1 className="text-3xl font-bold text-text mb-1">{user.name}</h1>
+            <p className="text-lg text-text-muted mb-3">{user.title} at {user.company}</p>
 
             {/* Contact Information */}
-            <div className="flex flex-wrap items-center text-gray-500 text-sm gap-4 mb-4">
+            <div className="flex flex-wrap items-center text-text-muted text-sm gap-4 mb-4">
               <div className="flex items-center">
                 <MapPin className="w-4 h-4 mr-1" />
                 {user.location}
@@ -68,7 +68,7 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
             </div>
 
             {/* About Summary */}
-            <p className="text-gray-700 leading-relaxed max-w-2xl">
+            <p className="text-text-muted leading-relaxed max-w-2xl">
               Passionate software engineer with 5+ years of experience in full-stack development.
               Specialized in React, Node.js, and cloud technologies. Love building scalable web applications
               and mentoring junior developers.
@@ -76,7 +76,7 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
           </div>
 
           {isOwnProfile && (
-            <button className="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center space-x-2 shadow-soft">
+            <button className="bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center space-x-2 shadow-md">
               <Edit3 className="w-4 h-4" />
               <span>Edit Profile</span>
             </button>
@@ -85,72 +85,72 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
 
        {/* Connection Tiers Visualization */}
        {isOwnProfile && (
-         <div className="pt-6 border-t border-gray-200">
-           <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Network Tiers</h3>
+         <div className="pt-6 border-t border-border">
+           <h3 className="text-lg font-semibold text-text mb-4">Your Network Tiers</h3>
            <div className="grid grid-cols-3 gap-4">
              <div className="text-center">
-               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-2">
                  <Users className="w-8 h-8 text-primary" />
                </div>
-               <div className="text-2xl font-bold text-gray-900">128</div>
-               <div className="text-sm text-gray-600">1st Degree</div>
-               <div className="text-xs text-gray-500">Direct connections</div>
+               <div className="text-2xl font-bold text-text">128</div>
+               <div className="text-sm text-text-muted">1st Degree</div>
+               <div className="text-xs text-text-muted">Direct connections</div>
              </div>
              <div className="text-center">
-               <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                 <Users className="w-8 h-8 text-secondary" />
-               </div>
-               <div className="text-2xl font-bold text-gray-900">456</div>
-               <div className="text-sm text-gray-600">2nd Degree</div>
-               <div className="text-xs text-gray-500">Connections of connections</div>
-             </div>
-             <div className="text-center">
-               <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-2">
+               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-2">
                  <Users className="w-8 h-8 text-accent" />
                </div>
-               <div className="text-2xl font-bold text-gray-900">1,234</div>
-               <div className="text-sm text-gray-600">3rd Degree</div>
-               <div className="text-xs text-gray-500">Extended network</div>
+               <div className="text-2xl font-bold text-text">456</div>
+               <div className="text-sm text-text-muted">2nd Degree</div>
+               <div className="text-xs text-text-muted">Connections of connections</div>
+             </div>
+             <div className="text-center">
+               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-2">
+                 <Users className="w-8 h-8 text-primary" />
+               </div>
+               <div className="text-2xl font-bold text-text">1,234</div>
+               <div className="text-sm text-text-muted">3rd Degree</div>
+               <div className="text-xs text-text-muted">Extended network</div>
              </div>
            </div>
          </div>
        )}
 
        {/* Stats Grid */}
-       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-gray-200">
+       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-border">
          <div className="text-center">
            <div className="flex items-center justify-center mb-1">
              <Users className="w-5 h-5 text-primary mr-2" />
-             <span className="text-2xl font-bold text-gray-900">{user.connections.toLocaleString()}</span>
+             <span className="text-2xl font-bold text-text">{user.connections.toLocaleString()}</span>
            </div>
-           <span className="text-gray-600 text-sm">connections</span>
+           <span className="text-text-muted text-sm">connections</span>
          </div>
 
          <div className="text-center">
            <div className="flex items-center justify-center mb-1">
              <Eye className="w-5 h-5 text-primary mr-2" />
-             <span className="text-2xl font-bold text-gray-900">234</span>
+             <span className="text-2xl font-bold text-text">234</span>
            </div>
-           <span className="text-gray-600 text-sm">profile views</span>
+           <span className="text-text-muted text-sm">profile views</span>
          </div>
 
          <div className="text-center">
            <div className="flex items-center justify-center mb-1">
              <Briefcase className="w-5 h-5 text-primary mr-2" />
-             <span className="text-2xl font-bold text-gray-900">12</span>
+             <span className="text-2xl font-bold text-text">12</span>
            </div>
-           <span className="text-gray-600 text-sm">jobs applied</span>
+           <span className="text-text-muted text-sm">jobs applied</span>
          </div>
 
          <div className="text-center">
            <div className="flex items-center justify-center mb-1">
              <Award className="w-5 h-5 text-primary mr-2" />
-             <span className="text-2xl font-bold text-gray-900">8</span>
+             <span className="text-2xl font-bold text-text">8</span>
            </div>
-           <span className="text-gray-600 text-sm">certifications</span>
+           <span className="text-text-muted text-sm">certifications</span>
          </div>
        </div>
-      </div>
-    </motion.div>
-  )
+     </div>
+   </motion.div>
+ )
 }

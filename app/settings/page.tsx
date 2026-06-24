@@ -82,7 +82,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-gradient-to-br from-surface via-surface/80 to-surface/60 rounded-xl border border-border/50 p-6 shadow-lg">
+          <div className="bg-surface rounded-xl border border-border p-6 shadow-md">
             <nav className="space-y-3">
               {tabs.map((tab) => {
                 const Icon = tab.icon
@@ -94,7 +94,7 @@ export default function SettingsPage() {
                     whileTap={{ scale: 0.98 }}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
+                         ? 'bg-primary text-white shadow-md'
                         : 'text-text-muted hover:bg-secondary/50 hover:text-text'
                     }`}
                   >
@@ -114,7 +114,7 @@ export default function SettingsPage() {
             initial={{ opacity: 0, x: 20, scale: 0.95 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="bg-gradient-to-br from-surface via-surface/80 to-surface/60 rounded-xl border border-border/50 p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-surface rounded-xl border border-border p-6 shadow-md hover:shadow-xl transition-all duration-300"
           >
             {activeTab === 'account' && <AccountSettings formData={formData} setFormData={setFormData} />}
             {activeTab === 'appearance' && <AppearanceSettings />}
@@ -127,7 +127,7 @@ export default function SettingsPage() {
                 onClick={handleSave}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-primary to-primary/90 text-white px-8 py-3 rounded-xl font-medium hover:from-primary/90 hover:to-primary transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                className="bg-primary text-white px-8 py-3 rounded-xl font-medium hover:bg-primary/90 transition-all duration-300 flex items-center space-x-2 shadow-md hover:shadow-xl"
               >
                 <Save className="w-4 h-4" />
                 <span>Save Changes</span>
@@ -333,8 +333,8 @@ function AppearanceSettings() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ${
-              isDarkMode ? 'bg-gradient-to-r from-primary to-primary/80' : 'bg-gradient-to-r from-gray-300 to-gray-400'
-            } shadow-lg`}
+              isDarkMode ? 'bg-primary' : 'bg-gray-400'
+            } shadow-md`}
           >
             <motion.span
               animate={{ x: isDarkMode ? 20 : 4 }}
@@ -356,8 +356,8 @@ function AppearanceSettings() {
               whileTap={{ scale: 0.95 }}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                 !isDarkMode
-                  ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
-                  : 'bg-gradient-to-r from-secondary to-secondary/80 text-text-muted hover:text-text hover:shadow-md'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-muted text-text hover:bg-muted/80 hover:shadow-md'
               }`}
             >
               Light
@@ -368,8 +368,8 @@ function AppearanceSettings() {
               whileTap={{ scale: 0.95 }}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                 isDarkMode
-                  ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
-                  : 'bg-gradient-to-r from-secondary to-secondary/80 text-text-muted hover:text-text hover:shadow-md'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-muted text-text hover:bg-muted/80 hover:shadow-md'
               }`}
             >
               Dark
@@ -381,18 +381,18 @@ function AppearanceSettings() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.3 }}
-          className="p-6 border border-border/50 rounded-xl bg-gradient-to-br from-card/50 to-card/30 shadow-lg"
+          className="p-6 border border-border/50 rounded-xl bg-muted/50 shadow-md"
         >
           <h3 className="font-medium mb-4">Preview</h3>
           <div className="space-y-4">
             <motion.div
               animate={{ opacity: isDarkMode ? 0.8 : 1 }}
               transition={{ duration: 0.3 }}
-              className={`p-4 rounded-xl border transition-all duration-300 ${
-                isDarkMode
-                  ? 'bg-gradient-to-br from-gray-800/80 to-gray-900/60 border-gray-700/50 shadow-inner'
-                  : 'bg-gradient-to-br from-gray-50 to-gray-100/80 border-gray-200/60 shadow-sm'
-              }`}
+               className={`p-4 rounded-xl border transition-all duration-300 ${
+                 isDarkMode
+                   ? 'bg-primary/80 border-border/50 shadow-inner'
+                   : 'bg-muted border-gray-200/60 shadow-sm'
+               }`}
             >
               <div className={`h-3 w-3/4 rounded-full mb-3 ${isDarkMode ? 'bg-gray-700/60' : 'bg-gray-200'}`}></div>
               <div className={`h-2 w-1/2 rounded-full ${isDarkMode ? 'bg-gray-600/60' : 'bg-gray-300'}`}></div>
@@ -400,11 +400,11 @@ function AppearanceSettings() {
             <motion.div
               animate={{ opacity: isDarkMode ? 0.9 : 1 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className={`p-3 rounded-lg border transition-all duration-300 ${
-                isDarkMode
-                  ? 'bg-gradient-to-br from-gray-800/60 to-gray-850/40 border-gray-700/40'
-                  : 'bg-gradient-to-br from-white to-gray-50/80 border-gray-200/50'
-              }`}
+               className={`p-3 rounded-lg border transition-all duration-300 ${
+                 isDarkMode
+                   ? 'bg-primary/60 border-border/40'
+                   : 'bg-surface border-gray-200/50'
+               }`}
             >
               <div className={`h-2 w-full rounded-full mb-2 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'}`}></div>
               <div className={`h-2 w-2/3 rounded-full ${isDarkMode ? 'bg-gray-600/50' : 'bg-gray-200'}`}></div>

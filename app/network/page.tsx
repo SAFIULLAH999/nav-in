@@ -176,22 +176,14 @@ export default function NetworkPage() {
           initial={{ opacity: 0, x: 20, scale: 0.95 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="rounded-3xl bg-gradient-to-br from-card/60 via-card/40 to-card/20 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 100%)',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.05)'
-          }}
+          className="rounded-3xl bg-card border border-border shadow-xl overflow-hidden"
         >
           {loading ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="bg-card/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-12 text-center"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.1)'
-              }}
+              className="bg-card border border-border rounded-3xl shadow-xl p-12 text-center"
             >
               <motion.div
                 animate={{ rotate: 360 }}
@@ -244,13 +236,10 @@ function ConnectionsTab({ connections }: { connections: Connection[] }) {
             transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }
           }}
           whileTap={{ scale: 0.98 }}
-          className="group bg-gradient-to-br from-card via-card/80 to-card/60 rounded-3xl shadow-lg border border-border/50 p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-500 relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-          }}
+          className="group bg-card rounded-3xl shadow-lg border border-border p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-500 relative overflow-hidden"
         >
-          {/* Animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          {/* Hover effect */}
+          <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
           {/* Floating particles effect */}
           <div className="absolute top-4 right-4 w-2 h-2 bg-primary/20 rounded-full animate-pulse" />
@@ -582,10 +571,10 @@ function BrowseUsersTab() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
       whileHover={{ y: -4, scale: 1.01 }}
-      className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-br from-[#1a1b1e] to-[#111214] border border-[#2a2b2e]/30 shadow-md group"
+      className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-primary border border-border shadow-md group"
     >
       <div className="flex items-start md:items-center gap-4 flex-1">
-        <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+        <div className="relative w-14 h-14 rounded-full bg-accent flex items-center justify-center text-white font-semibold overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
           {user.avatar ? (
             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
           ) : (
@@ -666,7 +655,7 @@ function BrowseUsersTab() {
             disabled={connectingUsers.has(user.id)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-white text-sm font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg"
           >
             {connectingUsers.has(user.id) ? (
               <motion.div
@@ -698,7 +687,7 @@ function BrowseUsersTab() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-2xl bg-gradient-to-br from-[#1a1b1e] to-[#0f1012] p-6 md:p-8 border border-[#2a2b2e] shadow-xl"
+         className="rounded-2xl bg-primary p-6 md:p-8 border border-border shadow-xl"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="flex-1">
@@ -831,7 +820,7 @@ function BrowseUsersTab() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#1a1b1e] to-[#0f1012] rounded-2xl p-12 text-center border border-[#2a2b2e]/50 shadow-xl"
+          className="bg-primary rounded-2xl p-12 text-center border border-border shadow-xl"
         >
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
@@ -850,7 +839,7 @@ function BrowseUsersTab() {
               onClick={() => loadUsers()}
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <Users className="w-5 h-5" />
               <span>Browse All Users</span>
@@ -929,10 +918,10 @@ function BrowseUsersTab() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * userIndex }}
                 whileHover={{ y: -4, scale: 1.02 }}
-                className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-[#1a1b1e] to-[#111214] border border-[#2a2b2e]/30 shadow-md"
+                className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-md"
               >
                 <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold overflow-hidden shadow-md">
+                  <div className="relative w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white font-semibold overflow-hidden shadow-md">
                     {user.avatar ? (
                       <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
@@ -975,7 +964,7 @@ function BrowseUsersTab() {
                       disabled={connectingUsers.has(user.id)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-white text-sm font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                     >
                       {connectingUsers.has(user.id) ? (
                         <motion.div
