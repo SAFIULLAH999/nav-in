@@ -56,6 +56,34 @@ export default function JobsPage() {
     return () => clearInterval(interval)
   }, [autoFetch, searchTerm, locationFilter, fetchCount])
 
+  useEffect(() => {
+    const es = new EventSource('/api/events')
+    const handler = (ev: MessageEvent) => {
+      try {
+        const payload = JSON.parse(ev.data)
+        if (payload.type === 'job_update') {
+          const data = payload.data || {}
+          if (data.type === 'JOB_CREATED' && data.job) {
+            setJobs(prev => {
+              const exists = prev.some(j => j.id === data.job.id)
+              return exists ? prev : [data.job, ...prev]
+            })
+            setHasMore(true)
+          } else if (data.type === 'JOB_REMOVED' && data.jobId) {
+            setJobs(prev => prev.filter(j => j.id !== data.jobId))
+          } else if (data.type === 'JOB_UPDATED' && data.jobId) {
+            setJobs(prev => prev.map(j => j.id === data.jobId ? { ...j, ...data.updates } : j))
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    es.addEventListener('message', handler)
+    return () => {
+      es.removeEventListener('message', handler)
+      es.close()
+    }
+  }, [])
+
   const fetchJobs = async (append = false) => {
     try {
       if (!append) {
@@ -402,21 +430,6 @@ export default function JobsPage() {
         {/* Job Listings */}
         <div className="space-y-4">
           {loading ? (
-            <div className="bg-card rounded-xl shadow-soft border border-border p-8 text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-text-muted">Loading jobs...</p>
-            </div>
-            ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-              <p className="text-red-600 mb-4">{error}</p>
-              <button
-                onClick={() => fetchJobs(false)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : loading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, idx) => (
                 <div key={idx} className="bg-card rounded-xl shadow-soft border border-border p-6 animate-pulse">
@@ -436,6 +449,16 @@ export default function JobsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => fetchJobs(false)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           ) : filteredJobs.length > 0 ? (
             filteredJobs.map((job, index) => (

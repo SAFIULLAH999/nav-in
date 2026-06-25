@@ -2,7 +2,6 @@
 
 import Navbar from '@/components/Navbar'
 import { ClerkProvider } from '@clerk/nextjs'
-import { DarkModeProvider } from '@/components/DarkModeProvider'
 import { SocketProvider } from '@/components/SocketProvider'
 import { RealTimeProvider } from '@/components/providers/RealTimeProvider'
 import { LiveblocksProvider } from '@/components/providers/LiveblocksProvider'
@@ -24,30 +23,22 @@ export default function LayoutContent({ children }: LayoutContentProps) {
   return (
     <ClerkProvider>
       <FirebaseProvider>
-        <DarkModeProvider>
-          <SocketProvider>
+        <SocketProvider>
             <LiveblocksProvider>
               <AblyProvider>
                 <ActivityTracker>
                   <div className="min-h-screen flex flex-col">
                     {!isAuthPage && <Navbar />}
                     <div className={`flex flex-1 w-full ${!isAuthPage ? 'pt-16' : ''}`}>
-                      {isFeedPage || isHomePage ? (
-                        <>
-                          {children}
-                        </>
-                      ) : (
-                        <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8 min-w-0 max-w-5xl mx-auto">
-                          {children}
-                        </main>
-                      )}
+                      <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8 min-w-0 max-w-5xl mx-auto">
+                        {children}
+                      </main>
                     </div>
                   </div>
                 </ActivityTracker>
               </AblyProvider>
             </LiveblocksProvider>
           </SocketProvider>
-        </DarkModeProvider>
       </FirebaseProvider>
     </ClerkProvider>
   )

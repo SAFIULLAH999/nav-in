@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma-mock'
-import { authenticateRequest } from '@/lib/jwt'
+import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { authenticateRequest } from '@/lib/jwt'
+import { postBroadcast } from '@/lib/realtime'
 
 const createPostSchema = z.object({
   content: z.string().min(1, 'Content is required').max(2000, 'Content too long'),
@@ -380,6 +381,8 @@ export async function POST(request: NextRequest) {
       image: newPost.image,
       video: newPost.video
     }
+
+    postBroadcast({ type: 'POST_CREATED', post: transformedPost })
 
     return NextResponse.json({
       success: true,

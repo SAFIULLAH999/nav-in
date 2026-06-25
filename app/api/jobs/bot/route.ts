@@ -4,6 +4,12 @@ import { broadcastJobUpdate } from '../websocket/route'
 import { EmailService } from '@/lib/email'
 import { JobQueueManager } from '@/lib/queue/job-queue-manager'
 import { cacheDeletePattern } from '@/lib/redis'
+import { jobBroadcast } from '@/lib/realtime'
+
+const realtimeBroadcast = (data: any) => {
+  broadcastJobUpdate(data)
+  jobBroadcast(data)
+}
 
 // Global variables for monitoring
 let monitoringInterval: NodeJS.Timeout | null = null
@@ -131,7 +137,7 @@ async function updateJobDates(dryRun: boolean) {
         jobsUpdated++
 
         // Broadcast the update
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'JOB_UPDATED',
           jobId: job.id,
           title: job.title,
@@ -205,7 +211,7 @@ async function removeExpiredJobs(dryRun: boolean) {
         jobsRemoved++
 
         // Broadcast the removal
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'JOB_REMOVED',
           jobId: job.id,
           title: job.title,
@@ -290,7 +296,7 @@ async function manageApplicants(jobId: string, dryRun: boolean) {
           applicantsRemoved++
 
           // Broadcast the removal
-          broadcastJobUpdate({
+          realtimeBroadcast({
             type: 'APPLICATION_REMOVED',
             jobId: job.id,
             applicationId: application.id,
@@ -316,7 +322,7 @@ async function manageApplicants(jobId: string, dryRun: boolean) {
             applicantsUpdated++
 
             // Broadcast the status update
-            broadcastJobUpdate({
+            realtimeBroadcast({
               type: 'APPLICATION_STATUS_UPDATED',
               jobId: job.id,
               applicationId: application.id,
@@ -450,7 +456,7 @@ async function startContinuousMonitoring() {
         })
         
         // Broadcast immediate cleanup
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'INSTANT_CLEANUP',
           action: 'EXPIRED_JOBS_DELETED',
           count: expiredJobs.length,
@@ -490,7 +496,7 @@ async function startContinuousMonitoring() {
             })
             invalidCount++
             
-            broadcastJobUpdate({
+            realtimeBroadcast({
               type: 'LINK_VALIDATION',
               action: 'INVALID_LINK_FOUND',
               jobId: job.id,
@@ -542,7 +548,7 @@ async function startContinuousMonitoring() {
           })
         }
         
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'IMMEDIATE_UPDATES',
           action: 'DATES_UPDATED',
           count: jobsNeedingUpdates.length,
@@ -562,7 +568,7 @@ async function startContinuousMonitoring() {
       console.log(`   ⚡ Latency: ${monitoringDuration}ms`)
   
       // Broadcast ultra-fast system health
-      broadcastJobUpdate({
+      realtimeBroadcast({
         type: 'ULTRA_FAST_HEALTH',
         data: {
           monitoringCycle: monitoringCount,
@@ -576,7 +582,7 @@ async function startContinuousMonitoring() {
   
     } catch (error) {
       console.error('[💥] ULTRA-FAST MONITORING ERROR:', error)
-      broadcastJobUpdate({
+      realtimeBroadcast({
         type: 'ULTRA_FAST_ERROR',
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
@@ -651,7 +657,7 @@ async function queueJob(jobType: string, jobData: any, priority?: number, schedu
     })
 
     // Broadcast job queued event
-    broadcastJobUpdate({
+    realtimeBroadcast({
       type: 'JOB_QUEUED',
       jobId,
       jobType,
@@ -775,7 +781,7 @@ async function processQueue() {
         jobsProcessedCount++
         
         // Broadcast job processed event
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'JOB_PROCESSED',
           jobId: job.id,
           jobType: job.type,
@@ -796,7 +802,7 @@ async function processQueue() {
         })
         
         // Broadcast job failed event
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'JOB_FAILED',
           jobId: job.id,
           jobType: job.type,
@@ -1441,7 +1447,7 @@ async function addFreshMockJobs() {
         await prisma.job.create({ data: jobData })
         jobsAdded++
 
-        broadcastJobUpdate({
+        realtimeBroadcast({
           type: 'JOB_CREATED',
           job: {
             id: 'fresh-' + jobsAdded,

@@ -51,6 +51,26 @@ export default function FeedPage() {
     }
   }, [onPostUpdate])
 
+  useEffect(() => {
+    const es = new EventSource('/api/events')
+    const handler = (ev: MessageEvent) => {
+      try {
+        const payload = JSON.parse(ev.data)
+        if (payload.type === 'post_update' && payload.data?.type === 'POST_CREATED') {
+          setPosts(prev => {
+            const exists = prev.some(p => p.id === payload.data.post.id)
+            return exists ? prev : [payload.data.post, ...prev]
+          })
+        }
+      } catch { /* ignore malformed */ }
+    }
+    es.addEventListener('message', handler)
+    return () => {
+      es.removeEventListener('message', handler)
+      es.close()
+    }
+  }, [])
+
   const checkIfNewUser = async () => {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')

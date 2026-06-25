@@ -21,12 +21,9 @@ import {
   Shield,
   Crown,
   Sparkles,
-  Sun,
-  Moon
 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
-import { useDarkMode } from "@/components/DarkModeProvider"
 import SearchBar from "./SearchBar"
 import Avatar from '@/components/Avatar'
 import { useFirebase } from '@/components/FirebaseProvider'
@@ -40,7 +37,6 @@ export default function Navbar() {
   const [loadingPremiumStatus, setLoadingPremiumStatus] = useState(true)
   const pathname = usePathname()
   const { user, isLoaded, isSignedIn } = useUser()
-  const { isDarkMode, toggleDarkMode } = useDarkMode()
   const { signOut: firebaseSignOut } = useFirebase()
 
   const navigation = [
@@ -147,23 +143,6 @@ export default function Navbar() {
 
           {/* Premium Action Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            {/* Theme Switcher */}
-            <button
-              onClick={toggleDarkMode}
-              aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-              className="p-2.5 rounded-full hover:bg-muted transition-all duration-300 group relative touch-target focus-visible hover:scale-110 active:scale-95"
-              title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-            >
-              <div className="relative w-5 h-5 flex items-center justify-center">
-                {isDarkMode ? (
-                  <Sun className="w-5 h-5 text-text-muted group-hover:text-accent transition-all duration-300 rotate-0 scale-100"
-                  />
-                ) : (
-                  <Moon className="w-5 h-5 text-text-muted group-hover:text-primary transition-all duration-300" />
-                )}
-              </div>
-            </button>
-
             {/* Post Button */}
             <Button
               size="sm"

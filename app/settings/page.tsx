@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useDarkMode } from '@/components/DarkModeProvider'
-import { ArrowLeft, Save, User, Settings as SettingsIcon, Bell, Shield, Lock, Eye, EyeOff, Palette, Sun, Moon } from 'lucide-react'
+import { ArrowLeft, Save, User, Settings as SettingsIcon, Bell, Shield, Lock, Eye, EyeOff, Palette } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -307,110 +306,11 @@ function NotificationSettings({ formData, setFormData }: { formData: any, setFor
 }
 
 function AppearanceSettings() {
-  const { isDarkMode, toggleDarkMode } = useDarkMode()
-
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Appearance Settings</h2>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              {isDarkMode ? (
-                <Moon className="w-5 h-5 text-yellow-400" />
-              ) : (
-                <Sun className="w-5 h-5 text-yellow-600" />
-              )}
-            </div>
-            <div>
-              <h3 className="font-medium">Dark Mode</h3>
-              <p className="text-sm text-text-muted">Toggle between light and dark themes</p>
-            </div>
-          </div>
-          <motion.button
-            onClick={toggleDarkMode}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ${
-              isDarkMode ? 'bg-primary' : 'bg-gray-400'
-            } shadow-md`}
-          >
-            <motion.span
-              animate={{ x: isDarkMode ? 20 : 4 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="inline-block h-5 w-5 rounded-full bg-white shadow-md border border-gray-200"
-            />
-          </motion.button>
-        </div>
-
-        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-          <div>
-            <h3 className="font-medium">Theme Preference</h3>
-            <p className="text-sm text-text-muted">Choose your preferred color scheme</p>
-          </div>
-          <div className="flex space-x-3">
-            <motion.button
-              onClick={() => {/* Set light mode */}}
-              whileHover={{ scale: 1.05, y: -1 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                !isDarkMode
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-muted text-text hover:bg-muted/80 hover:shadow-md'
-              }`}
-            >
-              Light
-            </motion.button>
-            <motion.button
-              onClick={() => {/* Set dark mode */}}
-              whileHover={{ scale: 1.05, y: -1 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                isDarkMode
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-muted text-text hover:bg-muted/80 hover:shadow-md'
-              }`}
-            >
-              Dark
-            </motion.button>
-          </div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
-          className="p-6 border border-border/50 rounded-xl bg-muted/50 shadow-md"
-        >
-          <h3 className="font-medium mb-4">Preview</h3>
-          <div className="space-y-4">
-            <motion.div
-              animate={{ opacity: isDarkMode ? 0.8 : 1 }}
-              transition={{ duration: 0.3 }}
-               className={`p-4 rounded-xl border transition-all duration-300 ${
-                 isDarkMode
-                   ? 'bg-primary/80 border-border/50 shadow-inner'
-                   : 'bg-muted border-gray-200/60 shadow-sm'
-               }`}
-            >
-              <div className={`h-3 w-3/4 rounded-full mb-3 ${isDarkMode ? 'bg-gray-700/60' : 'bg-gray-200'}`}></div>
-              <div className={`h-2 w-1/2 rounded-full ${isDarkMode ? 'bg-gray-600/60' : 'bg-gray-300'}`}></div>
-            </motion.div>
-            <motion.div
-              animate={{ opacity: isDarkMode ? 0.9 : 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-               className={`p-3 rounded-lg border transition-all duration-300 ${
-                 isDarkMode
-                   ? 'bg-primary/60 border-border/40'
-                   : 'bg-surface border-gray-200/50'
-               }`}
-            >
-              <div className={`h-2 w-full rounded-full mb-2 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'}`}></div>
-              <div className={`h-2 w-2/3 rounded-full ${isDarkMode ? 'bg-gray-600/50' : 'bg-gray-200'}`}></div>
-            </motion.div>
-          </div>
-        </motion.div>
+      <div className="p-8 border border-border rounded-lg text-center">
+        Theme toggle is not available.
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, Play, Users, Briefcase, MessageCircle } from 'lucide-react'
+import { ArrowRight, Play } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { DemoModal } from '@/components/DemoModal'
@@ -11,12 +11,12 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
-      <div className="relative max-w-7xl mx-auto text-center">
+      <div className="relative w-full text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="space-y-8"
+          className="max-w-5xl mx-auto space-y-8"
         >
           {/* Badge */}
           <motion.div
@@ -34,19 +34,18 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="text-4xl sm:text-5xl lg:text-7xl font-bold text-text leading-tight"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-text leading-tight"
           >
             Connect, Grow, and{' '}
-            <span className="text-primary relative">
-              Build
+            <span className="text-primary relative inline-block">
+              Build Your Professional Future
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: 1.2, duration: 0.8 }}
                 className="absolute -bottom-2 left-0 right-0 h-1 bg-accent rounded-full origin-left"
               />
-            </span>{' '}
-            Your Professional Future
+            </span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -91,15 +90,15 @@ export function HeroSection() {
             transition={{ delay: 1, duration: 0.8 }}
             className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-16 pt-16 border-t border-border"
           >
-            <div className="space-y-2">
+            <div className="flex flex-col items-center text-center space-y-2">
               <div className="text-3xl font-bold text-primary">10K+</div>
               <div className="text-text-muted">Active Professionals</div>
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col items-center text-center space-y-2">
               <div className="text-3xl font-bold text-primary">500+</div>
               <div className="text-text-muted">Companies</div>
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col items-center text-center space-y-2">
               <div className="text-3xl font-bold text-primary">50K+</div>
               <div className="text-text-muted">Connections Made</div>
             </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { cacheGet, cacheSet, cacheDeletePattern } from '@/lib/redis'
+import { jobBroadcast } from '@/lib/realtime'
 
 // Lazy import to avoid circular dependency issues
 let broadcastJobUpdate: ((data: any) => void) | null = null
@@ -419,6 +420,11 @@ export async function POST(request: NextRequest) {
         job: transformedJob
       })
     }
+
+    jobBroadcast({
+      type: 'JOB_CREATED',
+      job: transformedJob
+    })
 
     // Invalidate job search cache when new job is created
     await cacheDeletePattern('jobs:search:*')

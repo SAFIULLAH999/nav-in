@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { cacheDeletePattern } from '@/lib/redis'
+import { jobBroadcast } from '@/lib/realtime'
 
 // POST - Load more jobs from external sources
 export async function POST(request: NextRequest) {
@@ -47,6 +48,10 @@ export async function POST(request: NextRequest) {
               views: job.views || 0,
               applicationsCount: job.applicationsCount || 0
             }
+          })
+          jobBroadcast({
+            type: 'JOB_CREATED',
+            job,
           })
         } catch (e) {
           // ignore duplicate key errors
