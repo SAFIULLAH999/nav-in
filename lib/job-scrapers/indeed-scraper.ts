@@ -38,28 +38,28 @@ export class IndeedScraper {
           'Sec-Fetch-User': '?1',
           'Cache-Control': 'max-age=0'
         },
-        timeout: 15000,
+        timeout: 20000,
         maxRedirects: 5
       })
 
       const $ = cheerio.load(response.data)
       const jobCards = $('.jobsearch-SerpJobCard').slice(0, limit)
 
+      console.log(`Found ${jobCards.length} job cards on Indeed`)
+
       jobCards.each((index, card) => {
         try {
-          const text = (sel: string) => ($(card).find(sel).first().text() || '').trim()
-          const attr = (sel: string, a: string) => $(card).find(sel).first().attr(a)
-
-          const title = text('.title a') || text('.jobTitle')
-          const company = text('.company') || text('[data-testid="company-name"]')
-          const locationText = text('.location') || text('[data-testid="text-location"]')
-          const description = text('.summary') || text('[data-testid="job-snippet"]')
-          const salary = text('.salary-snippet') || text('[data-testid="attribute_snippet_testid"]')
-          const jobType = text('.jobType') || text('[data-testid="job-type"]') || 'Full-time'
-          const postedDate = text('.date') || text('[data-testid="days-since-posted"]')
+          const title = $(card).find('.title a').text().trim() || $(card).find('.jobTitle').text().trim()
+          const company = $(card).find('.company').text().trim() || $(card).find('[data-testid="company-name"]').text().trim()
+          const locationText = $(card).find('.location').text().trim() || $(card).find('[data-testid="text-location"]').text().trim()
+          const description = $(card).find('.summary').text().trim() || $(card).find('[data-testid="job-snippet"]').text().trim()
+          const salary = $(card).find('.salary-snippet').text().trim() || $(card).find('[data-testid="attribute_snippet_testid"]').text().trim()
+          const jobType = $(card).find('.jobType').text().trim() || $(card).find('[data-testid="job-type"]').text().trim() || 'Full-time'
+          const postedDate = $(card).find('.date').text().trim() || $(card).find('[data-testid="days-since-posted"]').text().trim()
           const externalId = $(card).attr('data-jk') || Math.random().toString(36).substr(2, 9)
-
           const applyUrl = this.buildJobUrl(externalId)
+
+          console.log(`Job ${index + 1}: ${title} at ${company}`)
 
           if (title && company) {
             jobs.push({
@@ -105,7 +105,7 @@ export class IndeedScraper {
           'Connection': 'keep-alive',
           'Upgrade-Insecure-Requests': '1'
         },
-        timeout: 15000,
+        timeout: 20000,
         maxRedirects: 5
       })
 

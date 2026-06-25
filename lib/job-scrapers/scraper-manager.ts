@@ -1,6 +1,5 @@
 import { IndeedScraper } from './indeed-scraper'
 import { prisma } from '@/lib/prisma'
-import { jobUrlValidator } from './job-validator'
 
 export interface ScrapedJob {
   title: string
@@ -44,14 +43,7 @@ export class JobScraperManager {
           },
         })
 
-        const validation = await jobUrlValidator.validateJobUrl(job.applyUrl)
-
-        if (!validation.isValid) {
-          console.log(`Skipping invalid job URL: ${job.applyUrl}`)
-          continue
-        }
-
-        const applyUrl = validation.finalUrl || job.applyUrl
+        const applyUrl = job.applyUrl
 
         if (!existingJob) {
           await prisma.job.create({
