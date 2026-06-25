@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { JobSource, ScrapingSession, JobScrapingQueue } from '@prisma/client';
+import { IndeedScraper } from './indeed-scraper';
 
 export interface ScrapedJob {
   title: string;
@@ -7,8 +8,8 @@ export interface ScrapedJob {
   location: string;
   description: string;
   type: string;
-  salaryMin?: number;
-  salaryMax?: number;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
   requirements?: string[];
   benefits?: string;
   experience?: string;
@@ -20,6 +21,7 @@ export interface ScrapedJob {
 
 export class EnhancedJobScraper {
   private rateLimiters: Map<string, { count: number; resetTime: number }> = new Map();
+  private indeedScraper = new IndeedScraper();
 
   async scrapeFromMultipleSources(sources?: string[]) {
     const activeSources = await prisma.jobSource.findMany({
@@ -30,10 +32,11 @@ export class EnhancedJobScraper {
     });
 
     const results = [];
+    let session: ScrapingSession | null = null;
 
     for (const source of activeSources) {
       try {
-        const session = await this.createScrapingSession(source.id);
+        session = await this.createScrapingSession(source.id);
 
         const jobs = await this.scrapeSource(source, session.id);
 
@@ -48,14 +51,14 @@ export class EnhancedJobScraper {
         console.error(`Error scraping ${source.name}:`, error);
 
         if (session) {
-          await this.completeScrapingSession(session.id, 'FAILED', 0, 0, 0, 1, error.message);
+          await this.completeScrapingSession(session.id, 'FAILED', 0, 0, 0, 1, error instanceof Error ? error.message : 'Unknown error');
         }
 
         results.push({
           source: source.name,
           jobsFound: 0,
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
@@ -68,7 +71,7 @@ export class EnhancedJobScraper {
       data: {
         sourceId,
         status: 'RUNNING',
-        createdBy: 'system', // System-initiated scraping
+        createdBy: 'system',
       },
     });
   }
@@ -116,7 +119,6 @@ export class EnhancedJobScraper {
         console.log(`No scraper available for ${source.name}`);
     }
 
-    // Process and store jobs
     for (const job of jobs) {
       try {
         await this.processScrapedJob(job, source.id, sessionId);
@@ -129,104 +131,59 @@ export class EnhancedJobScraper {
   }
 
   private async scrapeLinkedIn(source: JobSource): Promise<ScrapedJob[]> {
-    // LinkedIn scraping implementation
-    // This would use puppeteer or similar to scrape LinkedIn jobs
-    console.log('Scraping LinkedIn jobs...');
-
-    // Placeholder implementation
-    return [
-      {
-        title: 'Senior Software Engineer',
-        company: 'Tech Corp',
-        location: 'San Francisco, CA',
-        description: 'We are looking for a senior software engineer...',
-        type: 'FULL_TIME',
-        salaryMin: 120000,
-        salaryMax: 180000,
-        sourceUrl: 'https://linkedin.com/jobs/123',
-        sourceId: 'linkedin-123',
-        isRemote: true,
-      },
-    ];
+    console.log('LinkedIn scraping skipped due to anti-scraping measures');
+    return [];
   }
 
   private async scrapeIndeed(source: JobSource): Promise<ScrapedJob[]> {
-    // Indeed scraping implementation
-    console.log('Scraping Indeed jobs...');
+    const config = source.config ? JSON.parse(source.config as string) : {};
+    const searchQuery = config.searchQuery || 'software engineer';
+    const location = config.location || 'remote';
+    const limit = config.limit || 50;
 
-    // Placeholder implementation
-    return [
-      {
-        title: 'Product Manager',
-        company: 'ProductCorp',
-        location: 'New York, NY',
-        description: 'Join our product team...',
-        type: 'FULL_TIME',
-        salaryMin: 100000,
-        salaryMax: 140000,
-        sourceUrl: 'https://indeed.com/jobs/456',
-        sourceId: 'indeed-456',
-        isRemote: false,
-      },
-    ];
+    console.log(`Scraping Indeed for: ${searchQuery} in ${location}`);
+    const scrapedJobs = await this.indeedScraper.scrapeJobs(searchQuery, location, limit);
+
+    return scrapedJobs.map((job) => ({
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      description: job.description,
+      type: this.normalizeJobType(job.jobType),
+      salaryMin: job.salary ? this.parseSalary(job.salary).min : undefined,
+      salaryMax: job.salary ? this.parseSalary(job.salary).max : undefined,
+      requirements: this.extractRequirements(job.description),
+      experience: this.extractExperience(job.title, job.description),
+      sourceUrl: job.applyUrl,
+      sourceId: job.externalId,
+      isRemote: this.detectRemote(job.location, job.description),
+      applicationDeadline: this.calculateDeadline(job.postedDate),
+    }));
   }
 
   private async scrapeGlassdoor(source: JobSource): Promise<ScrapedJob[]> {
-    // Glassdoor scraping implementation
-    console.log('Scraping Glassdoor jobs...');
-
-    // Placeholder implementation
-    return [
-      {
-        title: 'UX Designer',
-        company: 'DesignStudio',
-        location: 'Austin, TX',
-        description: 'Create amazing user experiences...',
-        type: 'FULL_TIME',
-        salaryMin: 80000,
-        salaryMax: 120000,
-        sourceUrl: 'https://glassdoor.com/jobs/789',
-        sourceId: 'glassdoor-789',
-        isRemote: true,
-      },
-    ];
+    console.log('Glassdoor scraping not yet implemented');
+    return [];
   }
 
   private async scrapeGreenhouse(source: JobSource): Promise<ScrapedJob[]> {
-    // Greenhouse scraping implementation (via API if available)
-    console.log('Scraping Greenhouse jobs...');
-
-    // Placeholder implementation
-    return [
-      {
-        title: 'DevOps Engineer',
-        company: 'CloudTech',
-        location: 'Seattle, WA',
-        description: 'Build scalable infrastructure...',
-        type: 'FULL_TIME',
-        salaryMin: 110000,
-        salaryMax: 160000,
-        sourceUrl: 'https://greenhouse.com/jobs/101',
-        sourceId: 'greenhouse-101',
-        isRemote: false,
-      },
-    ];
+    console.log('Greenhouse scraping not yet implemented');
+    return [];
   }
 
   private async processScrapedJob(job: ScrapedJob, sourceId: string, sessionId: string) {
-    // Check if job already exists
     const existingJob = await prisma.job.findFirst({
       where: {
         sourceId: job.sourceId,
-        source: job.sourceId.startsWith('linkedin') ? 'LINKEDIN' :
-                job.sourceId.startsWith('indeed') ? 'INDEED' :
-                job.sourceId.startsWith('glassdoor') ? 'GLASSDOOR' :
-                job.sourceId.startsWith('greenhouse') ? 'GREENHOUSE' : 'MANUAL',
       },
     });
 
+    const source = job.sourceId.startsWith('linkedin') ? 'LINKEDIN' :
+                   job.sourceId.startsWith('indeed') ? 'INDEED' :
+                   job.sourceId.startsWith('glassdoor') ? 'GLASSDOOR' :
+                   job.sourceId.startsWith('greenhouse') ? 'GREENHOUSE' : 'MANUAL';
+
     if (existingJob) {
-      // Update existing job
       await prisma.job.update({
         where: { id: existingJob.id },
         data: {
@@ -235,8 +192,8 @@ export class EnhancedJobScraper {
           companyName: job.company,
           location: job.location,
           type: job.type,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
+          salaryMin: job.salaryMin ?? null,
+          salaryMax: job.salaryMax ?? null,
           requirements: JSON.stringify(job.requirements || []),
           benefits: job.benefits,
           experience: job.experience,
@@ -247,7 +204,6 @@ export class EnhancedJobScraper {
         },
       });
     } else {
-      // Create new job
       await prisma.job.create({
         data: {
           title: job.title,
@@ -255,24 +211,89 @@ export class EnhancedJobScraper {
           companyName: job.company,
           location: job.location,
           type: job.type,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
+          salaryMin: job.salaryMin ?? null,
+          salaryMax: job.salaryMax ?? null,
           requirements: JSON.stringify(job.requirements || []),
           benefits: job.benefits,
           experience: job.experience,
           isRemote: job.isRemote,
           sourceUrl: job.sourceUrl,
           sourceId: job.sourceId,
-          source: job.sourceId.startsWith('linkedin') ? 'LINKEDIN' :
-                  job.sourceId.startsWith('indeed') ? 'INDEED' :
-                  job.sourceId.startsWith('glassdoor') ? 'GLASSDOOR' :
-                  job.sourceId.startsWith('greenhouse') ? 'GREENHOUSE' : 'MANUAL',
+          source,
           isScraped: true,
           lastScraped: new Date(),
-          authorId: 'system', // System-created job
+          authorId: 'system',
         },
       });
     }
+  }
+
+  private normalizeJobType(jobType: string): string {
+    const normalized = jobType.toLowerCase();
+    if (normalized.includes('full') || normalized.includes('permanent')) return 'FULL_TIME';
+    if (normalized.includes('part')) return 'PART_TIME';
+    if (normalized.includes('contract')) return 'CONTRACT';
+    if (normalized.includes('intern')) return 'INTERNSHIP';
+    if (normalized.includes('freelance')) return 'FREELANCE';
+    if (normalized.includes('temp')) return 'TEMPORARY';
+    return 'FULL_TIME';
+  }
+
+  private parseSalary(salary: string): { min: number | null; max: number | null } {
+    const cleanSalary = salary.replace(/[$,]/g, '').toLowerCase();
+    const rangeMatch = cleanSalary.match(/(\d+)\s*[-–to]+\s*(\d+)/);
+    if (rangeMatch) {
+      const min = parseInt(rangeMatch[1]) * 1000;
+      const max = parseInt(rangeMatch[2]) * 1000;
+      return { min, max };
+    }
+    const singleMatch = cleanSalary.match(/(\d+)/);
+    if (singleMatch) {
+      const amount = parseInt(singleMatch[1]) * 1000;
+      return { min: amount, max: amount };
+    }
+    return { min: null, max: null };
+  }
+
+  private extractRequirements(description: string): string[] {
+    const requirements: string[] = [];
+    const sentences = description.split(/[.!?]+/);
+    for (const sentence of sentences) {
+      const lower = sentence.toLowerCase();
+      if (
+        lower.includes('require') ||
+        lower.includes('must have') ||
+        lower.includes('experience with') ||
+        lower.includes('knowledge of') ||
+        lower.includes('proficiency in')
+      ) {
+        requirements.push(sentence.trim());
+      }
+    }
+    return requirements.slice(0, 10);
+  }
+
+  private extractExperience(title: string, description: string): string {
+    const text = `${title} ${description}`.toLowerCase();
+    if (text.includes('senior') || text.includes('lead') || text.includes('principal') || text.includes('head')) {
+      return 'SENIOR';
+    } else if (text.includes('junior') || text.includes('entry') || text.includes('graduate') || text.includes('intern')) {
+      return 'JUNIOR';
+    } else if (text.includes('mid') || text.includes('intermediate') || text.includes('3+') || text.includes('5+')) {
+      return 'MID';
+    }
+    return 'MID';
+  }
+
+  private detectRemote(location: string, description: string): boolean {
+    const text = `${location} ${description}`.toLowerCase();
+    return text.includes('remote') || text.includes('work from home') || text.includes('wfh') || text.includes('telecommute');
+  }
+
+  private calculateDeadline(postedDate: string): Date {
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + 30);
+    return deadline;
   }
 
   async scheduleScraping(sourceName: string, url: string, priority = 0) {
@@ -316,7 +337,6 @@ export class EnhancedJobScraper {
           data: { status: 'PROCESSING' },
         });
 
-        // Process the scraping item
         await this.processQueueItem(item);
 
         await prisma.jobScrapingQueue.update({
@@ -336,7 +356,7 @@ export class EnhancedJobScraper {
             data: {
               status: 'FAILED',
               attempts: currentAttempts,
-              error: error.message,
+              error: error instanceof Error ? error.message : 'Unknown error',
               processedAt: new Date(),
             },
           });
@@ -345,7 +365,7 @@ export class EnhancedJobScraper {
             where: { id: item.id },
             data: {
               attempts: currentAttempts,
-              scheduledFor: new Date(Date.now() + currentAttempts * 60000), // Exponential backoff
+              scheduledFor: new Date(Date.now() + currentAttempts * 60000),
             },
           });
         }
@@ -354,7 +374,6 @@ export class EnhancedJobScraper {
   }
 
   private async processQueueItem(item: JobScrapingQueue) {
-    // Implementation for processing individual queue items
     console.log(`Processing queue item: ${item.url}`);
   }
 }

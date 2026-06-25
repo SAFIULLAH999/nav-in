@@ -1,33 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { enhancedJobScraper } from '@/lib/job-scrapers/enhanced-job-scraper';
+import { JobScraperManager } from '@/lib/job-scrapers/scraper-manager';
 
-// POST /api/scraping/trigger - Trigger job scraping from multiple sources
+const scraperManager = new JobScraperManager();
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { sources } = body; // Optional array of specific sources to scrape
+    const body = await request.json().catch(() => ({}));
+    const searchQuery = body.searchQuery || 'software engineer';
+    const location = body.location || 'remote';
+    const limit = body.limit || 100;
 
-    console.log('Starting job scraping from sources:', sources || 'all');
+    console.log(`Triggering job scraping: ${searchQuery} in ${location}, limit ${limit}`);
 
-    // Run scraping in background
-    const scrapePromise = enhancedJobScraper.scrapeFromMultipleSources(sources);
-
-    // Don't await - let it run in background
-    scrapePromise.then((results) => {
-      console.log('Scraping completed:', results);
-    }).catch((error) => {
-      console.error('Scraping failed:', error);
-    });
+    const jobs = await scraperManager.scrapeAllJobs(searchQuery, location, limit);
 
     return NextResponse.json({
-      message: 'Job scraping started',
-      sources: sources || 'all',
-      status: 'running',
+      success: true,
+      message: `Scraped ${jobs.length} jobs`,
+      jobsFound: jobs.length,
+      sample: jobs.slice(0, 5).map(job => ({
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        applyUrl: job.applyUrl,
+      })),
     });
   } catch (error) {
     console.error('Error triggering job scraping:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

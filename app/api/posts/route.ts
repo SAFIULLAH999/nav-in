@@ -308,6 +308,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export const runtime = 'nodejs'
+
 // POST - Create a new post
 export async function POST(request: NextRequest) {
   try {

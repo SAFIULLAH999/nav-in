@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { JobScraperManager } from '@/lib/job-scrapers/scraper-manager'
 
-// POST - Load more jobs from database
+const scraperManager = new JobScraperManager()
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { searchQuery, location, limit = 20, page = 1 } = body
 
+    // First, trigger scraping for new jobs
+    console.log(`Search trigger: scraping new jobs for ${searchQuery} in ${location}`)
+    await scraperManager.scrapeAllJobs(searchQuery || 'software engineer', location || 'remote', limit || 100)
+
+    // Then query the database for results
     const skip = (page - 1) * limit
 
-    // Only return valid, active jobs
     const where: any = {
       isActive: true,
       validityStatus: 'VALID',
@@ -27,7 +33,6 @@ export async function POST(request: NextRequest) {
       where.location = { contains: location, mode: 'insensitive' }
     }
 
-    // Get ONLY real scraped or manually posted jobs
     const [jobs, total] = await Promise.all([
       prisma.job.findMany({
         where,
@@ -58,20 +63,6 @@ export async function POST(request: NextRequest) {
       }),
       prisma.job.count({ where })
     ])
-
-    if (jobs.length === 0 && page === 1) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        meta: {
-          hasMore: false,
-          page,
-          total: 0,
-          limit,
-          message: 'No jobs found. Try adjusting your search or check back later for new postings.'
-        }
-      })
-    }
 
     const transformedJobs = jobs.map((job: any) => ({
       id: job.id,
@@ -112,9 +103,9 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error loading jobs:', error)
+    console.error('Error searching jobs:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to load jobs' },
+      { success: false, error: 'Failed to search jobs' },
       { status: 500 }
     )
   }

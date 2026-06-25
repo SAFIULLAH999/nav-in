@@ -26,8 +26,20 @@ export class IndeedScraper {
 
       const response = await axios.get(searchUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Cache-Control': 'max-age=0'
+        },
+        timeout: 15000,
+        maxRedirects: 5
       })
 
       const $ = cheerio.load(response.data)
@@ -35,22 +47,25 @@ export class IndeedScraper {
 
       jobCards.each((index, card) => {
         try {
-          const title = $(card).find('.title a').text().trim()
-          const company = $(card).find('.company').text().trim()
-          const location = $(card).find('.location').text().trim()
-          const description = $(card).find('.summary').text().trim()
-          const salary = $(card).find('.salary-snippet').text().trim()
-          const jobType = $(card).find('.jobType').text().trim() || 'Full-time'
-          const postedDate = $(card).find('.date').text().trim()
-          const relativeUrl = $(card).find('.title a').attr('href')
-          const applyUrl = relativeUrl ? `${this.baseUrl}${relativeUrl}` : searchUrl
+          const text = (sel: string) => ($(card).find(sel).first().text() || '').trim()
+          const attr = (sel: string, a: string) => $(card).find(sel).first().attr(a)
+
+          const title = text('.title a') || text('.jobTitle')
+          const company = text('.company') || text('[data-testid="company-name"]')
+          const locationText = text('.location') || text('[data-testid="text-location"]')
+          const description = text('.summary') || text('[data-testid="job-snippet"]')
+          const salary = text('.salary-snippet') || text('[data-testid="attribute_snippet_testid"]')
+          const jobType = text('.jobType') || text('[data-testid="job-type"]') || 'Full-time'
+          const postedDate = text('.date') || text('[data-testid="days-since-posted"]')
           const externalId = $(card).attr('data-jk') || Math.random().toString(36).substr(2, 9)
+
+          const applyUrl = this.buildJobUrl(externalId)
 
           if (title && company) {
             jobs.push({
               title,
               company,
-              location,
+              location: locationText,
               description,
               salary,
               jobType,
@@ -68,33 +83,47 @@ export class IndeedScraper {
       console.log(`Successfully scraped ${jobs.length} jobs from Indeed`)
       return jobs
 
-    } catch (error) {
-      console.error('Error scraping Indeed:', error)
+    } catch (error: any) {
+      console.error('Error scraping Indeed:', error.message || error)
       return []
     }
+  }
+
+  private buildJobUrl(jobKey: string): string {
+    if (!jobKey) return this.baseUrl
+    return `${this.baseUrl}/viewjob?jk=${encodeURIComponent(jobKey)}`
   }
 
   async scrapeJobDetails(jobUrl: string): Promise<Partial<ScrapedJob> | null> {
     try {
       const response = await axios.get(jobUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        },
+        timeout: 15000,
+        maxRedirects: 5
       })
 
       const $ = cheerio.load(response.data)
 
-      const fullDescription = $('#jobDescriptionText').text().trim()
-      const requirements = $('.jobsearch-JobRequirements-item').map((i: number, el: any) =>
+      const fullDescription = $('#jobDescriptionText').text().trim() || $('[data-testid="job-description"]').text().trim()
+      const requirements = $('.jobsearch-JobRequirements-item').map((i: number, el) =>
         $(el).text().trim()
-      ).get()
+      ).get().join('\n')
 
-      return {
-        description: fullDescription
-      }
+      const result: any = {}
+      if (fullDescription) result.description = fullDescription
+      if (requirements) result.requirements = requirements
 
-    } catch (error) {
-      console.error('Error scraping Indeed job details:', error)
+      return result
+
+    } catch (error: any) {
+      console.error('Error scraping Indeed job details:', error.message || error)
       return null
     }
   }
