@@ -216,11 +216,6 @@ export async function GET(request: NextRequest) {
             ]
           },
           orderBy: [
-            // Then order by engagement score (likes + comments + shares)
-            { likes: { _count: 'desc' } },
-            { comments: { _count: 'desc' } },
-            { shares: { _count: 'desc' } },
-            // Finally by recency
             { createdAt: 'desc' }
           ],
           include: {
@@ -253,9 +248,6 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
         orderBy: [
-          { likes: { _count: 'desc' } },
-          { comments: { _count: 'desc' } },
-          { shares: { _count: 'desc' } },
           { createdAt: 'desc' }
         ],
         include: {
