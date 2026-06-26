@@ -9,16 +9,17 @@ import JobsLoading from "./loading"
 export const revalidate = 3600
 
 interface JobsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?:      string
     type?:   string
     remote?: string
     page?:   string
-  }
+  }>
 }
 
 export async function generateMetadata({ searchParams }: JobsPageProps) {
-  const q = searchParams.q
+  const params = await searchParams
+  const q = params.q
   return {
     title: q ? `"${q}" jobs — NavIN` : "Find Jobs — NavIN",
     description: "Discover thousands of job opportunities matched to your skills on NavIN.",
@@ -26,10 +27,11 @@ export async function generateMetadata({ searchParams }: JobsPageProps) {
 }
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
-  const query  = searchParams.q      ?? ""
-  const type   = searchParams.type   ?? "all"
-  const remote = searchParams.remote === "true"
-  const page   = parseInt(searchParams.page ?? "1", 10)
+  const params = await searchParams
+  const query  = params.q      ?? ""
+  const type   = params.type   ?? "all"
+  const remote = params.remote === "true"
+  const page   = parseInt(params.page ?? "1", 10)
 
   // Fetch jobs server-side — always returns data (falls back to mock on error)
   const { jobs, total } = await fetchJobs({ query, type, remote, page })

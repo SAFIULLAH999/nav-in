@@ -42,6 +42,8 @@ export function JobCard({ job }: { job: AdzunaJob }) {
     ? job.description.slice(0, 160).trimEnd() + "…"
     : job.description
 
+  const href = job.apply_url === "#" ? `/jobs/${job.id}` : job.apply_url
+
   return (
     <article className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-200">
       <div className="flex items-start gap-4">
@@ -131,7 +133,7 @@ export function JobCard({ job }: { job: AdzunaJob }) {
           {/* Actions */}
           <div className="flex items-center gap-3 mt-4">
             <a
-              href={job.apply_url}
+              href={href}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 px-5 py-2 rounded-xl transition-colors"
