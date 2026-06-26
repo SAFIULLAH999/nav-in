@@ -45,11 +45,11 @@ export function JobCard({ job }: { job: AdzunaJob }) {
   const href = job.apply_url === "#" ? `/jobs/${job.id}` : job.apply_url
 
   return (
-    <article className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-200">
+    <article className="bg-surface rounded-2xl border border-border p-5 hover:shadow-md hover:border-primary/30 transition-all duration-200">
       <div className="flex items-start gap-4">
 
         {/* Company logo / initials */}
-        <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-sm shrink-0 select-none">
+        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-semibold text-sm shrink-0 select-none">
           {initials}
         </div>
 
@@ -58,10 +58,10 @@ export function JobCard({ job }: { job: AdzunaJob }) {
           {/* Top row: title + save button */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px] leading-snug truncate">
+              <h3 className="font-semibold text-text text-[15px] leading-snug truncate">
                 {job.title}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-sm text-text-muted mt-0.5">
                 {job.company}
                 {job.location ? ` · ${job.location}` : ""}
               </p>
@@ -71,8 +71,8 @@ export function JobCard({ job }: { job: AdzunaJob }) {
               aria-label={saved ? "Unsave job" : "Save job"}
               className={`shrink-0 text-xl transition-colors ${
                 saved
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-300 dark:text-gray-600 hover:text-blue-500"
+                  ? "text-error"
+                  : "text-text-muted hover:text-primary"
               }`}
             >
               {saved ? "♥" : "♡"}
@@ -81,20 +81,20 @@ export function JobCard({ job }: { job: AdzunaJob }) {
 
           {/* Badges row */}
           <div className="flex flex-wrap items-center gap-2 mt-2.5">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-text-muted font-medium">
               {job.job_type}
             </span>
             {job.is_remote && (
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium border border-green-100 dark:border-green-800">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-success/10 text-success font-medium border border-success/20">
                 Remote
               </span>
             )}
             {salary && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              <span className="text-xs text-text-muted font-medium">
                 {salary}
               </span>
             )}
-            <span className="text-xs text-gray-400 dark:text-gray-600 ml-auto shrink-0">
+            <span className="text-xs text-text-muted ml-auto shrink-0">
               {timeAgo(job.posted_at)}
             </span>
           </div>
@@ -105,7 +105,7 @@ export function JobCard({ job }: { job: AdzunaJob }) {
               {job.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="text-xs px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800/50"
+                  className="text-xs px-2 py-0.5 rounded-md bg-primary text-white border border-primary"
                 >
                   {skill}
                 </span>
@@ -116,13 +116,13 @@ export function JobCard({ job }: { job: AdzunaJob }) {
           {/* Description */}
           {job.description && (
             <div className="mt-3">
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-text-muted leading-relaxed">
                 {expanded ? job.description : shortDesc}
               </p>
               {job.description.length > 160 && (
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+                  className="text-xs text-primary hover:underline mt-1"
                 >
                   {expanded ? "Show less" : "Show more"}
                 </button>
@@ -136,7 +136,7 @@ export function JobCard({ job }: { job: AdzunaJob }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 px-5 py-2 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 active:bg-primary px-5 py-2 rounded-xl transition-colors"
             >
               Apply now
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -145,7 +145,7 @@ export function JobCard({ job }: { job: AdzunaJob }) {
             </a>
             <button
               onClick={() => setSaved(!saved)}
-              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="text-sm font-medium text-text-muted hover:text-primary transition-colors"
             >
               {saved ? "Saved ✓" : "Save"}
             </button>

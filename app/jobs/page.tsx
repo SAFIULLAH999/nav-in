@@ -37,15 +37,13 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const { jobs, total } = await fetchJobs({ query, type, remote, page })
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
 
       {/* Page header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 pt-8 pb-0">
+      <div className="bg-surface border-b border-border px-4 pt-8 pb-0">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Find your dream job
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-text">Find your dream job</h1>
+          <p className="text-sm text-text-muted mt-1">
             Discover opportunities that match your skills and career goals
           </p>
         </div>
@@ -73,12 +71,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                   ...(remote ? { remote: "true" } : {}),
                   page: String(page - 1),
                 })}`}
-                className="px-5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="px-5 py-2 rounded-xl border border-border text-sm font-medium text-text hover:bg-muted transition-colors"
               >
                 ← Previous
               </a>
             )}
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-text-muted">
               Page {page} of {Math.ceil(total / 20)}
             </span>
             {page < Math.ceil(total / 20) && (
@@ -89,7 +87,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                   ...(remote ? { remote: "true" } : {}),
                   page: String(page + 1),
                 })}`}
-                className="px-5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="px-5 py-2 rounded-xl border border-border text-sm font-medium text-text hover:bg-muted transition-colors"
               >
                 Next →
               </a>
