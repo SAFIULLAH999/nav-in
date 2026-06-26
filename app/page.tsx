@@ -1,15 +1,14 @@
-import { HeroSection } from '@/components/HeroSection'
-import { FeaturesSection } from '@/components/FeaturesSection'
-import { FeaturedCompanies } from '@/components/FeaturedCompanies'
-import { Footer } from '@/components/Footer'
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
-  return (
-    <>
-      <HeroSection />
-      <FeaturesSection />
-      <FeaturedCompanies />
-      <Footer />
-    </>
-  )
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace('/jobs')
+  }, [router])
+
+  return null
 }

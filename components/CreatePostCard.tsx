@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Image, Video, Calendar, MapPin, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useUser } from '@clerk/nextjs'
 import { useFirebase } from './FirebaseProvider'
 import { useSocket } from './SocketProvider'
 import { Alert, AlertDescription } from './ui/alert'
@@ -17,8 +18,10 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
   const [content, setContent] = useState('')
   const [isExpanded, setIsExpanded] = useState(false)
   const [alert, setAlert] = useState<{ type: 'error' | 'success'; message: string } | null>(null)
-  const { user } = useFirebase()
+  const firebaseContext = useFirebase()
+  const { user: clerkUser, isLoaded: authLoaded, isSignedIn } = useUser()
   const router = useRouter()
+  const activeUser = clerkUser || firebaseContext.user
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +81,23 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
     }
   }
 
-  if (!user) {
+  if (!authLoaded) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-xl shadow-soft border border-border p-6"
+      >
+        <div className="animate-pulse space-y-3">
+          <div className="h-16 bg-gray-200 rounded-lg"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (!isSignedIn || !activeUser) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -103,6 +122,8 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
     )
   }
 
+  const displayName = activeUser?.displayName || activeUser?.email?.split('@')[0] || 'User'
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -120,10 +141,7 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
           className="flex items-center space-x-3 p-3 bg-secondary/30 rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
         >
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
-            {user.displayName
-              ? user.displayName.charAt(0).toUpperCase()
-              : user.email?.split('@')[0].charAt(0).toUpperCase()
-            }
+            {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 text-text-muted">
             What's on your mind?
@@ -133,7 +151,7 @@ export const CreatePostCard = ({ onPostCreated }: CreatePostCardProps) => {
         <form onSubmit={handleSubmit}>
           <div className="flex items-start space-x-3 mb-4">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-              {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">
               <textarea

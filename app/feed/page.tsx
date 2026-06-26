@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@clerk/nextjs'
 import { MessageCircle } from 'lucide-react'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { RightSidebar } from '@/components/RightSidebar'
@@ -10,6 +12,8 @@ import { Post } from '@/types'
 import { useSocket } from '@/components/SocketProvider'
 
 export default function FeedPage() {
+  const router = useRouter()
+  const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth()
   const { socket, onPostUpdate } = useSocket()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,9 +22,17 @@ export default function FeedPage() {
   const [activeFilter, setActiveFilter] = useState('all')
 
   useEffect(() => {
-    fetchPosts()
-    checkIfNewUser()
-  }, [])
+    if (authLoaded && !isSignedIn) {
+      router.replace('/sign-in')
+    }
+  }, [authLoaded, isSignedIn, router])
+
+  useEffect(() => {
+    if (authLoaded && isSignedIn) {
+      fetchPosts()
+      checkIfNewUser()
+    }
+  }, [authLoaded, isSignedIn])
 
   useEffect(() => {
     const handleNewPost = (newPost: Post) => {
@@ -100,7 +112,9 @@ export default function FeedPage() {
       setLoading(true)
       setError(null)
       setActiveFilter(filterType)
-      const response = await fetch(`/api/posts?filter=${filterType}`)
+      const token = await getToken?.()
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await fetch(`/api/posts?filter=${filterType}`, { headers })
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -125,6 +139,18 @@ export default function FeedPage() {
 
   const handlePostCreated = (newPost: Post) => {
     setPosts(prevPosts => [newPost, ...prevPosts])
+  }
+
+  if (!authLoaded) {
+    return (
+      <div className="min-h-screen bg-background w-full flex items-center justify-center">
+        <p className="text-text-muted">Checking authentication...</p>
+      </div>
+    )
+  }
+
+  if (authLoaded && !isSignedIn) {
+    return null
   }
 
   return (

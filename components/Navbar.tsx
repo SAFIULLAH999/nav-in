@@ -30,11 +30,13 @@ import { useFirebase } from '@/components/FirebaseProvider'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [notificationCount, setNotificationCount] = useState(3)
+  const [notificationCount, setNotificationCount] = useState(0)
+  const [messageCount, setMessageCount] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
   const [isTrial, setIsTrial] = useState(false)
   const [trialEndsAt, setTrialEndsAt] = useState<Date | null>(null)
   const [loadingPremiumStatus, setLoadingPremiumStatus] = useState(true)
+  const [loadingCounts, setLoadingCounts] = useState(true)
   const pathname = usePathname()
   const { user, isLoaded, isSignedIn } = useUser()
   const { signOut: firebaseSignOut } = useFirebase()
@@ -84,6 +86,58 @@ export default function Navbar() {
       setLoadingPremiumStatus(false)
     }
   }, [isLoaded, user, isSignedIn])
+
+  useEffect(() => {
+    const loadCounts = async () => {
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+      if (!token || !isLoaded || !user || !isSignedIn) {
+        setNotificationCount(0)
+        setMessageCount(0)
+        setLoadingCounts(false)
+        return
+      }
+
+      try {
+        setLoadingCounts(true)
+
+        const [notificationsResponse, messagesResponse] = await Promise.all([
+          fetch('/api/notifications?limit=1&unread=true', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch('/api/messages?limit=100', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ])
+
+        if (notificationsResponse.ok) {
+          const notificationData = await notificationsResponse.json()
+          setNotificationCount(notificationData.unreadCount ?? 0)
+        } else {
+          setNotificationCount(0)
+        }
+
+        if (messagesResponse.ok) {
+          const messageData = await messagesResponse.json()
+          if (messageData.success && Array.isArray(messageData.data)) {
+            const unreadTotal = messageData.data.reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0)
+            setMessageCount(unreadTotal)
+          } else {
+            setMessageCount(0)
+          }
+        } else {
+          setMessageCount(0)
+        }
+      } catch (error) {
+        console.error('Error loading notification or message counts:', error)
+        setNotificationCount(0)
+        setMessageCount(0)
+      } finally {
+        setLoadingCounts(false)
+      }
+    }
+
+    loadCounts()
+  }, [isLoaded, isSignedIn, user])
 
   return (
     <nav className="sticky top-0 z-50 bg-surface border-b border-border">

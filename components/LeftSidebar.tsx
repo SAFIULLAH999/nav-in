@@ -12,6 +12,7 @@ export function LeftSidebar() {
   const { getToken } = useAuth()
   const [userProfile, setUserProfile] = useState<any>(null)
   const [connectionsCount, setConnectionsCount] = useState(0)
+  const [messageCount, setMessageCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -47,6 +48,22 @@ export function LeftSidebar() {
       if (connectionsResponse.ok) {
         const connectionsData = await connectionsResponse.json()
         setConnectionsCount(connectionsData.data?.length || 0)
+      }
+
+      if (token) {
+        const messagesResponse = await fetch('/api/messages?limit=100', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (messagesResponse.ok) {
+          const messagesData = await messagesResponse.json()
+          if (messagesData.success && Array.isArray(messagesData.data)) {
+            const unreadTotal = messagesData.data.reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0)
+            setMessageCount(unreadTotal)
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading user profile:', error)
@@ -118,9 +135,9 @@ export function LeftSidebar() {
 
       {/* Navigation Links */}
       <div className="space-y-3">
-        <SidebarLink icon={Users} label="My Network" count="45" href="/network" />
+        <SidebarLink icon={Users} label="My Network" count={connectionsCount || undefined} href="/network" />
         <SidebarLink icon={Briefcase} label="Jobs" href="/jobs" />
-        <SidebarLink icon={MessageCircle} label="Messages" count="3" href="/messages" />
+        <SidebarLink icon={MessageCircle} label="Messages" count={messageCount || undefined} href="/messages" />
         <SidebarLink icon={Settings} label="Settings" href="/settings" />
       </div>
 
@@ -146,7 +163,7 @@ export function LeftSidebar() {
   )
 }
 
-function SidebarLink({ icon: Icon, label, count, href }: { icon: any, label: string, count?: string, href?: string }) {
+function SidebarLink({ icon: Icon, label, count, href }: { icon: any, label: string, count?: string | number, href?: string }) {
   const content = (
     <div className="flex items-center justify-between p-3 hover:bg-muted rounded-2xl cursor-pointer transition-all duration-300 group w-full">
       <div className="flex items-center space-x-4">
